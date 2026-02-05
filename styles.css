@@ -1,0 +1,92 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
+
+/* ===== 3D FLIP CLOCK ESSENTIALS ===== */
+
+/* Perspective on parent creates 3D space */
+.perspective-1000 {
+  -webkit-perspective: 1000px;
+  perspective: 1000px;
+}
+
+/* Upper and Lower card positioning */
+.upper-card,
+.lower-card {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 50%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.upper-card {
+  top: 0;
+  transform-origin: bottom center;
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+  /* Clip the bottom edge precisely */
+  clip-path: inset(0 0 0 0);
+}
+
+.lower-card {
+  bottom: 0;
+  transform-origin: top center;
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
+  /* Clip the top edge precisely */
+  clip-path: inset(0 0 0 0);
+}
+
+/* ===== BACKGROUND STYLES ===== */
+
+.mesh-bg {
+  background-color: #000000;
+  background-image:
+    radial-gradient(circle at 50% -20%, #1c1c1e, #000000 60%);
+}
+
+.light-mesh-bg {
+  background-color: #f2f2f7;
+  background-image:
+    radial-gradient(at 50% 0%, rgba(255,255,255,1) 0, rgba(242,242,247,0) 80%);
+}
+
+/* ===== UTILITY STYLES ===== */
+
+.color-transition {
+  transition: background-color 0.5s ease, color 0.5s ease, box-shadow 0.5s ease;
+}
+
+/* Hide number input spinners */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Smooth scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.3);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.5);
+}
