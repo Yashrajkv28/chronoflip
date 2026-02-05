@@ -30,9 +30,25 @@ class AudioService {
   private enabled: boolean = true;
   private vibrationEnabled: boolean = true;
   private customAudioCache: Map<string, AudioBuffer> = new Map();
+  private currentAudio: HTMLAudioElement | null = null;
 
   constructor() {
     // AudioContext is created lazily on first use (browser autoplay policy)
+  }
+
+  /**
+   * Stop any currently playing custom audio
+   */
+  stop(): void {
+    if (this.currentAudio) {
+      this.currentAudio.pause();
+      this.currentAudio.currentTime = 0;
+      this.currentAudio = null;
+    }
+    // Also stop vibration
+    if (this.isVibrationSupported()) {
+      navigator.vibrate(0);
+    }
   }
 
   /**
@@ -154,29 +170,23 @@ class AudioService {
   }
 
   /**
-   * Tick sound - subtle mechanical click
+   * Tick sound - plays custom tick.mp3 (first 200ms only)
    */
-  private async playTick(ctx: AudioContext): Promise<void> {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const filter = ctx.createBiquadFilter();
+  private async playTick(_ctx: AudioContext): Promise<void> {
+    try {
+      const audio = new Audio('/sounds/tick.mp3');
+      audio.volume = this.volume;
+      audio.currentTime = 0;
+      await audio.play();
 
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(150, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.05);
-
-    filter.type = 'lowpass';
-    filter.frequency.value = 800;
-
-    gain.gain.setValueAtTime(this.volume * 0.08, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start();
-    osc.stop(ctx.currentTime + 0.05);
+      // Stop after 200ms (extract just the first tick from the file)
+      setTimeout(() => {
+        audio.pause();
+        audio.currentTime = 0;
+      }, 200);
+    } catch (e) {
+      console.warn('Custom tick sound failed:', e);
+    }
   }
 
   /**
@@ -298,37 +308,56 @@ class AudioService {
   }
 
   /**
-   * Play a custom audio file (for future use)
+   * Play a custom audio file
    * @param url URL to the audio file
    */
   async playCustom(url: string): Promise<void> {
     if (!this.enabled || this.volume === 0) return;
 
+    // Stop any currently playing audio first
+    this.stop();
+
+    // Use HTML5 Audio for simpler, more reliable playback
     try {
-      const ctx = await this.getContext();
+      const audio = new Audio(url);
+      audio.volume = this.volume;
+      this.currentAudio = audio;
 
-      // Check cache first
-      let buffer = this.customAudioCache.get(url);
+      // Clear reference when audio ends naturally
+      audio.onended = () => {
+        if (this.currentAudio === audio) {
+          this.currentAudio = null;
+        }
+      };
 
-      if (!buffer) {
-        const response = await fetch(url);
-        const arrayBuffer = await response.arrayBuffer();
-        buffer = await ctx.decodeAudioData(arrayBuffer);
-        this.customAudioCache.set(url, buffer);
-      }
-
-      const source = ctx.createBufferSource();
-      const gain = ctx.createGain();
-
-      source.buffer = buffer;
-      gain.gain.value = this.volume;
-
-      source.connect(gain);
-      gain.connect(ctx.destination);
-
-      source.start();
+      await audio.play();
     } catch (e) {
       console.warn('Custom audio playback failed:', e);
+      // Fallback to Web Audio API
+      try {
+        const ctx = await this.getContext();
+        let buffer = this.customAudioCache.get(url);
+
+        if (!buffer) {
+          const response = await fetch(url);
+          const arrayBuffer = await response.arrayBuffer();
+          buffer = await ctx.decodeAudioData(arrayBuffer);
+          this.customAudioCache.set(url, buffer);
+        }
+
+        const source = ctx.createBufferSource();
+        const gain = ctx.createGain();
+
+        source.buffer = buffer;
+        gain.gain.value = this.volume;
+
+        source.connect(gain);
+        gain.connect(ctx.destination);
+
+        source.start();
+      } catch (e2) {
+        console.warn('Web Audio API fallback also failed:', e2);
+      }
     }
   }
 

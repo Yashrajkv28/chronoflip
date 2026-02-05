@@ -358,7 +358,7 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
           {/* Color Alerts - Only for Countdown/Hybrid */}
           {localConfig.mode !== 'countup' && (
             <div className="mb-8">
-              <div className="flex items-center justify-between px-4 mb-2">
+              <div className="flex items-center justify-between px-4 mb-1">
                 <h3 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">COLOR ALERTS</h3>
                 <button
                   type="button"
@@ -369,7 +369,8 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
                   + Add
                 </button>
               </div>
-              
+              <p className="px-4 mb-2 text-[10px] text-zinc-400 dark:text-zinc-500">Only active in Countdown and Hybrid modes</p>
+
               <div className="bg-zinc-50/80 dark:bg-zinc-900/40 backdrop-blur-md border border-zinc-200/50 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
                 {localConfig.colorAlerts.length === 0 && (
                   <div className="p-8 text-center text-zinc-400 dark:text-zinc-600 text-sm">

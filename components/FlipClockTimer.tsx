@@ -102,6 +102,8 @@ const FlipClockTimer: React.FC = () => {
   const triggeredAlertsRef = useRef<Set<string>>(new Set());
   const resetTimerRef = useRef<number | null>(null);
   const resetIntervalRef = useRef<number | null>(null);
+  const rKeyHeldRef = useRef<boolean>(false);
+  const lastTickSecondRef = useRef<number | null>(null);  // Track last second for tick sound
 
   // Timestamp refs for accurate timing (immune to browser throttling)
   const startTimeRef = useRef<number | null>(null);      // When timer started (ms)
@@ -251,14 +253,15 @@ const FlipClockTimer: React.FC = () => {
   }, [appMode, status, days, hours, minutes, seconds, config.showHours, config.showDays, isDelayPhase, isScheduledPhase]);
 
   // Check color alerts
+  // Sort ASCENDING so we find the smallest threshold that matches current time
   const checkColorAlerts = useCallback((currentTime: number) => {
-    const sortedAlerts = [...config.colorAlerts].sort((a, b) => b.timeInSeconds - a.timeInSeconds);
+    const sortedAlerts = [...config.colorAlerts].sort((a, b) => a.timeInSeconds - b.timeInSeconds);
 
     for (const alert of sortedAlerts) {
       if (currentTime <= alert.timeInSeconds) {
         setCurrentColorClass(alert.colorClass);
 
-        // Trigger alert once
+        // Trigger alert once when we exactly hit the threshold
         if (!triggeredAlertsRef.current.has(alert.id) && currentTime === alert.timeInSeconds) {
           triggeredAlertsRef.current.add(alert.id);
 
@@ -299,6 +302,12 @@ const FlipClockTimer: React.FC = () => {
       const elapsedMs = now - startTimeRef.current! - totalPausedMsRef.current;
       const elapsedSeconds = Math.floor(elapsedMs / 1000);
 
+      // Play tick sound when a new second starts
+      if (config.playTickSound && lastTickSecondRef.current !== elapsedSeconds) {
+        lastTickSecondRef.current = elapsedSeconds;
+        audioService.play('tick');
+      }
+
       if (config.mode === 'countdown' || (config.mode === 'hybrid' && hybridPhase === 'countdown')) {
         const remaining = Math.max(0, initialTimeRef.current - elapsedSeconds);
 
@@ -315,7 +324,8 @@ const FlipClockTimer: React.FC = () => {
             startTimeRef.current = Date.now();
             totalPausedMsRef.current = 0;
             if (config.playAlertSound) {
-              audioService.play('finish');
+              audioService.vibrate('finish');
+              audioService.playCustom('/sounds/my-alarm.mp3');
             }
             setTimeInSeconds(0);
           } else {
@@ -323,7 +333,8 @@ const FlipClockTimer: React.FC = () => {
             setStatus('completed');
             releaseWakeLock(); // Allow screen to sleep
             if (config.playAlertSound) {
-              audioService.play('finish');
+              audioService.vibrate('finish');
+              audioService.playCustom('/sounds/my-alarm.mp3');
             }
             setTimeInSeconds(0);
           }
@@ -533,6 +544,8 @@ const FlipClockTimer: React.FC = () => {
   // handleReset now accepts optional parameter to fix stale closure bug
   const handleReset = (newInitialTime?: number) => {
     const initialTime = newInitialTime ?? config.initialTimeInSeconds;
+    // Stop any playing alarm sound immediately
+    audioService.stop();
     setStatus('idle');
     setTimeInSeconds(initialTime);
     setCurrentColorClass('');
@@ -548,6 +561,7 @@ const FlipClockTimer: React.FC = () => {
     pausedAtRef.current = null;
     totalPausedMsRef.current = 0;
     initialTimeRef.current = initialTime;
+    lastTickSecondRef.current = null;  // Reset tick tracker
     releaseWakeLock(); // Allow screen to sleep
   };
 
@@ -611,9 +625,16 @@ const FlipClockTimer: React.FC = () => {
           }
           break;
         case 'KeyR':
-          if (!e.metaKey && !e.ctrlKey) {
+          if (!e.metaKey && !e.ctrlKey && !e.repeat) {
             e.preventDefault();
-            handleReset();
+            // If idle or completed, instant reset
+            if (status === 'idle' || status === 'completed') {
+              handleReset();
+            } else if (!rKeyHeldRef.current) {
+              // Running/paused: require long press (same as button)
+              rKeyHeldRef.current = true;
+              handleResetMouseDown();
+            }
           }
           break;
         case 'KeyS':
@@ -652,8 +673,22 @@ const FlipClockTimer: React.FC = () => {
       }
     };
 
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'KeyR') {
+        // Cancel reset if R key released before completion
+        if (rKeyHeldRef.current) {
+          rKeyHeldRef.current = false;
+          handleResetMouseUp();
+        }
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
   }, [appMode, status, showSettings, isFullscreen, isBlackout, toggleFullscreen]);
 
   const handleConfigSave = (newConfig: TimerConfig) => {
