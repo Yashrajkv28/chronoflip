@@ -5,13 +5,18 @@ interface TimerSettingsProps {
   config: TimerConfig;
   onSave: (config: TimerConfig) => void;
   onClose: () => void;
+  onScheduleStart?: (scheduledTime: number) => void;
 }
 
-const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose }) => {
+const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, onScheduleStart }) => {
   const [localConfig, setLocalConfig] = useState<TimerConfig>(config);
   const [hours, setHours] = useState(Math.floor(config.initialTimeInSeconds / 3600));
   const [minutes, setMinutes] = useState(Math.floor((config.initialTimeInSeconds % 3600) / 60));
   const [seconds, setSeconds] = useState(config.initialTimeInSeconds % 60);
+
+  // Scheduled start state
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('');
 
   const handleModeChange = (mode: TimerMode) => {
     setLocalConfig(prev => ({ ...prev, mode }));
@@ -21,6 +26,25 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose }
     const totalSeconds = hours * 3600 + minutes * 60 + seconds;
     onSave({ ...localConfig, initialTimeInSeconds: totalSeconds });
   };
+
+  const handleScheduleStart = () => {
+    if (!scheduleDate || !scheduleTime || !onScheduleStart) return;
+    const scheduledDateTime = new Date(`${scheduleDate}T${scheduleTime}`);
+    const scheduledTimestamp = scheduledDateTime.getTime();
+
+    if (scheduledTimestamp <= Date.now()) {
+      // Time is in the past
+      return;
+    }
+
+    // Save current config first, then schedule
+    const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+    onSave({ ...localConfig, initialTimeInSeconds: totalSeconds });
+    onScheduleStart(scheduledTimestamp);
+  };
+
+  // Get today's date in YYYY-MM-DD format for min attribute
+  const today = new Date().toISOString().split('T')[0];
 
   const addColorAlert = () => {
     const newAlert: ColorAlert = {
@@ -238,6 +262,98 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose }
               <ToggleSwitch checked={localConfig.playAlertSound} onChange={(v) => setLocalConfig(p => ({ ...p, playAlertSound: v }))} label="Toggle alert sounds" />
             </SectionItem>
           </Section>
+
+          {/* Delayed Start */}
+          <Section title="DELAYED START">
+            <SectionItem>
+              <div className="flex flex-col">
+                <span className="text-[15px] font-medium text-zinc-900 dark:text-zinc-100">Start Delay</span>
+                <span className="text-xs text-zinc-400 dark:text-zinc-500">Timer will start after this delay</span>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <input
+                  type="number"
+                  min="0"
+                  max="59"
+                  value={Math.floor((localConfig.delayedStartSeconds || 0) / 60)}
+                  onChange={(e) => {
+                    const mins = Math.min(59, parseInt(e.target.value) || 0);
+                    const secs = (localConfig.delayedStartSeconds || 0) % 60;
+                    setLocalConfig(p => ({ ...p, delayedStartSeconds: mins * 60 + secs }));
+                  }}
+                  aria-label="Delay minutes"
+                  className="w-8 bg-transparent text-right font-mono text-lg font-medium text-zinc-800 dark:text-white focus:text-blue-500 focus:outline-none"
+                />
+                <span className="text-sm text-zinc-400">m</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="59"
+                  value={(localConfig.delayedStartSeconds || 0) % 60}
+                  onChange={(e) => {
+                    const mins = Math.floor((localConfig.delayedStartSeconds || 0) / 60);
+                    const secs = Math.min(59, parseInt(e.target.value) || 0);
+                    setLocalConfig(p => ({ ...p, delayedStartSeconds: mins * 60 + secs }));
+                  }}
+                  aria-label="Delay seconds"
+                  className="w-8 bg-transparent text-right font-mono text-lg font-medium text-zinc-800 dark:text-white focus:text-blue-500 focus:outline-none"
+                />
+                <span className="text-sm text-zinc-400">s</span>
+              </div>
+            </SectionItem>
+            <div className="px-4 pb-3 text-xs text-zinc-400 dark:text-zinc-500">
+              Set to 0:00 to start immediately
+            </div>
+          </Section>
+
+          {/* Scheduled Start */}
+          {onScheduleStart && (
+            <Section title="SCHEDULED START">
+              <SectionItem>
+                <div className="flex flex-col flex-1">
+                  <span className="text-[15px] font-medium text-zinc-900 dark:text-zinc-100 mb-2">Start at specific time</span>
+                  <div className="flex gap-2">
+                    <input
+                      type="date"
+                      value={scheduleDate}
+                      onChange={(e) => setScheduleDate(e.target.value)}
+                      min={today}
+                      aria-label="Schedule date"
+                      className="flex-1 px-3 py-2 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm text-zinc-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                    />
+                    <input
+                      type="time"
+                      value={scheduleTime}
+                      onChange={(e) => setScheduleTime(e.target.value)}
+                      aria-label="Schedule time"
+                      className="px-3 py-2 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm text-zinc-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                    />
+                  </div>
+                </div>
+              </SectionItem>
+              <div className="px-4 pb-3">
+                <button
+                  type="button"
+                  onClick={handleScheduleStart}
+                  disabled={!scheduleDate || !scheduleTime}
+                  className="w-full py-3 rounded-xl bg-pink-500/20 hover:bg-pink-500/30 text-pink-600 dark:text-pink-400 font-bold border border-pink-500/30 hover:border-pink-500/50 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                      <line x1="16" y1="2" x2="16" y2="6" />
+                      <line x1="8" y1="2" x2="8" y2="6" />
+                      <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
+                    <span>Schedule Start</span>
+                  </div>
+                </button>
+                <p className="mt-2 text-xs text-zinc-400 dark:text-zinc-500 text-center">
+                  Timer will automatically start at the scheduled time
+                </p>
+              </div>
+            </Section>
+          )}
 
           {/* Color Alerts - Only for Countdown/Hybrid */}
           {localConfig.mode !== 'countup' && (

@@ -6,6 +6,7 @@ import { audioService } from '../services/audioService';
 // Types
 export type TimerMode = 'countdown' | 'countup' | 'hybrid';
 export type TimerStatus = 'idle' | 'running' | 'paused' | 'completed';
+export type AppMode = 'timer' | 'clock';
 
 export interface ColorAlert {
   id: string;
@@ -24,6 +25,8 @@ export interface TimerConfig {
   showDays: boolean;
   playTickSound: boolean;
   playAlertSound: boolean;
+  delayedStartSeconds: number; // 0 = disabled, >0 = delay before timer starts
+  scheduledStartTime: number | null; // Unix timestamp for scheduled start, null = disabled
 }
 
 const DEFAULT_ALERTS: ColorAlert[] = [
@@ -40,6 +43,8 @@ const DEFAULT_CONFIG: TimerConfig = {
   showDays: false,
   playTickSound: false,
   playAlertSound: true,
+  delayedStartSeconds: 0, // 0 = no delay
+  scheduledStartTime: null, // null = no scheduled start
 };
 
 const STORAGE_KEY = 'chronoflip-config';
@@ -83,6 +88,14 @@ const FlipClockTimer: React.FC = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [resetProgress, setResetProgress] = useState(0);
   const [isBlackout, setIsBlackout] = useState(false);
+  const [isDelayPhase, setIsDelayPhase] = useState(false);
+  const [delayRemaining, setDelayRemaining] = useState(0);
+  const [isScheduledPhase, setIsScheduledPhase] = useState(false);
+  const [timeUntilScheduled, setTimeUntilScheduled] = useState(0);
+
+  // App mode: timer or clock
+  const [appMode, setAppMode] = useState<AppMode>('timer');
+  const [currentTime, setCurrentTime] = useState(() => new Date());
 
   // Refs
   const intervalRef = useRef<number | null>(null);
@@ -136,6 +149,20 @@ const FlipClockTimer: React.FC = () => {
     return () => window.removeEventListener('keydown', exitBlackout);
   }, [isBlackout]);
 
+  // Clock mode: update current time every second
+  useEffect(() => {
+    if (appMode !== 'clock') return;
+
+    const clockInterval = window.setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    // Update immediately
+    setCurrentTime(new Date());
+
+    return () => clearInterval(clockInterval);
+  }, [appMode]);
+
   // Fullscreen toggle
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
@@ -162,25 +189,41 @@ const FlipClockTimer: React.FC = () => {
   }, [config]);
 
   // Calculate display time
-  // When idle, show config.initialTimeInSeconds directly (fixes preset button sync issue)
-  const displayTime = status === 'idle'
-    ? config.initialTimeInSeconds
-    : (config.mode === 'hybrid' && hybridPhase === 'countup'
-        ? elapsedAfterZero
-        : timeInSeconds);
+  // Priority: clock mode > scheduled phase > delay phase > normal display
+  const displayTime = isScheduledPhase
+    ? timeUntilScheduled
+    : (isDelayPhase
+        ? delayRemaining
+        : (status === 'idle'
+            ? config.initialTimeInSeconds
+            : (config.mode === 'hybrid' && hybridPhase === 'countup'
+                ? elapsedAfterZero
+                : timeInSeconds)));
 
-  const days = Math.floor(displayTime / 86400);
-  const hours = Math.floor((displayTime % 86400) / 3600);
-  const minutes = Math.floor((displayTime % 3600) / 60);
-  const seconds = displayTime % 60;
+  // In clock mode, use current time; otherwise use timer display time
+  const days = appMode === 'clock' ? 0 : Math.floor(displayTime / 86400);
+  const hours = appMode === 'clock' ? currentTime.getHours() : Math.floor((displayTime % 86400) / 3600);
+  const minutes = appMode === 'clock' ? currentTime.getMinutes() : Math.floor((displayTime % 3600) / 60);
+  const seconds = appMode === 'clock' ? currentTime.getSeconds() : displayTime % 60;
 
-  // Update browser tab title with timer
+  // Update browser tab title with timer or clock
   useEffect(() => {
     const originalTitle = 'ChronoFlip Premium';
+    const pad = (n: number) => n.toString().padStart(2, '0');
 
-    if (status === 'running' || status === 'paused') {
+    // Clock mode: show current time
+    if (appMode === 'clock') {
+      const timeStr = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+      document.title = `🕐 ${timeStr} - ChronoFlip`;
+    } else if (isScheduledPhase) {
+      // Format time for scheduled countdown
+      let timeStr = `${pad(minutes)}:${pad(seconds)}`;
+      if (hours > 0) {
+        timeStr = `${pad(hours)}:${timeStr}`;
+      }
+      document.title = `📅 Starts in ${timeStr} - ChronoFlip`;
+    } else if (status === 'running' || status === 'paused') {
       // Format time for tab title
-      const pad = (n: number) => n.toString().padStart(2, '0');
       let timeStr = `${pad(minutes)}:${pad(seconds)}`;
       if (config.showHours || hours > 0) {
         timeStr = `${pad(hours)}:${timeStr}`;
@@ -189,7 +232,13 @@ const FlipClockTimer: React.FC = () => {
         timeStr = `${days}d ${timeStr}`;
       }
 
-      const statusIcon = status === 'paused' ? '⏸ ' : '⏱ ';
+      let statusIcon = '⏱ ';
+      if (status === 'paused') {
+        statusIcon = '⏸ ';
+      } else if (isDelayPhase) {
+        statusIcon = '⏳ ';
+        timeStr = `Starting in ${timeStr}`;
+      }
       document.title = `${statusIcon}${timeStr} - ChronoFlip`;
     } else {
       document.title = originalTitle;
@@ -199,7 +248,7 @@ const FlipClockTimer: React.FC = () => {
     return () => {
       document.title = originalTitle;
     };
-  }, [status, days, hours, minutes, seconds, config.showHours, config.showDays]);
+  }, [appMode, status, days, hours, minutes, seconds, config.showHours, config.showDays, isDelayPhase, isScheduledPhase]);
 
   // Check color alerts
   const checkColorAlerts = useCallback((currentTime: number) => {
@@ -297,9 +346,110 @@ const FlipClockTimer: React.FC = () => {
     };
   }, [status, config.mode, config.playAlertSound, hybridPhase, checkColorAlerts]);
 
+  // Delay phase countdown
+  useEffect(() => {
+    if (!isDelayPhase || status !== 'running') return;
+
+    const delayIntervalRef = window.setInterval(() => {
+      const now = Date.now();
+      const elapsedMs = now - startTimeRef.current! - totalPausedMsRef.current;
+      const elapsedSeconds = Math.floor(elapsedMs / 1000);
+      const remaining = Math.max(0, config.delayedStartSeconds - elapsedSeconds);
+
+      setDelayRemaining(remaining);
+
+      if (remaining <= 0) {
+        // Delay complete - start main timer
+        setIsDelayPhase(false);
+        setDelayRemaining(0);
+
+        // Initialize main timer
+        const startTime = config.initialTimeInSeconds;
+        startTimeRef.current = null; // Will be set by main timer effect
+        pausedAtRef.current = null;
+        totalPausedMsRef.current = 0;
+        initialTimeRef.current = startTime;
+        triggeredAlertsRef.current.clear();
+        setHybridPhase('countdown');
+        setElapsedAfterZero(0);
+        setTimeInSeconds(startTime);
+        if (config.mode !== 'countup') {
+          checkColorAlerts(startTime);
+        }
+        audioService.play('alert'); // Signal that main timer is starting
+      }
+    }, 100);
+
+    return () => clearInterval(delayIntervalRef);
+  }, [isDelayPhase, status, config.delayedStartSeconds, config.initialTimeInSeconds, config.mode, checkColorAlerts]);
+
+  // Scheduled start countdown
+  useEffect(() => {
+    if (!isScheduledPhase || !config.scheduledStartTime) return;
+
+    const scheduleIntervalRef = window.setInterval(() => {
+      const now = Date.now();
+      const remaining = Math.max(0, Math.floor((config.scheduledStartTime! - now) / 1000));
+
+      setTimeUntilScheduled(remaining);
+
+      if (remaining <= 0) {
+        // Scheduled time reached - start the timer
+        setIsScheduledPhase(false);
+        setTimeUntilScheduled(0);
+        // Clear the scheduled time from config
+        setConfig(prev => ({ ...prev, scheduledStartTime: null }));
+
+        // Start the timer (handle delay if enabled)
+        if (config.delayedStartSeconds > 0) {
+          setIsDelayPhase(true);
+          setDelayRemaining(config.delayedStartSeconds);
+          startTimeRef.current = Date.now();
+          totalPausedMsRef.current = 0;
+          pausedAtRef.current = null;
+          setStatus('running');
+          requestWakeLock();
+        } else {
+          // Direct start
+          const startTime = config.initialTimeInSeconds;
+          startTimeRef.current = null;
+          pausedAtRef.current = null;
+          totalPausedMsRef.current = 0;
+          initialTimeRef.current = startTime;
+          triggeredAlertsRef.current.clear();
+          setHybridPhase('countdown');
+          setElapsedAfterZero(0);
+          setTimeInSeconds(startTime);
+          if (config.mode !== 'countup') {
+            checkColorAlerts(startTime);
+          }
+          setStatus('running');
+          requestWakeLock();
+        }
+        audioService.play('alert');
+      }
+    }, 1000);
+
+    return () => clearInterval(scheduleIntervalRef);
+  }, [isScheduledPhase, config.scheduledStartTime, config.delayedStartSeconds, config.initialTimeInSeconds, config.mode, checkColorAlerts]);
+
   // Control functions
   const handleStart = () => {
     if (status === 'idle' || status === 'completed') {
+      // Check if delayed start is enabled
+      if (config.delayedStartSeconds > 0) {
+        // Enter delay phase
+        setIsDelayPhase(true);
+        setDelayRemaining(config.delayedStartSeconds);
+        startTimeRef.current = Date.now();
+        totalPausedMsRef.current = 0;
+        pausedAtRef.current = null;
+        audioService.play('start');
+        setStatus('running');
+        requestWakeLock();
+        return;
+      }
+
       // Use config.initialTimeInSeconds as the starting point
       const startTime = config.initialTimeInSeconds;
       // Reset all timing refs for fresh start
@@ -318,6 +468,48 @@ const FlipClockTimer: React.FC = () => {
     audioService.play('start');
     setStatus('running');
     requestWakeLock(); // Prevent screen sleep
+  };
+
+  // Skip delay and start main timer immediately
+  const handleSkipDelay = () => {
+    if (isDelayPhase) {
+      setIsDelayPhase(false);
+      setDelayRemaining(0);
+      // Initialize main timer
+      const startTime = config.initialTimeInSeconds;
+      startTimeRef.current = null;
+      pausedAtRef.current = null;
+      totalPausedMsRef.current = 0;
+      initialTimeRef.current = startTime;
+      triggeredAlertsRef.current.clear();
+      setHybridPhase('countdown');
+      setElapsedAfterZero(0);
+      setTimeInSeconds(startTime);
+      if (config.mode !== 'countup') {
+        checkColorAlerts(startTime);
+      }
+      audioService.play('alert');
+    }
+  };
+
+  // Schedule timer to start at a specific time
+  const handleScheduleStart = (scheduledTime: number) => {
+    if (scheduledTime <= Date.now()) {
+      // Time is in the past, start immediately
+      handleStart();
+      return;
+    }
+    setConfig(prev => ({ ...prev, scheduledStartTime: scheduledTime }));
+    setIsScheduledPhase(true);
+    setTimeUntilScheduled(Math.floor((scheduledTime - Date.now()) / 1000));
+    audioService.play('start');
+  };
+
+  // Cancel scheduled start
+  const handleCancelSchedule = () => {
+    setIsScheduledPhase(false);
+    setTimeUntilScheduled(0);
+    setConfig(prev => ({ ...prev, scheduledStartTime: null }));
   };
 
   const handlePause = () => {
@@ -346,6 +538,10 @@ const FlipClockTimer: React.FC = () => {
     setCurrentColorClass('');
     setHybridPhase('countdown');
     setElapsedAfterZero(0);
+    setIsDelayPhase(false);
+    setDelayRemaining(0);
+    setIsScheduledPhase(false);
+    setTimeUntilScheduled(0);
     triggeredAlertsRef.current.clear();
     // Clear all timestamp refs
     startTimeRef.current = null;
@@ -442,9 +638,15 @@ const FlipClockTimer: React.FC = () => {
           }
           break;
         case 'KeyB':
-          if (!e.metaKey && !e.ctrlKey && status === 'running') {
+          if (!e.metaKey && !e.ctrlKey && appMode === 'timer' && status === 'running') {
             e.preventDefault();
             setIsBlackout(prev => !prev);
+          }
+          break;
+        case 'KeyC':
+          if (!e.metaKey && !e.ctrlKey) {
+            e.preventDefault();
+            setAppMode(prev => prev === 'timer' ? 'clock' : 'timer');
           }
           break;
       }
@@ -452,7 +654,7 @@ const FlipClockTimer: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [status, showSettings, isFullscreen, isBlackout, toggleFullscreen]);
+  }, [appMode, status, showSettings, isFullscreen, isBlackout, toggleFullscreen]);
 
   const handleConfigSave = (newConfig: TimerConfig) => {
     const newTime = newConfig.initialTimeInSeconds;
@@ -507,9 +709,37 @@ const FlipClockTimer: React.FC = () => {
     initialTimeRef.current = seconds;
   };
 
+  // Quick adjust time (+/- seconds)
+  const handleAdjustTime = (deltaSeconds: number) => {
+    const newTime = Math.max(0, Math.min(359999, config.initialTimeInSeconds + deltaSeconds)); // Max 99:59:59
+    const shouldShowHours = newTime >= 3600;
+    setConfig(prev => ({
+      ...prev,
+      initialTimeInSeconds: newTime,
+      showHours: shouldShowHours || prev.showHours
+    }));
+    // Update refs
+    initialTimeRef.current = newTime;
+  };
+
   // Status badge with phase-specific labels
   const getStatusBadge = () => {
     const baseClasses = "px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.15em] border";
+
+    // Handle clock mode
+    if (appMode === 'clock') {
+      return <span className={`${baseClasses} bg-cyan-500/10 border-cyan-500/20 text-cyan-500`}>Live Clock</span>;
+    }
+
+    // Handle scheduled phase
+    if (isScheduledPhase) {
+      return <span className={`${baseClasses} bg-pink-500/10 border-pink-500/20 text-pink-500`}>Scheduled</span>;
+    }
+
+    // Handle delay phase
+    if (isDelayPhase && status === 'running') {
+      return <span className={`${baseClasses} bg-violet-500/10 border-violet-500/20 text-violet-500`}>Starting in...</span>;
+    }
 
     // Handle running state with mode-specific labels
     if (status === 'running') {
@@ -545,6 +775,34 @@ const FlipClockTimer: React.FC = () => {
       <div className="hidden dark:block absolute bottom-10 right-10 w-[500px] h-[500px] bg-blue-500/25 rounded-full blur-[150px]"></div>
       <div className="hidden dark:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/15 rounded-full blur-[180px]"></div>
 
+      {/* App Mode Toggle - Top Left Corner */}
+      <button
+        type="button"
+        onClick={() => setAppMode(prev => prev === 'timer' ? 'clock' : 'timer')}
+        title={appMode === 'timer' ? 'Switch to Clock Mode' : 'Switch to Timer Mode'}
+        aria-label={appMode === 'timer' ? 'Switch to live clock display' : 'Switch to timer mode'}
+        className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20 flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-white/20 dark:bg-white/5 backdrop-blur-xl border border-white/30 dark:border-white/10 text-zinc-600 dark:text-zinc-300 hover:bg-white/30 dark:hover:bg-white/10 hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg"
+      >
+        {appMode === 'timer' ? (
+          <>
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12,6 12,12 16,14" />
+            </svg>
+            <span className="text-xs sm:text-sm font-semibold tracking-wide">Clock</span>
+          </>
+        ) : (
+          <>
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 3h14M5 21h14" />
+              <path d="M7 3v4a5 5 0 0 0 5 5 5 5 0 0 0 5-5V3" />
+              <path d="M7 21v-4a5 5 0 0 1 5-5 5 5 0 0 1 5 5v4" />
+            </svg>
+            <span className="text-xs sm:text-sm font-semibold tracking-wide">Timer</span>
+          </>
+        )}
+      </button>
+
       {/* Main Glass Container */}
       <div className="relative z-10 flex flex-col items-center">
 
@@ -572,14 +830,14 @@ const FlipClockTimer: React.FC = () => {
             hours={hours}
             minutes={minutes}
             seconds={seconds}
-            showHours={config.showHours}
-            showDays={config.showDays}
-            colorClass={currentColorClass}
-            isRunning={status === 'running'}
+            showHours={appMode === 'clock' ? true : config.showHours}
+            showDays={appMode === 'clock' ? false : config.showDays}
+            colorClass={appMode === 'clock' ? '' : currentColorClass}
+            isRunning={appMode === 'clock' || status === 'running'}
           />
 
-          {/* Inline Preset Quick Actions (Only when Idle) */}
-          {status === 'idle' && config.mode !== 'countup' && (
+          {/* Inline Preset Quick Actions (Only when Idle, Timer mode) */}
+          {appMode === 'timer' && status === 'idle' && config.mode !== 'countup' && (
             <div className="flex flex-wrap justify-center gap-2 mt-10 opacity-70 hover:opacity-100 transition-opacity">
               {presets.map(preset => (
                 <button
@@ -599,11 +857,53 @@ const FlipClockTimer: React.FC = () => {
               ))}
             </div>
           )}
+
+          {/* Quick Adjust Buttons (Only when Idle, Timer mode, not countup) */}
+          {appMode === 'timer' && status === 'idle' && config.mode !== 'countup' && (
+            <div className="flex justify-center items-center gap-1 mt-4 opacity-60 hover:opacity-100 transition-opacity">
+              <button
+                type="button"
+                onClick={() => handleAdjustTime(-60)}
+                disabled={config.initialTimeInSeconds < 60}
+                className="px-2.5 py-1 rounded-lg text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                title="Subtract 1 minute"
+              >
+                -1m
+              </button>
+              <button
+                type="button"
+                onClick={() => handleAdjustTime(-10)}
+                disabled={config.initialTimeInSeconds < 10}
+                className="px-2.5 py-1 rounded-lg text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                title="Subtract 10 seconds"
+              >
+                -10s
+              </button>
+              <span className="px-2 text-zinc-300 dark:text-zinc-600">|</span>
+              <button
+                type="button"
+                onClick={() => handleAdjustTime(10)}
+                className="px-2.5 py-1 rounded-lg text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50 transition-all"
+                title="Add 10 seconds"
+              >
+                +10s
+              </button>
+              <button
+                type="button"
+                onClick={() => handleAdjustTime(60)}
+                className="px-2.5 py-1 rounded-lg text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50 transition-all"
+                title="Add 1 minute"
+              >
+                +1m
+              </button>
+            </div>
+          )}
         </div>
 
         {/* CONTROLS */}
         <div className="mt-12 flex flex-wrap gap-4 sm:gap-6 justify-center items-center w-full">
-          {status === 'idle' && (
+          {/* Timer-specific controls - hidden in clock mode */}
+          {appMode === 'timer' && status === 'idle' && (
             <button
               type="button"
               onClick={handleStart}
@@ -616,7 +916,7 @@ const FlipClockTimer: React.FC = () => {
             </button>
           )}
 
-          {status === 'running' && (
+          {appMode === 'timer' && status === 'running' && !isDelayPhase && (
             <button
               type="button"
               onClick={handlePause}
@@ -629,7 +929,21 @@ const FlipClockTimer: React.FC = () => {
             </button>
           )}
 
-          {status === 'paused' && (
+          {/* Skip delay button - shown during delay phase */}
+          {appMode === 'timer' && status === 'running' && isDelayPhase && (
+            <button
+              type="button"
+              onClick={handleSkipDelay}
+              className="group relative px-10 py-5 rounded-2xl bg-violet-500/20 hover:bg-violet-500/30 text-violet-600 dark:text-violet-400 font-bold border border-violet-500/30 hover:border-violet-500/50 shadow-[0_0_20px_rgba(139,92,246,0.15)] hover:shadow-[0_0_30px_rgba(139,92,246,0.3)] backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300"
+            >
+              <div className="flex items-center gap-3">
+                <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                <span className="tracking-widest">SKIP</span>
+              </div>
+            </button>
+          )}
+
+          {appMode === 'timer' && status === 'paused' && (
             <button
               type="button"
               onClick={handleResume}
@@ -642,7 +956,7 @@ const FlipClockTimer: React.FC = () => {
             </button>
           )}
 
-          {(status !== 'idle') && (
+          {appMode === 'timer' && (status !== 'idle') && (
             <button
               type="button"
               onMouseDown={handleResetMouseDown}
@@ -667,15 +981,18 @@ const FlipClockTimer: React.FC = () => {
             </button>
           )}
 
-          <button
-            type="button"
-            onClick={() => setShowSettings(true)}
-            title="Settings (S)"
-            aria-label="Open Settings"
-            className="px-6 py-5 rounded-2xl bg-white/10 dark:bg-black/20 text-gray-600 dark:text-white font-bold border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/5 hover:scale-105 active:scale-95 transition-all duration-300 backdrop-blur-md"
-          >
-            <svg className="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>
-          </button>
+          {/* Settings button - only in timer mode */}
+          {appMode === 'timer' && (
+            <button
+              type="button"
+              onClick={() => setShowSettings(true)}
+              title="Settings (S)"
+              aria-label="Open Settings"
+              className="px-6 py-5 rounded-2xl bg-white/10 dark:bg-black/20 text-gray-600 dark:text-white font-bold border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/5 hover:scale-105 active:scale-95 transition-all duration-300 backdrop-blur-md"
+            >
+              <svg className="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>
+            </button>
+          )}
 
           <button
             type="button"
@@ -691,8 +1008,8 @@ const FlipClockTimer: React.FC = () => {
             )}
           </button>
 
-          {/* Blackout button - only when running */}
-          {status === 'running' && (
+          {/* Blackout button - only when timer is running */}
+          {appMode === 'timer' && status === 'running' && (
             <button
               type="button"
               onClick={() => setIsBlackout(true)}
@@ -704,6 +1021,24 @@ const FlipClockTimer: React.FC = () => {
                 <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
                 <line x1="1" y1="1" x2="23" y2="23" />
               </svg>
+            </button>
+          )}
+
+          {/* Cancel Schedule button - shown during scheduled phase */}
+          {appMode === 'timer' && isScheduledPhase && (
+            <button
+              type="button"
+              onClick={handleCancelSchedule}
+              className="group relative px-10 py-5 rounded-2xl bg-pink-500/20 hover:bg-pink-500/30 text-pink-600 dark:text-pink-400 font-bold border border-pink-500/30 hover:border-pink-500/50 shadow-[0_0_20px_rgba(236,72,153,0.15)] hover:shadow-[0_0_30px_rgba(236,72,153,0.3)] backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300"
+            >
+              <div className="flex items-center gap-3">
+                <svg className="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="15" y1="9" x2="9" y2="15" />
+                  <line x1="9" y1="9" x2="15" y2="15" />
+                </svg>
+                <span className="tracking-widest">CANCEL</span>
+              </div>
             </button>
           )}
         </div>
@@ -727,6 +1062,10 @@ const FlipClockTimer: React.FC = () => {
           config={config}
           onSave={handleConfigSave}
           onClose={() => setShowSettings(false)}
+          onScheduleStart={(scheduledTime) => {
+            setShowSettings(false);
+            handleScheduleStart(scheduledTime);
+          }}
         />
       )}
     </div>

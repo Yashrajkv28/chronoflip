@@ -11,17 +11,63 @@ export type SoundType = 'tick' | 'alert' | 'warning' | 'finish' | 'start' | 'pau
 export interface AudioServiceConfig {
   volume: number; // 0 to 1
   enabled: boolean;
-  // Future: customSounds: Record<SoundType, string | null>; // URLs to custom audio files
+  vibrationEnabled: boolean;
 }
+
+// Vibration patterns (in milliseconds) for different sound types
+const VIBRATION_PATTERNS: Record<SoundType, number[]> = {
+  tick: [10],                         // Short pulse
+  alert: [100, 50, 100],              // Double pulse
+  warning: [150, 75, 150, 75, 150],   // Triple urgent pulse
+  finish: [300, 100, 300, 100, 500],  // Long completion pattern
+  start: [50, 30, 80],                // Rising pattern
+  pause: [80, 30, 50],                // Descending pattern
+};
 
 class AudioService {
   private context: AudioContext | null = null;
   private volume: number = 0.5;
   private enabled: boolean = true;
+  private vibrationEnabled: boolean = true;
   private customAudioCache: Map<string, AudioBuffer> = new Map();
 
   constructor() {
     // AudioContext is created lazily on first use (browser autoplay policy)
+  }
+
+  /**
+   * Check if vibration API is supported
+   */
+  isVibrationSupported(): boolean {
+    return 'vibrate' in navigator;
+  }
+
+  /**
+   * Enable or disable vibration
+   */
+  setVibrationEnabled(enabled: boolean): void {
+    this.vibrationEnabled = enabled;
+  }
+
+  /**
+   * Check if vibration is enabled
+   */
+  isVibrationEnabled(): boolean {
+    return this.vibrationEnabled && this.isVibrationSupported();
+  }
+
+  /**
+   * Trigger vibration pattern for a sound type
+   */
+  vibrate(type: SoundType): void {
+    if (!this.vibrationEnabled || !this.isVibrationSupported()) return;
+
+    try {
+      const pattern = VIBRATION_PATTERNS[type];
+      navigator.vibrate(pattern);
+    } catch (e) {
+      // Vibration may fail silently on some devices
+    }
   }
 
   /**
@@ -69,9 +115,14 @@ class AudioService {
   }
 
   /**
-   * Play a sound by type
+   * Play a sound by type (with optional vibration)
    */
-  async play(type: SoundType): Promise<void> {
+  async play(type: SoundType, includeVibration: boolean = true): Promise<void> {
+    // Trigger vibration (works even if audio is disabled)
+    if (includeVibration) {
+      this.vibrate(type);
+    }
+
     if (!this.enabled || this.volume === 0) return;
 
     try {
