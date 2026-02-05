@@ -55,6 +55,3 @@ npm run build
 
 Quick-select timers: 5m, 10m, 15m, 20m, 30m, 45m, 60m
 
-## License
-
-MIT
