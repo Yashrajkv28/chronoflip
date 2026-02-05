@@ -35,7 +35,12 @@ const FlipDigit: React.FC<FlipDigitProps> = ({ value, label, colorClass = '' }) 
         setIsFlipping(false);
       }, 600);
 
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        // When interrupted by rapid changes, update ref to the value we were
+        // animating TO, so the next animation starts from the correct position
+        prevValueRef.current = value;
+      };
     }
   }, [value]); 
 

@@ -174,6 +174,33 @@ const FlipClockTimer: React.FC = () => {
   const minutes = Math.floor((displayTime % 3600) / 60);
   const seconds = displayTime % 60;
 
+  // Update browser tab title with timer
+  useEffect(() => {
+    const originalTitle = 'ChronoFlip Premium';
+
+    if (status === 'running' || status === 'paused') {
+      // Format time for tab title
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      let timeStr = `${pad(minutes)}:${pad(seconds)}`;
+      if (config.showHours || hours > 0) {
+        timeStr = `${pad(hours)}:${timeStr}`;
+      }
+      if (config.showDays || days > 0) {
+        timeStr = `${days}d ${timeStr}`;
+      }
+
+      const statusIcon = status === 'paused' ? '⏸ ' : '⏱ ';
+      document.title = `${statusIcon}${timeStr} - ChronoFlip`;
+    } else {
+      document.title = originalTitle;
+    }
+
+    // Cleanup: restore original title when component unmounts
+    return () => {
+      document.title = originalTitle;
+    };
+  }, [status, days, hours, minutes, seconds, config.showHours, config.showDays]);
+
   // Check color alerts
   const checkColorAlerts = useCallback((currentTime: number) => {
     const sortedAlerts = [...config.colorAlerts].sort((a, b) => b.timeInSeconds - a.timeInSeconds);
@@ -513,13 +540,14 @@ const FlipClockTimer: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
       
-      {/* Decorative background elements */}
-      <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500/20 rounded-full blur-[100px] animate-blob"></div>
-      <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-500/20 rounded-full blur-[100px] animate-blob animation-delay-2000"></div>
+      {/* Decorative background elements - dark mode only */}
+      <div className="hidden dark:block absolute top-10 left-10 w-96 h-96 bg-purple-500/30 rounded-full blur-[120px]"></div>
+      <div className="hidden dark:block absolute bottom-10 right-10 w-[500px] h-[500px] bg-blue-500/25 rounded-full blur-[150px]"></div>
+      <div className="hidden dark:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/15 rounded-full blur-[180px]"></div>
 
       {/* Main Glass Container */}
-      <div className="relative z-10 w-full max-w-5xl flex flex-col items-center">
-        
+      <div className="relative z-10 flex flex-col items-center">
+
         {/* Header Badges */}
         <div className="flex gap-4 mb-8 sm:mb-12 animate-[fadeIn_0.5s_ease-out]">
           {/* Removed getModeBadge() */}
@@ -528,7 +556,7 @@ const FlipClockTimer: React.FC = () => {
 
         {/* CLOCK DISPLAY CONTAINER - Glassmorphism */}
         <div className={`
-          relative w-full
+          relative
           p-8 sm:p-12 md:p-16
           rounded-[2.5rem]
           bg-white/30 dark:bg-white/5
