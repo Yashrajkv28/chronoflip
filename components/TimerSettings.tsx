@@ -633,9 +633,22 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
                 </div>
               ))}
             </div>
-            <p className="px-4 mt-2 text-[10px] text-zinc-400 dark:text-zinc-500">
-              Customize the gradient orbs visible in dark mode
-            </p>
+            <div className="flex items-center justify-between px-4 mt-2">
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                Customize the gradient orbs visible in dark mode
+              </p>
+              <button
+                type="button"
+                onClick={() => setLocalConfig(prev => ({
+                  ...prev,
+                  orbColors: ['#A855F7', '#3B82F6', '#6366F1'],
+                  orbOpacities: [30, 25, 25],
+                }))}
+                className="text-[10px] font-bold text-blue-500 hover:text-blue-400 transition-colors uppercase"
+              >
+                Reset
+              </button>
+            </div>
           </div>
 
         </div>
