@@ -6,9 +6,10 @@ interface TimerSettingsProps {
   onSave: (config: TimerConfig) => void;
   onClose: () => void;
   onScheduleStart?: (scheduledTime: number) => void;
+  clockModeOnly?: boolean; // When true, only show dark mode background settings
 }
 
-const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, onScheduleStart }) => {
+const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, onScheduleStart, clockModeOnly = false }) => {
   const [localConfig, setLocalConfig] = useState<TimerConfig>(config);
   const [hours, setHours] = useState(Math.floor(config.initialTimeInSeconds / 3600));
   const [minutes, setMinutes] = useState(Math.floor((config.initialTimeInSeconds % 3600) / 60));
@@ -189,7 +190,7 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
           >
             Cancel
           </button>
-          <span className="text-zinc-900 dark:text-white font-semibold text-[17px]">Timer</span>
+          <span className="text-zinc-900 dark:text-white font-semibold text-[17px]">{clockModeOnly ? 'Appearance' : 'Timer'}</span>
           <button
             type="button"
             onClick={handleSave}
@@ -201,7 +202,8 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 scrollbar-hide">
-          
+
+          {!clockModeOnly && (<>
           {/* Mode Selector */}
           <div className="mb-8">
             <SegmentedControl
@@ -483,7 +485,7 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
                     No visual alerts set.
                   </div>
                 )}
-                
+
                 {localConfig.colorAlerts.map((alert, idx) => (
                   <div key={alert.id} className={`p-4 ${idx !== localConfig.colorAlerts.length - 1 ? 'border-b border-zinc-200/50 dark:border-white/5' : ''}`}>
                     <div className="flex items-center gap-3 mb-3">
@@ -580,6 +582,7 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
               </div>
             </div>
           )}
+          </>)}
 
           {/* Dark Mode Background Orbs */}
           <div className="mb-8">
