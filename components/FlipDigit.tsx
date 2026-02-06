@@ -153,4 +153,4 @@ const FlipDigit: React.FC<FlipDigitProps> = ({ value, label, colorClass = '' }) 
   );
 };
 
-export default FlipDigit;
+export default React.memo(FlipDigit);

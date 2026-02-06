@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import FlipClockTimer from './components/FlipClockTimer';
+import HelpModal from './components/HelpModal';
 
 const App: React.FC = () => {
-  const [darkMode, setDarkMode] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    const saved = localStorage.getItem('chronoflip-darkmode');
+    if (saved !== null) return saved === 'true';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
 
   useEffect(() => {
-    // Check system preference
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setDarkMode(true);
-    }
-  }, []);
-
-  useEffect(() => {
+    localStorage.setItem('chronoflip-darkmode', String(darkMode));
     const body = document.body;
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -45,7 +45,27 @@ const App: React.FC = () => {
         )}
       </button>
 
+      {/* Help Button */}
+      <button
+        type="button"
+        onClick={() => setShowHelp(true)}
+        title="Help & Keyboard Shortcuts"
+        aria-label="Open help and keyboard shortcuts"
+        className="fixed bottom-6 left-6 z-50 p-3 rounded-full
+                   bg-white/20 dark:bg-black/20 backdrop-blur-md
+                   border border-white/20 dark:border-white/10
+                   shadow-lg hover:scale-110 transition-all duration-200"
+      >
+        <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" strokeLinecap="round" strokeLinejoin="round" />
+          <line x1="12" y1="17" x2="12.01" y2="17" strokeLinecap="round" />
+        </svg>
+      </button>
+
       <FlipClockTimer />
+
+      {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
     </div>
   );
 };

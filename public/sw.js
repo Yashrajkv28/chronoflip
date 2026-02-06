@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chronoflip-v2';
+const CACHE_NAME = 'chronoflip-v3';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -26,7 +26,8 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - stale-while-revalidate
+// Serve from cache immediately, update cache in background
 self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (event.request.method !== 'GET') return;
@@ -35,26 +36,19 @@ self.addEventListener('fetch', (event) => {
   if (!event.request.url.startsWith(self.location.origin)) return;
 
   event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Return cached version or fetch from network
-        if (response) {
-          return response;
-        }
-
-        return fetch(event.request).then((response) => {
-          // Don't cache non-successful responses
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-
-          // Clone and cache the response
+    caches.match(event.request).then((cached) => {
+      const fetchPromise = fetch(event.request).then((response) => {
+        // Cache successful same-origin responses
+        if (response && response.status === 200 && response.type === 'basic') {
           const responseToCache = response.clone();
           caches.open(CACHE_NAME)
             .then((cache) => cache.put(event.request, responseToCache));
+        }
+        return response;
+      }).catch(() => cached);
 
-          return response;
-        });
-      })
+      // Return cached immediately if available, otherwise wait for network
+      return cached || fetchPromise;
+    })
   );
 });

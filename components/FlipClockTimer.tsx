@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import FlipClockDisplay from './FlipClockDisplay';
 import TimerSettings from './TimerSettings';
 import { audioService } from '../services/audioService';
@@ -252,17 +252,22 @@ const FlipClockTimer: React.FC = () => {
     };
   }, [appMode, status, days, hours, minutes, seconds, config.showHours, config.showDays, isDelayPhase, isScheduledPhase]);
 
+  // Memoize sorted alerts to avoid re-sorting on every tick (every 100ms)
+  const sortedAlerts = useMemo(
+    () => [...config.colorAlerts].sort((a, b) => a.timeInSeconds - b.timeInSeconds),
+    [config.colorAlerts]
+  );
+
   // Check color alerts
   // Sort ASCENDING so we find the smallest threshold that matches current time
   const checkColorAlerts = useCallback((currentTime: number) => {
-    const sortedAlerts = [...config.colorAlerts].sort((a, b) => a.timeInSeconds - b.timeInSeconds);
 
     for (const alert of sortedAlerts) {
       if (currentTime <= alert.timeInSeconds) {
         setCurrentColorClass(alert.colorClass);
 
-        // Trigger alert once when we exactly hit the threshold
-        if (!triggeredAlertsRef.current.has(alert.id) && currentTime === alert.timeInSeconds) {
+        // Trigger alert once when we reach or pass below the threshold
+        if (!triggeredAlertsRef.current.has(alert.id)) {
           triggeredAlertsRef.current.add(alert.id);
 
           if (alert.flash) {
@@ -278,7 +283,7 @@ const FlipClockTimer: React.FC = () => {
         break;
       }
     }
-  }, [config.colorAlerts, config.playAlertSound]);
+  }, [sortedAlerts, config.playAlertSound]);
 
   // Timer tick - TIMESTAMP-BASED for accuracy (immune to browser throttling)
   useEffect(() => {
@@ -302,8 +307,8 @@ const FlipClockTimer: React.FC = () => {
       const elapsedMs = now - startTimeRef.current! - totalPausedMsRef.current;
       const elapsedSeconds = Math.floor(elapsedMs / 1000);
 
-      // Play tick sound when a new second starts
-      if (config.playTickSound && lastTickSecondRef.current !== elapsedSeconds) {
+      // Play tick sound when a new second starts (not during delay/scheduled phases)
+      if (config.playTickSound && !isDelayPhase && !isScheduledPhase && lastTickSecondRef.current !== elapsedSeconds) {
         lastTickSecondRef.current = elapsedSeconds;
         audioService.play('tick');
       }
@@ -325,7 +330,9 @@ const FlipClockTimer: React.FC = () => {
             totalPausedMsRef.current = 0;
             if (config.playAlertSound) {
               audioService.vibrate('finish');
-              audioService.playCustom('/sounds/my-alarm.mp3');
+              audioService.playCustom('/sounds/my-alarm.mp3').catch(() => {
+                audioService.play('finish');
+              });
             }
             setTimeInSeconds(0);
           } else {
@@ -334,7 +341,9 @@ const FlipClockTimer: React.FC = () => {
             releaseWakeLock(); // Allow screen to sleep
             if (config.playAlertSound) {
               audioService.vibrate('finish');
-              audioService.playCustom('/sounds/my-alarm.mp3');
+              audioService.playCustom('/sounds/my-alarm.mp3').catch(() => {
+                audioService.play('finish');
+              });
             }
             setTimeInSeconds(0);
           }
@@ -355,7 +364,7 @@ const FlipClockTimer: React.FC = () => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [status, config.mode, config.playAlertSound, hybridPhase, checkColorAlerts]);
+  }, [status, config.mode, config.playAlertSound, config.playTickSound, hybridPhase, isDelayPhase, isScheduledPhase, checkColorAlerts]);
 
   // Delay phase countdown
   useEffect(() => {
@@ -539,6 +548,7 @@ const FlipClockTimer: React.FC = () => {
     }
     audioService.play('start');
     setStatus('running');
+    requestWakeLock();
   };
 
   // handleReset now accepts optional parameter to fix stale closure bug
@@ -638,7 +648,7 @@ const FlipClockTimer: React.FC = () => {
           }
           break;
         case 'KeyS':
-          if (!e.metaKey && !e.ctrlKey) {
+          if (!e.metaKey && !e.ctrlKey && appMode === 'timer') {
             e.preventDefault();
             setShowSettings(prev => !prev);
           }

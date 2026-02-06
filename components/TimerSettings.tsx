@@ -48,7 +48,7 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
 
   const addColorAlert = () => {
     const newAlert: ColorAlert = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       timeInSeconds: 60,
       colorClass: 'text-yellow-500',
       flash: false,

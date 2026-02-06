@@ -88,4 +88,4 @@ const FlipClockDisplay: React.FC<FlipClockDisplayProps> = ({
   );
 };
 
-export default FlipClockDisplay;
+export default React.memo(FlipClockDisplay);

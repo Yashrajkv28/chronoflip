@@ -31,6 +31,7 @@ class AudioService {
   private vibrationEnabled: boolean = true;
   private customAudioCache: Map<string, AudioBuffer> = new Map();
   private currentAudio: HTMLAudioElement | null = null;
+  private tickAudio: HTMLAudioElement | null = null;
 
   constructor() {
     // AudioContext is created lazily on first use (browser autoplay policy)
@@ -44,6 +45,10 @@ class AudioService {
       this.currentAudio.pause();
       this.currentAudio.currentTime = 0;
       this.currentAudio = null;
+    }
+    if (this.tickAudio) {
+      this.tickAudio.pause();
+      this.tickAudio.currentTime = 0;
     }
     // Also stop vibration
     if (this.isVibrationSupported()) {
@@ -172,20 +177,41 @@ class AudioService {
   /**
    * Tick sound - plays custom tick.mp3 (first 200ms only)
    */
-  private async playTick(_ctx: AudioContext): Promise<void> {
+  private async playTick(ctx: AudioContext): Promise<void> {
     try {
-      const audio = new Audio('/sounds/tick.mp3');
-      audio.volume = this.volume;
-      audio.currentTime = 0;
-      await audio.play();
+      // Create the tick audio element once and reuse it
+      if (!this.tickAudio) {
+        this.tickAudio = new Audio('/sounds/tick.mp3');
+      }
+
+      this.tickAudio.currentTime = 0;
+      this.tickAudio.volume = this.volume;
+      await this.tickAudio.play();
 
       // Stop after 200ms (extract just the first tick from the file)
       setTimeout(() => {
-        audio.pause();
-        audio.currentTime = 0;
+        if (this.tickAudio) {
+          this.tickAudio.pause();
+          this.tickAudio.currentTime = 0;
+        }
       }, 200);
     } catch (e) {
-      console.warn('Custom tick sound failed:', e);
+      // Fallback to synthesized tick sound
+      console.warn('Custom tick sound failed, using synthesized sound:', e);
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.value = 800;
+
+      gain.gain.setValueAtTime(this.volume * 0.2, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 0.05);
     }
   }
 
@@ -314,8 +340,11 @@ class AudioService {
   async playCustom(url: string): Promise<void> {
     if (!this.enabled || this.volume === 0) return;
 
-    // Stop any currently playing audio first
-    this.stop();
+    // Stop any currently playing custom audio first
+    if (this.currentAudio) {
+      this.currentAudio.pause();
+      this.currentAudio = null;
+    }
 
     // Use HTML5 Audio for simpler, more reliable playback
     try {
