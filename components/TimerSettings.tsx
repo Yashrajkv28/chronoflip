@@ -63,6 +63,7 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
       timeInSeconds: 60,
       color: '#EAB308',
       flash: false,
+      background: false,
       sound: true,
       label: 'New Alert',
     };
@@ -521,8 +522,8 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
                       </button>
                     </div>
 
+                    {/* Color Swatches + Custom Picker + Sound pill */}
                     <div className="flex items-center justify-between">
-                      {/* Color Swatches + Custom Picker */}
                       <div className="flex gap-2 items-center" aria-label="Alert color selection">
                         {colorOptions.map((c) => {
                           const isSelected = alert.color === c.value;
@@ -557,24 +558,25 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
                         </label>
                       </div>
 
-                      {/* Options */}
-                      <div className="flex gap-3">
-                        <button
-                          type="button"
-                          onClick={() => updateColorAlert(alert.id, { flash: !alert.flash })}
-                          title={alert.flash ? 'Flash enabled' : 'Flash disabled'}
-                          className={`text-[10px] font-bold px-2 py-1 rounded border transition-colors ${alert.flash ? 'bg-zinc-800 text-white dark:bg-white dark:text-black border-transparent' : 'border-zinc-300 dark:border-zinc-700 text-zinc-400'}`}
-                        >
-                          FLASH
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => updateColorAlert(alert.id, { sound: !alert.sound })}
-                          title={alert.sound ? 'Sound enabled' : 'Sound disabled'}
-                          className={`text-[10px] font-bold px-2 py-1 rounded border transition-colors ${alert.sound ? 'bg-zinc-800 text-white dark:bg-white dark:text-black border-transparent' : 'border-zinc-300 dark:border-zinc-700 text-zinc-400'}`}
-                        >
-                          SOUND
-                        </button>
+                      <button
+                        type="button"
+                        onClick={() => updateColorAlert(alert.id, { sound: !alert.sound })}
+                        title={alert.sound ? 'Sound enabled' : 'Sound disabled'}
+                        className={`text-[10px] font-bold px-2 py-1 rounded border transition-colors ${alert.sound ? 'bg-zinc-800 text-white dark:bg-white dark:text-black border-transparent' : 'border-zinc-300 dark:border-zinc-700 text-zinc-400'}`}
+                      >
+                        SOUND
+                      </button>
+                    </div>
+
+                    {/* Flash & Background toggles */}
+                    <div className="flex items-center gap-5 mt-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Flash</span>
+                        <ToggleSwitch checked={alert.flash} onChange={(v) => updateColorAlert(alert.id, { flash: v })} label="Toggle flash" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Background</span>
+                        <ToggleSwitch checked={alert.background} onChange={(v) => updateColorAlert(alert.id, { background: v })} label="Toggle persistent background" />
                       </div>
                     </div>
                   </div>

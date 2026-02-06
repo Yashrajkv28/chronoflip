@@ -13,6 +13,7 @@ export interface ColorAlert {
   timeInSeconds: number;
   color: string;
   flash: boolean;
+  background: boolean; // Persist body background color until next alert or reset
   sound: boolean;
   label: string;
 }
@@ -34,9 +35,9 @@ export interface TimerConfig {
 }
 
 const DEFAULT_ALERTS: ColorAlert[] = [
-  { id: '1', timeInSeconds: 300, color: '#EAB308', flash: false, sound: true, label: '5 minutes' },
-  { id: '2', timeInSeconds: 60, color: '#F97316', flash: true, sound: true, label: '1 minute' },
-  { id: '3', timeInSeconds: 10, color: '#EF4444', flash: true, sound: true, label: '10 seconds' },
+  { id: '1', timeInSeconds: 300, color: '#EAB308', flash: false, background: false, sound: true, label: '5 minutes' },
+  { id: '2', timeInSeconds: 60, color: '#F97316', flash: true, background: false, sound: true, label: '1 minute' },
+  { id: '3', timeInSeconds: 10, color: '#EF4444', flash: true, background: false, sound: true, label: '10 seconds' },
 ];
 
 const DEFAULT_CONFIG: TimerConfig = {
@@ -68,6 +69,7 @@ const migrateAlertColors = (alerts: any[]): ColorAlert[] =>
   alerts.map(a => ({
     ...a,
     color: a.colorClass ? (TAILWIND_TO_HEX[a.colorClass] || '#EAB308') : (a.color || '#EAB308'),
+    background: a.background ?? false,
   }));
 
 // Load config from localStorage with validation
@@ -281,21 +283,22 @@ const FlipClockTimer: React.FC = () => {
   );
 
   // Full-screen flash: 3 strong flashes behind everything via body background
-  const triggerFullScreenFlash = useCallback((color: string) => {
+  // persistColor: if provided, body stays this color after flash ends instead of clearing
+  const triggerFullScreenFlash = useCallback((color: string, persistColor?: string) => {
     const body = document.body;
     let count = 0;
     const flash = () => {
       if (count >= 6) {
-        body.style.backgroundColor = '';
-        body.style.backgroundImage = '';
+        body.style.backgroundColor = persistColor || '';
+        body.style.backgroundImage = persistColor ? 'none' : '';
         return;
       }
       if (count % 2 === 0) {
         body.style.backgroundColor = color;
         body.style.backgroundImage = 'none';
       } else {
-        body.style.backgroundColor = '';
-        body.style.backgroundImage = '';
+        body.style.backgroundColor = persistColor || '';
+        body.style.backgroundImage = persistColor ? 'none' : '';
       }
       count++;
       setTimeout(flash, 250);
@@ -315,8 +318,15 @@ const FlipClockTimer: React.FC = () => {
         if (!triggeredAlertsRef.current.has(alert.id)) {
           triggeredAlertsRef.current.add(alert.id);
 
-          if (alert.flash) {
+          if (alert.flash && alert.background) {
+            // Flash then persist background color
+            triggerFullScreenFlash(alert.color, alert.color);
+          } else if (alert.flash) {
             triggerFullScreenFlash(alert.color);
+          } else if (alert.background) {
+            // Persistent background color immediately
+            document.body.style.backgroundColor = alert.color;
+            document.body.style.backgroundImage = 'none';
           }
 
           if (alert.sound && config.playAlertSound) {
@@ -653,6 +663,9 @@ const FlipClockTimer: React.FC = () => {
     totalPausedMsRef.current = 0;
     initialTimeRef.current = initialTime;
     lastTickSecondRef.current = null;  // Reset tick tracker
+    // Clear persistent background color from alerts
+    document.body.style.backgroundColor = '';
+    document.body.style.backgroundImage = '';
     releaseWakeLock(); // Allow screen to sleep
   };
 
