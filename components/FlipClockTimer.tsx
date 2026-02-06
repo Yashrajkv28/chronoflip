@@ -625,6 +625,7 @@ const FlipClockTimer: React.FC = () => {
 
       switch (e.code) {
         case 'Space':
+          if (appMode !== 'timer') break;
           e.preventDefault();
           if (status === 'idle' || status === 'completed') {
             handleStart();
@@ -635,7 +636,7 @@ const FlipClockTimer: React.FC = () => {
           }
           break;
         case 'KeyR':
-          if (!e.metaKey && !e.ctrlKey && !e.repeat) {
+          if (!e.metaKey && !e.ctrlKey && !e.repeat && appMode === 'timer') {
             e.preventDefault();
             // If idle or completed, instant reset
             if (status === 'idle' || status === 'completed') {
