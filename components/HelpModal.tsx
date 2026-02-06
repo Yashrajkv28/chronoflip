@@ -82,7 +82,7 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
             />
             <InfoRow
               title="Count Up"
-              description="Counts up from zero indefinitely."
+              description="Counts up from zero. Optionally set a target time in Settings to complete with an alarm."
             />
             <InfoRow
               title="Hybrid"
@@ -167,7 +167,7 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
             />
             <InfoRow
               title="カウントアップ"
-              description="ゼロから無制限にカウントアップします。"
+              description="ゼロからカウントアップします。設定画面で目標時間を設定すると、アラームで完了します。"
             />
             <InfoRow
               title="ハイブリッド"

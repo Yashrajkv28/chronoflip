@@ -29,6 +29,8 @@ export interface TimerConfig {
   scheduledStartTime: number | null; // Unix timestamp for scheduled start, null = disabled
   qaTimeInSeconds: number; // 0 = unlimited countup (default), >0 = Q&A countdown duration
   orbColors: [string, string, string]; // 3 hex colors for dark mode background orbs
+  orbOpacities: [number, number, number]; // 0-100 intensity for each orb
+  countupLimitSeconds: number; // 0 = unlimited stopwatch, >0 = count up to this limit
 }
 
 const DEFAULT_ALERTS: ColorAlert[] = [
@@ -49,6 +51,8 @@ const DEFAULT_CONFIG: TimerConfig = {
   scheduledStartTime: null, // null = no scheduled start
   qaTimeInSeconds: 0, // 0 = unlimited Q&A (counts up)
   orbColors: ['#A855F7', '#3B82F6', '#6366F1'], // purple, blue, indigo
+  orbOpacities: [30, 25, 25], // intensity percentage for each orb
+  countupLimitSeconds: 0, // 0 = unlimited stopwatch
 };
 
 const STORAGE_KEY = 'chronoflip-config';
@@ -215,7 +219,7 @@ const FlipClockTimer: React.FC = () => {
     : (isDelayPhase
         ? delayRemaining
         : (status === 'idle'
-            ? config.initialTimeInSeconds
+            ? (config.mode === 'countup' ? 0 : config.initialTimeInSeconds)
             : (config.mode === 'hybrid' && hybridPhase === 'countup'
                 ? elapsedAfterZero
                 : timeInSeconds)));
@@ -373,6 +377,8 @@ const FlipClockTimer: React.FC = () => {
               audioService.playCustom('/sounds/my-alarm.mp3').catch(() => {
                 audioService.play('finish');
               });
+              // Short alarm for hybrid transition (~4s)
+              setTimeout(() => audioService.stop(), 4000);
             }
             setTimeInSeconds(0);
           } else {
@@ -411,7 +417,25 @@ const FlipClockTimer: React.FC = () => {
             }
           }
         } else {
+          // Standalone countup mode
           setTimeInSeconds(elapsedSeconds);
+
+          if (config.countupLimitSeconds > 0) {
+            const countupRemaining = Math.max(0, config.countupLimitSeconds - elapsedSeconds);
+            checkColorAlerts(countupRemaining);
+
+            if (countupRemaining <= 0) {
+              setTimeInSeconds(config.countupLimitSeconds);
+              setStatus('completed');
+              releaseWakeLock();
+              if (config.playAlertSound) {
+                audioService.vibrate('finish');
+                audioService.playCustom('/sounds/my-alarm.mp3').catch(() => {
+                  audioService.play('finish');
+                });
+              }
+            }
+          }
         }
       }
     }, 100); // 100ms for responsive updates (10 updates/sec)
@@ -421,7 +445,7 @@ const FlipClockTimer: React.FC = () => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [status, config.mode, config.playAlertSound, config.playTickSound, config.qaTimeInSeconds, hybridPhase, isDelayPhase, isScheduledPhase, checkColorAlerts]);
+  }, [status, config.mode, config.playAlertSound, config.playTickSound, config.qaTimeInSeconds, config.countupLimitSeconds, hybridPhase, isDelayPhase, isScheduledPhase, checkColorAlerts]);
 
   // Delay phase countdown
   useEffect(() => {
@@ -874,9 +898,9 @@ const FlipClockTimer: React.FC = () => {
     <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
       
       {/* Decorative background orbs - dark mode only */}
-      <div className="hidden dark:block absolute top-10 left-10 w-96 h-96 rounded-full blur-[120px]" style={{ backgroundColor: config.orbColors[0] + '4D' }}></div>
-      <div className="hidden dark:block absolute bottom-10 right-10 w-[500px] h-[500px] rounded-full blur-[150px]" style={{ backgroundColor: config.orbColors[1] + '40' }}></div>
-      <div className="hidden dark:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[180px]" style={{ backgroundColor: config.orbColors[2] + '26' }}></div>
+      <div className="hidden dark:block absolute top-10 left-10 w-96 h-96 rounded-full blur-[120px]" style={{ backgroundColor: config.orbColors[0], opacity: (config.orbOpacities?.[0] ?? 30) / 100 }}></div>
+      <div className="hidden dark:block absolute bottom-10 right-10 w-[500px] h-[500px] rounded-full blur-[150px]" style={{ backgroundColor: config.orbColors[1], opacity: (config.orbOpacities?.[1] ?? 25) / 100 }}></div>
+      <div className="hidden dark:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[180px]" style={{ backgroundColor: config.orbColors[2], opacity: (config.orbOpacities?.[2] ?? 25) / 100 }}></div>
 
       {/* App Mode Toggle - Top Left Corner */}
       <button
