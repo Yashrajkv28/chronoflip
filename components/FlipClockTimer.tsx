@@ -420,7 +420,7 @@ const FlipClockTimer: React.FC = () => {
           if (config.mode === 'hybrid') {
             // Switch to countup phase
             setHybridPhase('countup');
-            setCurrentAlertColor('#3B82F6');
+            setCurrentAlertColor('');
             triggeredAlertsRef.current.clear();
             // Clear persistent background from countdown alerts
             document.body.style.backgroundColor = '';
@@ -866,6 +866,10 @@ const FlipClockTimer: React.FC = () => {
     pausedAtRef.current = null;
     totalPausedMsRef.current = 0;
     initialTimeRef.current = newTime;
+    // Clear persistent background color from alerts
+    document.body.style.backgroundColor = '';
+    document.body.style.backgroundImage = '';
+    setIsAlertBgActive(false);
   };
 
   const presets = [

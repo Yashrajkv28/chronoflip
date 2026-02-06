@@ -213,6 +213,7 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
                   type="number"
                   value={Math.floor(alert.timeInSeconds / 60)}
                   onChange={(e) => onUpdate(alertKey, alert.id, { timeInSeconds: (parseInt(e.target.value) || 0) * 60 + (alert.timeInSeconds % 60) })}
+                  onWheel={(e) => e.currentTarget.blur()}
                   aria-label="Alert time minutes"
                   className="w-8 bg-transparent text-right font-mono text-lg font-medium focus:text-blue-500 focus:outline-none"
                 />
@@ -221,6 +222,7 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
                   type="number"
                   value={(alert.timeInSeconds % 60).toString().padStart(2, '0')}
                   onChange={(e) => onUpdate(alertKey, alert.id, { timeInSeconds: Math.floor(alert.timeInSeconds / 60) * 60 + (parseInt(e.target.value) || 0) })}
+                  onWheel={(e) => e.currentTarget.blur()}
                   aria-label="Alert time seconds"
                   className="w-8 bg-transparent font-mono text-lg font-medium focus:text-blue-500 focus:outline-none"
                 />
