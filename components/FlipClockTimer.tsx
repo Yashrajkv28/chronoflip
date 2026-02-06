@@ -22,6 +22,7 @@ export interface TimerConfig {
   mode: TimerMode;
   initialTimeInSeconds: number;
   colorAlerts: ColorAlert[];
+  qaColorAlerts: ColorAlert[]; // Separate alerts for Q&A phase (triggered by elapsed time)
   showHours: boolean;
   showDays: boolean;
   playTickSound: boolean;
@@ -44,6 +45,7 @@ const DEFAULT_CONFIG: TimerConfig = {
   mode: 'countdown',
   initialTimeInSeconds: 300, // 5 minutes default
   colorAlerts: DEFAULT_ALERTS,
+  qaColorAlerts: [], // No Q&A alerts by default
   showHours: true,
   showDays: false,
   playTickSound: false,
@@ -82,6 +84,7 @@ const loadConfig = (): TimerConfig => {
       if (parsed.mode && typeof parsed.initialTimeInSeconds === 'number') {
         const merged = { ...DEFAULT_CONFIG, ...parsed };
         merged.colorAlerts = migrateAlertColors(merged.colorAlerts);
+        merged.qaColorAlerts = migrateAlertColors(merged.qaColorAlerts || []);
         return merged;
       }
     }
@@ -283,6 +286,12 @@ const FlipClockTimer: React.FC = () => {
     [config.colorAlerts]
   );
 
+  // Memoize sorted Q&A alerts (descending — highest threshold first for elapsed-time matching)
+  const sortedQaAlerts = useMemo(
+    () => [...(config.qaColorAlerts || [])].sort((a, b) => b.timeInSeconds - a.timeInSeconds),
+    [config.qaColorAlerts]
+  );
+
   // Full-screen flash: 3 strong flashes behind everything via body background
   // persistColor: if provided, body stays this color after flash ends instead of clearing
   const triggerFullScreenFlash = useCallback((color: string, persistColor?: string) => {
@@ -341,6 +350,37 @@ const FlipClockTimer: React.FC = () => {
       }
     }
   }, [sortedAlerts, config.playAlertSound, triggerFullScreenFlash]);
+
+  // Check Q&A color alerts based on elapsed time (ascending thresholds)
+  // Sorted DESCENDING so we find the highest threshold the elapsed time has passed
+  const checkQaColorAlerts = useCallback((elapsedTime: number) => {
+    for (const alert of sortedQaAlerts) {
+      if (elapsedTime >= alert.timeInSeconds) {
+        setCurrentAlertColor(alert.color);
+
+        // Trigger alert once when we reach or pass the threshold
+        if (!triggeredAlertsRef.current.has(alert.id)) {
+          triggeredAlertsRef.current.add(alert.id);
+
+          if (alert.flash && alert.background) {
+            triggerFullScreenFlash(alert.color, alert.color);
+            setIsAlertBgActive(true);
+          } else if (alert.flash) {
+            triggerFullScreenFlash(alert.color);
+          } else if (alert.background) {
+            document.body.style.backgroundColor = alert.color;
+            document.body.style.backgroundImage = 'none';
+            setIsAlertBgActive(true);
+          }
+
+          if (alert.sound && config.playAlertSound) {
+            audioService.play(alert.timeInSeconds <= 10 ? 'warning' : 'alert');
+          }
+        }
+        break;
+      }
+    }
+  }, [sortedQaAlerts, config.playAlertSound, triggerFullScreenFlash]);
 
   // Timer tick - TIMESTAMP-BASED for accuracy (immune to browser throttling)
   useEffect(() => {
@@ -417,10 +457,12 @@ const FlipClockTimer: React.FC = () => {
         if (config.mode === 'hybrid') {
           setElapsedAfterZero(elapsedSeconds);
 
+          // Check Q&A alerts based on elapsed time
+          checkQaColorAlerts(elapsedSeconds);
+
           if (config.qaTimeInSeconds > 0) {
-            // Q&A has fixed duration - check for completion and run alerts
+            // Q&A has fixed duration - check for completion
             const qaRemaining = Math.max(0, config.qaTimeInSeconds - elapsedSeconds);
-            checkColorAlerts(qaRemaining);
 
             if (qaRemaining <= 0) {
               setStatus('completed');
@@ -462,7 +504,7 @@ const FlipClockTimer: React.FC = () => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [status, config.mode, config.playAlertSound, config.playTickSound, config.qaTimeInSeconds, config.countupLimitSeconds, hybridPhase, isDelayPhase, isScheduledPhase, checkColorAlerts]);
+  }, [status, config.mode, config.playAlertSound, config.playTickSound, config.qaTimeInSeconds, config.countupLimitSeconds, hybridPhase, isDelayPhase, isScheduledPhase, checkColorAlerts, checkQaColorAlerts]);
 
   // Delay phase countdown
   useEffect(() => {
