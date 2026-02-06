@@ -530,6 +530,46 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
               </div>
             </div>
           )}
+
+          {/* Dark Mode Background Orbs */}
+          <div className="mb-8">
+            <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+              DARK MODE BACKGROUND
+            </h3>
+            <div className="bg-zinc-50/80 dark:bg-zinc-900/40 backdrop-blur-md border border-zinc-200/50 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
+              {(['Orb 1 — Top Left', 'Orb 2 — Bottom Right', 'Orb 3 — Center'] as const).map((label, i) => (
+                <div key={i} className={`p-4 flex items-center justify-between ${i < 2 ? 'border-b border-zinc-200/50 dark:border-white/5' : ''}`}>
+                  <span className="text-[15px] text-zinc-700 dark:text-zinc-200">{label}</span>
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-8 h-8 rounded-xl border-2 border-zinc-200 dark:border-zinc-600 shadow-sm"
+                      style={{ backgroundColor: localConfig.orbColors[i] }}
+                    />
+                    <label className="relative w-8 h-8 rounded-xl cursor-pointer overflow-hidden ring-1 ring-zinc-300 dark:ring-zinc-600 hover:scale-110 transition-transform"
+                      style={{
+                        background: 'conic-gradient(#ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)',
+                      }}
+                    >
+                      <input
+                        type="color"
+                        value={localConfig.orbColors[i]}
+                        onChange={(e) => {
+                          const newOrbs = [...localConfig.orbColors] as [string, string, string];
+                          newOrbs[i] = e.target.value;
+                          setLocalConfig(prev => ({ ...prev, orbColors: newOrbs }));
+                        }}
+                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                      />
+                    </label>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="px-4 mt-2 text-[10px] text-zinc-400 dark:text-zinc-500">
+              Customize the gradient orbs visible in dark mode
+            </p>
+          </div>
+
         </div>
       </div>
     </div>

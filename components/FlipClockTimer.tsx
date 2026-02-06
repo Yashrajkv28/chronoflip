@@ -28,6 +28,7 @@ export interface TimerConfig {
   delayedStartSeconds: number; // 0 = disabled, >0 = delay before timer starts
   scheduledStartTime: number | null; // Unix timestamp for scheduled start, null = disabled
   qaTimeInSeconds: number; // 0 = unlimited countup (default), >0 = Q&A countdown duration
+  orbColors: [string, string, string]; // 3 hex colors for dark mode background orbs
 }
 
 const DEFAULT_ALERTS: ColorAlert[] = [
@@ -47,6 +48,7 @@ const DEFAULT_CONFIG: TimerConfig = {
   delayedStartSeconds: 0, // 0 = no delay
   scheduledStartTime: null, // null = no scheduled start
   qaTimeInSeconds: 0, // 0 = unlimited Q&A (counts up)
+  orbColors: ['#A855F7', '#3B82F6', '#6366F1'], // purple, blue, indigo
 };
 
 const STORAGE_KEY = 'chronoflip-config';
@@ -98,8 +100,6 @@ const FlipClockTimer: React.FC = () => {
   const [timeInSeconds, setTimeInSeconds] = useState(() => loadConfig().initialTimeInSeconds);
   const [status, setStatus] = useState<TimerStatus>('idle');
   const [currentAlertColor, setCurrentAlertColor] = useState('');
-  const [flashColor, setFlashColor] = useState('');
-  const [flashVisible, setFlashVisible] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [hybridPhase, setHybridPhase] = useState<'countdown' | 'countup'>('countdown');
   const [elapsedAfterZero, setElapsedAfterZero] = useState(0);
@@ -276,13 +276,23 @@ const FlipClockTimer: React.FC = () => {
     [config.colorAlerts]
   );
 
-  // Full-screen flash: 3 flashes over 1.5s
+  // Full-screen flash: 3 strong flashes behind everything via body background
   const triggerFullScreenFlash = useCallback((color: string) => {
-    setFlashColor(color);
+    const body = document.body;
     let count = 0;
     const flash = () => {
-      if (count >= 6) { setFlashVisible(false); setFlashColor(''); return; }
-      setFlashVisible(count % 2 === 0);
+      if (count >= 6) {
+        body.style.backgroundColor = '';
+        body.style.backgroundImage = '';
+        return;
+      }
+      if (count % 2 === 0) {
+        body.style.backgroundColor = color;
+        body.style.backgroundImage = 'none';
+      } else {
+        body.style.backgroundColor = '';
+        body.style.backgroundImage = '';
+      }
       count++;
       setTimeout(flash, 250);
     };
@@ -863,10 +873,10 @@ const FlipClockTimer: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
       
-      {/* Decorative background elements - dark mode only */}
-      <div className="hidden dark:block absolute top-10 left-10 w-96 h-96 bg-purple-500/30 rounded-full blur-[120px]"></div>
-      <div className="hidden dark:block absolute bottom-10 right-10 w-[500px] h-[500px] bg-blue-500/25 rounded-full blur-[150px]"></div>
-      <div className="hidden dark:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/15 rounded-full blur-[180px]"></div>
+      {/* Decorative background orbs - dark mode only */}
+      <div className="hidden dark:block absolute top-10 left-10 w-96 h-96 rounded-full blur-[120px]" style={{ backgroundColor: config.orbColors[0] + '4D' }}></div>
+      <div className="hidden dark:block absolute bottom-10 right-10 w-[500px] h-[500px] rounded-full blur-[150px]" style={{ backgroundColor: config.orbColors[1] + '40' }}></div>
+      <div className="hidden dark:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[180px]" style={{ backgroundColor: config.orbColors[2] + '26' }}></div>
 
       {/* App Mode Toggle - Top Left Corner */}
       <button
@@ -1135,14 +1145,6 @@ const FlipClockTimer: React.FC = () => {
           )}
         </div>
       </div>
-
-      {/* Full-Screen Flash Overlay */}
-      {flashColor && flashVisible && (
-        <div
-          className="fixed inset-0 pointer-events-none"
-          style={{ backgroundColor: flashColor, opacity: 0.35, zIndex: 90 }}
-        />
-      )}
 
       {/* Blackout Overlay */}
       {isBlackout && (
