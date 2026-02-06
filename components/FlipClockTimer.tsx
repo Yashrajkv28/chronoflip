@@ -116,6 +116,7 @@ const FlipClockTimer: React.FC = () => {
   const [delayRemaining, setDelayRemaining] = useState(0);
   const [isScheduledPhase, setIsScheduledPhase] = useState(false);
   const [timeUntilScheduled, setTimeUntilScheduled] = useState(0);
+  const [isAlertBgActive, setIsAlertBgActive] = useState(false); // True when a background alert is showing
 
   // App mode: timer or clock
   const [appMode, setAppMode] = useState<AppMode>('timer');
@@ -321,12 +322,14 @@ const FlipClockTimer: React.FC = () => {
           if (alert.flash && alert.background) {
             // Flash then persist background color
             triggerFullScreenFlash(alert.color, alert.color);
+            setIsAlertBgActive(true);
           } else if (alert.flash) {
             triggerFullScreenFlash(alert.color);
           } else if (alert.background) {
             // Persistent background color immediately
             document.body.style.backgroundColor = alert.color;
             document.body.style.backgroundImage = 'none';
+            setIsAlertBgActive(true);
           }
 
           if (alert.sound && config.playAlertSound) {
@@ -666,6 +669,7 @@ const FlipClockTimer: React.FC = () => {
     // Clear persistent background color from alerts
     document.body.style.backgroundColor = '';
     document.body.style.backgroundImage = '';
+    setIsAlertBgActive(false);
     releaseWakeLock(); // Allow screen to sleep
   };
 
@@ -1046,7 +1050,11 @@ const FlipClockTimer: React.FC = () => {
             <button
               type="button"
               onClick={handleStart}
-              className="group relative px-10 py-5 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/30 hover:border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:shadow-[0_0_30px_rgba(16,185,129,0.3)] backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300"
+              className={`group relative px-10 py-5 rounded-2xl font-bold backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300 ${
+                isAlertBgActive
+                  ? 'bg-white/10 dark:bg-black/20 text-gray-600 dark:text-white border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/5'
+                  : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:shadow-[0_0_30px_rgba(16,185,129,0.3)]'
+              }`}
             >
               <div className="flex items-center gap-3">
                 <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -1059,7 +1067,11 @@ const FlipClockTimer: React.FC = () => {
             <button
               type="button"
               onClick={handlePause}
-              className="group relative px-10 py-5 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/30 hover:border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.15)] hover:shadow-[0_0_30px_rgba(245,158,11,0.3)] backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300"
+              className={`group relative px-10 py-5 rounded-2xl font-bold backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300 ${
+                isAlertBgActive
+                  ? 'bg-white/10 dark:bg-black/20 text-gray-600 dark:text-white border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/5'
+                  : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-600 dark:text-amber-400 border border-amber-500/30 hover:border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.15)] hover:shadow-[0_0_30px_rgba(245,158,11,0.3)]'
+              }`}
             >
               <div className="flex items-center gap-3">
                 <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
@@ -1086,7 +1098,11 @@ const FlipClockTimer: React.FC = () => {
             <button
               type="button"
               onClick={handleResume}
-              className="group relative px-10 py-5 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/30 hover:border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:shadow-[0_0_30px_rgba(16,185,129,0.3)] backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300"
+              className={`group relative px-10 py-5 rounded-2xl font-bold backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300 ${
+                isAlertBgActive
+                  ? 'bg-white/10 dark:bg-black/20 text-gray-600 dark:text-white border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/5'
+                  : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:shadow-[0_0_30px_rgba(16,185,129,0.3)]'
+              }`}
             >
               <div className="flex items-center gap-3">
                 <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
