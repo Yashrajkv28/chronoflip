@@ -201,9 +201,7 @@ const FlipClockTimer: React.FC = () => {
         : (status === 'idle'
             ? config.initialTimeInSeconds
             : (config.mode === 'hybrid' && hybridPhase === 'countup'
-                ? (config.qaTimeInSeconds > 0
-                    ? Math.max(0, config.qaTimeInSeconds - elapsedAfterZero)
-                    : elapsedAfterZero)
+                ? elapsedAfterZero
                 : timeInSeconds)));
 
   // In clock mode, use current time; otherwise use timer display time
