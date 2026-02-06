@@ -86,7 +86,7 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
             />
             <InfoRow
               title="Hybrid"
-              description="Counts down to zero, then automatically switches to counting up. Ideal for presentations with Q&A."
+              description="Counts down to zero, then automatically switches to counting up. Optionally set a fixed Q&A duration in Settings."
               border={false}
             />
           </Section>
@@ -171,7 +171,7 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
             />
             <InfoRow
               title="ハイブリッド"
-              description="ゼロまでカウントダウンした後、自動的にカウントアップに切り替わります。プレゼンテーション＋Q&Aに最適です。"
+              description="ゼロまでカウントダウンした後、自動的にカウントアップに切り替わります。設定画面でQ&A時間を固定することもできます。"
               border={false}
             />
           </Section>

@@ -27,6 +27,7 @@ export interface TimerConfig {
   playAlertSound: boolean;
   delayedStartSeconds: number; // 0 = disabled, >0 = delay before timer starts
   scheduledStartTime: number | null; // Unix timestamp for scheduled start, null = disabled
+  qaTimeInSeconds: number; // 0 = unlimited countup (default), >0 = Q&A countdown duration
 }
 
 const DEFAULT_ALERTS: ColorAlert[] = [
@@ -45,6 +46,7 @@ const DEFAULT_CONFIG: TimerConfig = {
   playAlertSound: true,
   delayedStartSeconds: 0, // 0 = no delay
   scheduledStartTime: null, // null = no scheduled start
+  qaTimeInSeconds: 0, // 0 = unlimited Q&A (counts up)
 };
 
 const STORAGE_KEY = 'chronoflip-config';
@@ -199,7 +201,9 @@ const FlipClockTimer: React.FC = () => {
         : (status === 'idle'
             ? config.initialTimeInSeconds
             : (config.mode === 'hybrid' && hybridPhase === 'countup'
-                ? elapsedAfterZero
+                ? (config.qaTimeInSeconds > 0
+                    ? Math.max(0, config.qaTimeInSeconds - elapsedAfterZero)
+                    : elapsedAfterZero)
                 : timeInSeconds)));
 
   // In clock mode, use current time; otherwise use timer display time
@@ -353,6 +357,23 @@ const FlipClockTimer: React.FC = () => {
       } else if (config.mode === 'countup' || (config.mode === 'hybrid' && hybridPhase === 'countup')) {
         if (config.mode === 'hybrid') {
           setElapsedAfterZero(elapsedSeconds);
+
+          if (config.qaTimeInSeconds > 0) {
+            // Q&A has fixed duration - check for completion and run alerts
+            const qaRemaining = Math.max(0, config.qaTimeInSeconds - elapsedSeconds);
+            checkColorAlerts(qaRemaining);
+
+            if (qaRemaining <= 0) {
+              setStatus('completed');
+              releaseWakeLock();
+              if (config.playAlertSound) {
+                audioService.vibrate('finish');
+                audioService.playCustom('/sounds/my-alarm.mp3').catch(() => {
+                  audioService.play('finish');
+                });
+              }
+            }
+          }
         } else {
           setTimeInSeconds(elapsedSeconds);
         }
@@ -364,7 +385,7 @@ const FlipClockTimer: React.FC = () => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [status, config.mode, config.playAlertSound, config.playTickSound, hybridPhase, isDelayPhase, isScheduledPhase, checkColorAlerts]);
+  }, [status, config.mode, config.playAlertSound, config.playTickSound, config.qaTimeInSeconds, hybridPhase, isDelayPhase, isScheduledPhase, checkColorAlerts]);
 
   // Delay phase countdown
   useEffect(() => {

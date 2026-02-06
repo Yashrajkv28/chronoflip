@@ -13,6 +13,9 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
   const [hours, setHours] = useState(Math.floor(config.initialTimeInSeconds / 3600));
   const [minutes, setMinutes] = useState(Math.floor((config.initialTimeInSeconds % 3600) / 60));
   const [seconds, setSeconds] = useState(config.initialTimeInSeconds % 60);
+  const [qaHours, setQaHours] = useState(Math.floor((config.qaTimeInSeconds || 0) / 3600));
+  const [qaMinutes, setQaMinutes] = useState(Math.floor(((config.qaTimeInSeconds || 0) % 3600) / 60));
+  const [qaSeconds, setQaSeconds] = useState((config.qaTimeInSeconds || 0) % 60);
 
   // Scheduled start state
   const [scheduleDate, setScheduleDate] = useState('');
@@ -24,7 +27,8 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
 
   const handleSave = () => {
     const totalSeconds = hours * 3600 + minutes * 60 + seconds;
-    onSave({ ...localConfig, initialTimeInSeconds: totalSeconds });
+    const qaTotalSeconds = qaHours * 3600 + qaMinutes * 60 + qaSeconds;
+    onSave({ ...localConfig, initialTimeInSeconds: totalSeconds, qaTimeInSeconds: qaTotalSeconds });
   };
 
   const handleScheduleStart = () => {
@@ -39,7 +43,8 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
 
     // Save current config first, then schedule
     const totalSeconds = hours * 3600 + minutes * 60 + seconds;
-    onSave({ ...localConfig, initialTimeInSeconds: totalSeconds });
+    const qaTotalSeconds = qaHours * 3600 + qaMinutes * 60 + qaSeconds;
+    onSave({ ...localConfig, initialTimeInSeconds: totalSeconds, qaTimeInSeconds: qaTotalSeconds });
     onScheduleStart(scheduledTimestamp);
   };
 
@@ -204,38 +209,89 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
               onChange={handleModeChange}
             />
             <div className="mt-2 px-2 text-xs text-zinc-400 dark:text-zinc-500 text-center">
-              {localConfig.mode === 'hybrid' && "Counts down to zero, then starts counting up."}
+              {localConfig.mode === 'hybrid' && ((qaHours + qaMinutes + qaSeconds) > 0
+                ? "Presentation countdown → Q&A countdown → Complete"
+                : "Counts down to zero, then starts counting up.")}
             </div>
           </div>
 
           {/* Time Picker */}
           {localConfig.mode !== 'countup' && (
-            <div className="mb-8 flex justify-center items-center">
-              <div className="flex items-baseline gap-1">
-                {[
-                  { val: hours, set: setHours, label: 'h', ariaLabel: 'Hours' },
-                  { val: minutes, set: setMinutes, label: 'm', ariaLabel: 'Minutes' },
-                  { val: seconds, set: setSeconds, label: 's', ariaLabel: 'Seconds' }
-                ].map((item, i) => (
-                  <div key={i} className="flex items-baseline">
-                    <input
-                      type="number"
-                      min="0"
-                      max={i === 0 ? 99 : 59}
-                      value={item.val.toString().padStart(2, '0')}
-                      onChange={(e) => item.set(Math.min(i === 0 ? 99 : 59, parseInt(e.target.value) || 0))}
-                      aria-label={item.ariaLabel}
-                      className="
-                        w-[2ch] bg-transparent p-0 text-center
-                        text-6xl font-light tracking-tight
-                        text-zinc-800 dark:text-white
-                        focus:outline-none focus:text-blue-500
-                        selection:bg-blue-500/20
-                      "
-                    />
-                    <span className="text-xl font-medium text-zinc-400 dark:text-zinc-600 mr-2">{item.label}</span>
-                  </div>
-                ))}
+            <>
+              {localConfig.mode === 'hybrid' && (
+                <div className="mb-2 text-center">
+                  <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Presentation</span>
+                </div>
+              )}
+              <div className="mb-4 flex justify-center items-center">
+                <div className="flex items-baseline gap-1">
+                  {[
+                    { val: hours, set: setHours, label: 'h', ariaLabel: 'Hours' },
+                    { val: minutes, set: setMinutes, label: 'm', ariaLabel: 'Minutes' },
+                    { val: seconds, set: setSeconds, label: 's', ariaLabel: 'Seconds' }
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-baseline">
+                      <input
+                        type="number"
+                        min="0"
+                        max={i === 0 ? 99 : 59}
+                        value={item.val.toString().padStart(2, '0')}
+                        onChange={(e) => item.set(Math.min(i === 0 ? 99 : 59, parseInt(e.target.value) || 0))}
+                        aria-label={item.ariaLabel}
+                        className="
+                          w-[2ch] bg-transparent p-0 text-center
+                          text-6xl font-light tracking-tight
+                          text-zinc-800 dark:text-white
+                          focus:outline-none focus:text-blue-500
+                          selection:bg-blue-500/20
+                        "
+                      />
+                      <span className="text-xl font-medium text-zinc-400 dark:text-zinc-600 mr-2">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Q&A Time Picker (Hybrid mode only) */}
+          {localConfig.mode === 'hybrid' && (
+            <div className="mb-8">
+              <div className="mb-2 text-center">
+                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Q&A</span>
+              </div>
+              <div className="flex justify-center items-center">
+                <div className="flex items-baseline gap-1">
+                  {[
+                    { val: qaHours, set: setQaHours, label: 'h', ariaLabel: 'Q&A Hours' },
+                    { val: qaMinutes, set: setQaMinutes, label: 'm', ariaLabel: 'Q&A Minutes' },
+                    { val: qaSeconds, set: setQaSeconds, label: 's', ariaLabel: 'Q&A Seconds' }
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-baseline">
+                      <input
+                        type="number"
+                        min="0"
+                        max={i === 0 ? 99 : 59}
+                        value={item.val.toString().padStart(2, '0')}
+                        onChange={(e) => item.set(Math.min(i === 0 ? 99 : 59, parseInt(e.target.value) || 0))}
+                        aria-label={item.ariaLabel}
+                        className="
+                          w-[2ch] bg-transparent p-0 text-center
+                          text-6xl font-light tracking-tight
+                          text-zinc-800 dark:text-white
+                          focus:outline-none focus:text-blue-500
+                          selection:bg-blue-500/20
+                        "
+                      />
+                      <span className="text-xl font-medium text-zinc-400 dark:text-zinc-600 mr-2">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="mt-2 px-2 text-xs text-zinc-400 dark:text-zinc-500 text-center">
+                {(qaHours === 0 && qaMinutes === 0 && qaSeconds === 0)
+                  ? "Set to 0 for unlimited count-up"
+                  : ""}
               </div>
             </div>
           )}
