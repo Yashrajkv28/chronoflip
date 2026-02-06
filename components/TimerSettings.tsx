@@ -55,7 +55,7 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
     const newAlert: ColorAlert = {
       id: crypto.randomUUID(),
       timeInSeconds: 60,
-      colorClass: 'text-yellow-500',
+      color: '#EAB308',
       flash: false,
       sound: true,
       label: 'New Alert',
@@ -83,12 +83,12 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
   };
 
   const colorOptions = [
-    { value: 'text-green-500', bg: 'bg-green-500' },
-    { value: 'text-yellow-500', bg: 'bg-yellow-500' },
-    { value: 'text-orange-500', bg: 'bg-orange-500' },
-    { value: 'text-red-500', bg: 'bg-red-500' },
-    { value: 'text-blue-500', bg: 'bg-blue-500' },
-    { value: 'text-purple-500', bg: 'bg-purple-500' },
+    { value: '#22C55E', label: 'Green' },
+    { value: '#EAB308', label: 'Yellow' },
+    { value: '#F97316', label: 'Orange' },
+    { value: '#EF4444', label: 'Red' },
+    { value: '#3B82F6', label: 'Blue' },
+    { value: '#A855F7', label: 'Purple' },
   ];
 
   /* --- iOS Style Components --- */
@@ -470,25 +470,39 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
                     </div>
 
                     <div className="flex items-center justify-between">
-                      {/* Color Dots */}
-                      <div className="flex gap-2" aria-label="Alert color selection">
+                      {/* Color Swatches + Custom Picker */}
+                      <div className="flex gap-2 items-center" aria-label="Alert color selection">
                         {colorOptions.map((c) => {
-                          const colorName = c.value.replace('text-', '').replace('-500', '');
-                          const isSelected = alert.colorClass === c.value;
+                          const isSelected = alert.color === c.value;
                           return (
                             <button
                               type="button"
                               key={c.value}
-                              onClick={() => updateColorAlert(alert.id, { colorClass: c.value })}
-                              title={`${colorName} color${isSelected ? ' (selected)' : ''}`}
-                              aria-label={`Select ${colorName} color${isSelected ? ' (currently selected)' : ''}`}
+                              onClick={() => updateColorAlert(alert.id, { color: c.value })}
+                              title={`${c.label}${isSelected ? ' (selected)' : ''}`}
+                              aria-label={`Select ${c.label} color${isSelected ? ' (currently selected)' : ''}`}
                               className={`
-                                w-5 h-5 rounded-full ${c.bg} shadow-sm transition-transform
-                                ${isSelected ? 'scale-125 ring-2 ring-white dark:ring-zinc-700' : 'opacity-40 hover:opacity-100 hover:scale-110'}
+                                w-5 h-5 rounded-full shadow-sm transition-transform
+                                ${isSelected ? 'scale-125 ring-2 ring-white dark:ring-zinc-600' : 'opacity-50 hover:opacity-100 hover:scale-110'}
                               `}
+                              style={{ backgroundColor: c.value }}
                             />
                           );
                         })}
+                        <label
+                          className="relative w-5 h-5 rounded-full cursor-pointer overflow-hidden ring-1 ring-zinc-300 dark:ring-zinc-600 hover:scale-110 transition-transform"
+                          title="Pick custom color"
+                          style={{
+                            background: 'conic-gradient(#ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)',
+                          }}
+                        >
+                          <input
+                            type="color"
+                            value={alert.color}
+                            onChange={(e) => updateColorAlert(alert.id, { color: e.target.value })}
+                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                          />
+                        </label>
                       </div>
 
                       {/* Options */}

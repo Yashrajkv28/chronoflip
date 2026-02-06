@@ -3,10 +3,10 @@ import React, { useEffect, useState, useRef } from 'react';
 interface FlipDigitProps {
   value: string;
   label?: string;
-  colorClass?: string;
+  color?: string;
 }
 
-const FlipDigit: React.FC<FlipDigitProps> = ({ value, label, colorClass = '' }) => {
+const FlipDigit: React.FC<FlipDigitProps> = ({ value, label, color = '' }) => {
   // Use ref to track the previous value (doesn't cause re-renders)
   const prevValueRef = useRef<string>(value);
   const [isFlipping, setIsFlipping] = useState(false);
@@ -46,7 +46,8 @@ const FlipDigit: React.FC<FlipDigitProps> = ({ value, label, colorClass = '' }) 
 
   // Card styling
   const cardBg = "bg-gradient-to-b from-zinc-100 to-zinc-200 dark:from-zinc-700 dark:to-zinc-800";
-  const textStyle = `font-mono text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold leading-none select-none text-zinc-800 dark:text-zinc-100 ${colorClass}`;
+  const textStyle = 'font-mono text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold leading-none select-none text-zinc-800 dark:text-zinc-100';
+  const colorStyle = color ? { color } : undefined;
 
   // LOGIC TO PREVENT FLICKER:
   // When value changes, there is one render frame before 'isFlipping' becomes true.
@@ -73,7 +74,7 @@ const FlipDigit: React.FC<FlipDigitProps> = ({ value, label, colorClass = '' }) 
           className={`upper-card ${cardBg} flex justify-center items-end rounded-t-xl overflow-hidden`}
           style={{ zIndex: 1 }}
         >
-          <span className={`${textStyle} translate-y-1/2`}>
+          <span className={`${textStyle} translate-y-1/2`} style={colorStyle}>
             {upperStaticValue}
           </span>
           <div className="absolute inset-0 bg-gradient-to-b from-black/5 to-transparent dark:from-black/20 pointer-events-none" />
@@ -81,11 +82,11 @@ const FlipDigit: React.FC<FlipDigitProps> = ({ value, label, colorClass = '' }) 
 
         {/* LOWER STATIC - Shows the OLD value */}
         {/* This stays visible until the Flap lands and covers it */}
-        <div 
+        <div
           className={`lower-card ${cardBg} flex justify-center items-start rounded-b-xl overflow-hidden`}
           style={{ zIndex: 1 }}
         >
-          <span className={`${textStyle} -translate-y-1/2`}>
+          <span className={`${textStyle} -translate-y-1/2`} style={colorStyle}>
             {previousValue}
           </span>
           <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent dark:from-black/30 pointer-events-none" />
@@ -106,18 +107,18 @@ const FlipDigit: React.FC<FlipDigitProps> = ({ value, label, colorClass = '' }) 
                 backfaceVisibility: 'hidden'
               }}
             >
-              <span className={`${textStyle} translate-y-1/2`}>
+              <span className={`${textStyle} translate-y-1/2`} style={colorStyle}>
                 {previousValue}
               </span>
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/40 
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/40
                              opacity-0 animate-shadow-increase pointer-events-none" />
             </div>
 
             {/* BOTTOM FLAP - Shows NEW value, flips UP */}
             {/* Back face of the falling card (appears to be falling from top) */}
-            <div 
+            <div
               className={`lower-card ${cardBg} flex justify-center items-start rounded-b-xl overflow-hidden animate-flip-bottom-up`}
-              style={{ 
+              style={{
                 zIndex: 10,
                 transformOrigin: 'top center',
                 backfaceVisibility: 'hidden',
@@ -125,7 +126,7 @@ const FlipDigit: React.FC<FlipDigitProps> = ({ value, label, colorClass = '' }) 
                 transform: 'rotateX(90deg)'
               }}
             >
-              <span className={`${textStyle} -translate-y-1/2`}>
+              <span className={`${textStyle} -translate-y-1/2`} style={colorStyle}>
                 {currentValue}
               </span>
               <div className="absolute inset-0 bg-gradient-to-b from-white/30 to-transparent 

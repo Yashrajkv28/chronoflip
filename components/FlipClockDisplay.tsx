@@ -8,7 +8,7 @@ interface FlipClockDisplayProps {
   showHours?: boolean;
   showDays?: boolean;
   days?: number;
-  colorClass?: string;
+  color?: string;
   isRunning?: boolean;
 }
 
@@ -19,7 +19,7 @@ const FlipClockDisplay: React.FC<FlipClockDisplayProps> = ({
   showHours = true,
   showDays = false,
   days = 0,
-  colorClass = '',
+  color = '',
   isRunning = false,
 }) => {
   // Pad numbers to always show two digits
@@ -48,13 +48,13 @@ const FlipClockDisplay: React.FC<FlipClockDisplayProps> = ({
   );
 
   return (
-    <div className={`flex items-center justify-center color-transition ${colorClass}`}>
+    <div className="flex items-center justify-center color-transition">
       {/* Days */}
       {showDays && (
         <>
           <div className="flex">
-            <FlipDigit value={d1} colorClass={colorClass} />
-            <FlipDigit value={d2} label="Days" colorClass={colorClass} />
+            <FlipDigit value={d1} color={color} />
+            <FlipDigit value={d2} label="Days" color={color} />
           </div>
           <Separator />
         </>
@@ -64,8 +64,8 @@ const FlipClockDisplay: React.FC<FlipClockDisplayProps> = ({
       {showHours && (
         <>
           <div className="flex">
-            <FlipDigit value={h1} colorClass={colorClass} />
-            <FlipDigit value={h2} label="Hours" colorClass={colorClass} />
+            <FlipDigit value={h1} color={color} />
+            <FlipDigit value={h2} label="Hours" color={color} />
           </div>
           <Separator />
         </>
@@ -73,16 +73,16 @@ const FlipClockDisplay: React.FC<FlipClockDisplayProps> = ({
 
       {/* Minutes */}
       <div className="flex">
-        <FlipDigit value={m1} colorClass={colorClass} />
-        <FlipDigit value={m2} label="Minutes" colorClass={colorClass} />
+        <FlipDigit value={m1} color={color} />
+        <FlipDigit value={m2} label="Minutes" color={color} />
       </div>
       
       <Separator />
 
       {/* Seconds */}
       <div className="flex">
-        <FlipDigit value={s1} colorClass={colorClass} />
-        <FlipDigit value={s2} label="Seconds" colorClass={colorClass} />
+        <FlipDigit value={s1} color={color} />
+        <FlipDigit value={s2} label="Seconds" color={color} />
       </div>
     </div>
   );

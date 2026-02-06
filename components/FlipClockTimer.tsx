@@ -11,7 +11,7 @@ export type AppMode = 'timer' | 'clock';
 export interface ColorAlert {
   id: string;
   timeInSeconds: number;
-  colorClass: string;
+  color: string;
   flash: boolean;
   sound: boolean;
   label: string;
@@ -31,9 +31,9 @@ export interface TimerConfig {
 }
 
 const DEFAULT_ALERTS: ColorAlert[] = [
-  { id: '1', timeInSeconds: 300, colorClass: 'text-yellow-500', flash: false, sound: true, label: '5 minutes' },
-  { id: '2', timeInSeconds: 60, colorClass: 'text-orange-500', flash: true, sound: true, label: '1 minute' },
-  { id: '3', timeInSeconds: 10, colorClass: 'text-red-500', flash: true, sound: true, label: '10 seconds' },
+  { id: '1', timeInSeconds: 300, color: '#EAB308', flash: false, sound: true, label: '5 minutes' },
+  { id: '2', timeInSeconds: 60, color: '#F97316', flash: true, sound: true, label: '1 minute' },
+  { id: '3', timeInSeconds: 10, color: '#EF4444', flash: true, sound: true, label: '10 seconds' },
 ];
 
 const DEFAULT_CONFIG: TimerConfig = {
@@ -51,6 +51,19 @@ const DEFAULT_CONFIG: TimerConfig = {
 
 const STORAGE_KEY = 'chronoflip-config';
 
+// Migration: old Tailwind color classes → hex values
+const TAILWIND_TO_HEX: Record<string, string> = {
+  'text-green-500': '#22C55E', 'text-yellow-500': '#EAB308',
+  'text-orange-500': '#F97316', 'text-red-500': '#EF4444',
+  'text-blue-500': '#3B82F6', 'text-purple-500': '#A855F7',
+};
+
+const migrateAlertColors = (alerts: any[]): ColorAlert[] =>
+  alerts.map(a => ({
+    ...a,
+    color: a.colorClass ? (TAILWIND_TO_HEX[a.colorClass] || '#EAB308') : (a.color || '#EAB308'),
+  }));
+
 // Load config from localStorage with validation
 const loadConfig = (): TimerConfig => {
   try {
@@ -59,7 +72,9 @@ const loadConfig = (): TimerConfig => {
       const parsed = JSON.parse(saved);
       // Validate essential properties exist
       if (parsed.mode && typeof parsed.initialTimeInSeconds === 'number') {
-        return { ...DEFAULT_CONFIG, ...parsed };
+        const merged = { ...DEFAULT_CONFIG, ...parsed };
+        merged.colorAlerts = migrateAlertColors(merged.colorAlerts);
+        return merged;
       }
     }
   } catch (e) {
@@ -82,8 +97,9 @@ const FlipClockTimer: React.FC = () => {
   const [config, setConfig] = useState<TimerConfig>(loadConfig);
   const [timeInSeconds, setTimeInSeconds] = useState(() => loadConfig().initialTimeInSeconds);
   const [status, setStatus] = useState<TimerStatus>('idle');
-  const [currentColorClass, setCurrentColorClass] = useState('');
-  const [isFlashing, setIsFlashing] = useState(false);
+  const [currentAlertColor, setCurrentAlertColor] = useState('');
+  const [flashColor, setFlashColor] = useState('');
+  const [flashVisible, setFlashVisible] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [hybridPhase, setHybridPhase] = useState<'countdown' | 'countup'>('countdown');
   const [elapsedAfterZero, setElapsedAfterZero] = useState(0);
@@ -260,21 +276,33 @@ const FlipClockTimer: React.FC = () => {
     [config.colorAlerts]
   );
 
+  // Full-screen flash: 3 flashes over 1.5s
+  const triggerFullScreenFlash = useCallback((color: string) => {
+    setFlashColor(color);
+    let count = 0;
+    const flash = () => {
+      if (count >= 6) { setFlashVisible(false); setFlashColor(''); return; }
+      setFlashVisible(count % 2 === 0);
+      count++;
+      setTimeout(flash, 250);
+    };
+    flash();
+  }, []);
+
   // Check color alerts
   // Sort ASCENDING so we find the smallest threshold that matches current time
   const checkColorAlerts = useCallback((currentTime: number) => {
 
     for (const alert of sortedAlerts) {
       if (currentTime <= alert.timeInSeconds) {
-        setCurrentColorClass(alert.colorClass);
+        setCurrentAlertColor(alert.color);
 
         // Trigger alert once when we reach or pass below the threshold
         if (!triggeredAlertsRef.current.has(alert.id)) {
           triggeredAlertsRef.current.add(alert.id);
 
           if (alert.flash) {
-            setIsFlashing(true);
-            setTimeout(() => setIsFlashing(false), 500);
+            triggerFullScreenFlash(alert.color);
           }
 
           if (alert.sound && config.playAlertSound) {
@@ -285,7 +313,7 @@ const FlipClockTimer: React.FC = () => {
         break;
       }
     }
-  }, [sortedAlerts, config.playAlertSound]);
+  }, [sortedAlerts, config.playAlertSound, triggerFullScreenFlash]);
 
   // Timer tick - TIMESTAMP-BASED for accuracy (immune to browser throttling)
   useEffect(() => {
@@ -325,7 +353,7 @@ const FlipClockTimer: React.FC = () => {
           if (config.mode === 'hybrid') {
             // Switch to countup phase
             setHybridPhase('countup');
-            setCurrentColorClass('text-blue-500');
+            setCurrentAlertColor('#3B82F6');
             triggeredAlertsRef.current.clear();
             // Reset timing for countup phase
             startTimeRef.current = Date.now();
@@ -577,7 +605,7 @@ const FlipClockTimer: React.FC = () => {
     audioService.stop();
     setStatus('idle');
     setTimeInSeconds(initialTime);
-    setCurrentColorClass('');
+    setCurrentAlertColor('');
     setHybridPhase('countdown');
     setElapsedAfterZero(0);
     setIsDelayPhase(false);
@@ -731,7 +759,7 @@ const FlipClockTimer: React.FC = () => {
     // Update config - display derives from config.initialTimeInSeconds when idle
     setConfig(finalConfig);
     setStatus('idle');
-    setCurrentColorClass('');
+    setCurrentAlertColor('');
     setHybridPhase('countdown');
     setElapsedAfterZero(0);
     setShowSettings(false);
@@ -763,7 +791,7 @@ const FlipClockTimer: React.FC = () => {
       showHours: shouldShowHours || prev.showHours // Keep enabled if already on
     }));
     // Reset other state
-    setCurrentColorClass('');
+    setCurrentAlertColor('');
     setHybridPhase('countdown');
     setElapsedAfterZero(0);
     // Update refs
@@ -888,7 +916,6 @@ const FlipClockTimer: React.FC = () => {
           shadow-[0_8px_32px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.4)]
           dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1)]
           transition-all duration-500
-          ${isFlashing ? 'ring-2 ring-red-500/50 shadow-[0_0_50px_rgba(239,68,68,0.3)]' : ''}
         `}>
           <FlipClockDisplay
             days={days}
@@ -897,7 +924,7 @@ const FlipClockTimer: React.FC = () => {
             seconds={seconds}
             showHours={appMode === 'clock' ? true : config.showHours}
             showDays={appMode === 'clock' ? false : config.showDays}
-            colorClass={appMode === 'clock' ? '' : currentColorClass}
+            color={appMode === 'clock' ? '' : currentAlertColor}
             isRunning={appMode === 'clock' || status === 'running'}
           />
 
@@ -1108,6 +1135,14 @@ const FlipClockTimer: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Full-Screen Flash Overlay */}
+      {flashColor && flashVisible && (
+        <div
+          className="fixed inset-0 pointer-events-none"
+          style={{ backgroundColor: flashColor, opacity: 0.35, zIndex: 90 }}
+        />
+      )}
 
       {/* Blackout Overlay */}
       {isBlackout && (
