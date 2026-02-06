@@ -592,8 +592,12 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
               DARK MODE BACKGROUND
             </h3>
             <div className="bg-zinc-50/80 dark:bg-zinc-900/40 backdrop-blur-md border border-zinc-200/50 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
-              {(['Orb 1 — Top Left', 'Orb 2 — Bottom Right', 'Orb 3 — Center'] as const).map((label, i) => (
-                <div key={i} className={`p-4 ${i < 2 ? 'border-b border-zinc-200/50 dark:border-white/5' : ''}`}>
+              {([
+                { label: 'Orb 1 — Top Left', idx: 0 },
+                { label: 'Orb 2 — Center', idx: 2 },
+                { label: 'Orb 3 — Bottom Right', idx: 1 },
+              ] as const).map(({ label, idx: i }, displayIdx) => (
+                <div key={i} className={`p-4 ${displayIdx < 2 ? 'border-b border-zinc-200/50 dark:border-white/5' : ''}`}>
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-[15px] text-zinc-700 dark:text-zinc-200">{label}</span>
                     <div className="flex items-center gap-3">
