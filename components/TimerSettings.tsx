@@ -1,12 +1,190 @@
 import React, { useState } from 'react';
 import { TimerConfig, TimerMode, ColorAlert } from './FlipClockTimer';
 
+/* --- Reusable UI Components (defined outside to prevent remount on state change) --- */
+
+const ToggleSwitch = ({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) => (
+  <button
+    type="button"
+    onClick={() => onChange(!checked)}
+    aria-label={label}
+    aria-pressed={checked}
+    className={`
+      relative w-11 h-6 rounded-full transition-colors duration-300 ease-in-out focus:outline-none
+      ${checked ? 'bg-blue-500' : 'bg-zinc-300 dark:bg-zinc-700'}
+    `}
+  >
+    <span
+      className={`
+        absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]
+        ${checked ? 'translate-x-5' : 'translate-x-0'}
+      `}
+    />
+  </button>
+);
+
+const Section = ({ title, children, className = '' }: { title?: string; children: React.ReactNode; className?: string }) => (
+  <div className={`mb-8 ${className}`}>
+    {title && <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">{title}</h3>}
+    <div className="bg-zinc-50/80 dark:bg-zinc-900/40 backdrop-blur-md border border-zinc-200/50 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
+      {children}
+    </div>
+  </div>
+);
+
+const SectionItem = ({ children, border = true }: { children: React.ReactNode; border?: boolean }) => (
+  <div className={`p-4 flex items-center justify-between ${border ? 'border-b border-zinc-200/50 dark:border-white/5' : ''}`}>
+    {children}
+  </div>
+);
+
+const COLOR_OPTIONS = [
+  { value: '#22C55E', label: 'Green' },
+  { value: '#EAB308', label: 'Yellow' },
+  { value: '#F97316', label: 'Orange' },
+  { value: '#EF4444', label: 'Red' },
+  { value: '#3B82F6', label: 'Blue' },
+  { value: '#A855F7', label: 'Purple' },
+];
+
+type AlertKey = 'colorAlerts' | 'qaColorAlerts';
+
+const AlertsSection = ({
+  title, subtitle, timeLabel, alerts, alertKey, onAdd, onRemove, onUpdate,
+}: {
+  title: string;
+  subtitle: string;
+  timeLabel: string;
+  alerts: ColorAlert[];
+  alertKey: AlertKey;
+  onAdd: (key: AlertKey) => void;
+  onRemove: (key: AlertKey, id: string) => void;
+  onUpdate: (key: AlertKey, id: string, updates: Partial<ColorAlert>) => void;
+}) => (
+  <div className="mb-8">
+    <div className="flex items-center justify-between px-4 mb-1">
+      <h3 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">{title}</h3>
+      <button
+        type="button"
+        onClick={() => onAdd(alertKey)}
+        aria-label="Add new color alert"
+        className="text-xs font-bold text-blue-500 hover:text-blue-400 transition-colors uppercase"
+      >
+        + Add
+      </button>
+    </div>
+    <p className="px-4 mb-2 text-[10px] text-zinc-400 dark:text-zinc-500">{subtitle}</p>
+
+    <div className="bg-zinc-50/80 dark:bg-zinc-900/40 backdrop-blur-md border border-zinc-200/50 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
+      {alerts.length === 0 && (
+        <div className="p-8 text-center text-zinc-400 dark:text-zinc-600 text-sm">
+          No visual alerts set.
+        </div>
+      )}
+
+      {alerts.map((alert, idx) => (
+        <div key={alert.id} className={`p-4 ${idx !== alerts.length - 1 ? 'border-b border-zinc-200/50 dark:border-white/5' : ''}`}>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-baseline gap-1 text-zinc-900 dark:text-zinc-100">
+              <span className="text-xs font-bold text-zinc-400 dark:text-zinc-500">{timeLabel}</span>
+              <input
+                type="number"
+                value={Math.floor(alert.timeInSeconds / 60)}
+                onChange={(e) => onUpdate(alertKey, alert.id, { timeInSeconds: (parseInt(e.target.value) || 0) * 60 + (alert.timeInSeconds % 60) })}
+                onWheel={(e) => e.currentTarget.blur()}
+                aria-label="Alert time minutes"
+                className="w-8 bg-transparent text-right font-mono text-lg font-medium focus:text-blue-500 focus:outline-none"
+              />
+              <span className="text-xs text-zinc-400">:</span>
+              <input
+                type="number"
+                value={(alert.timeInSeconds % 60).toString().padStart(2, '0')}
+                onChange={(e) => onUpdate(alertKey, alert.id, { timeInSeconds: Math.floor(alert.timeInSeconds / 60) * 60 + (parseInt(e.target.value) || 0) })}
+                onWheel={(e) => e.currentTarget.blur()}
+                aria-label="Alert time seconds"
+                className="w-8 bg-transparent font-mono text-lg font-medium focus:text-blue-500 focus:outline-none"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => onRemove(alertKey, alert.id)}
+              aria-label="Delete this alert"
+              title="Delete alert"
+              className="ml-auto w-6 h-6 flex items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-500 hover:bg-red-500 hover:text-white transition-colors"
+            >
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex gap-2 items-center" aria-label="Alert color selection">
+              {COLOR_OPTIONS.map((c) => {
+                const isSelected = alert.color === c.value;
+                return (
+                  <button
+                    type="button"
+                    key={c.value}
+                    onClick={() => onUpdate(alertKey, alert.id, { color: c.value })}
+                    title={`${c.label}${isSelected ? ' (selected)' : ''}`}
+                    aria-label={`Select ${c.label} color${isSelected ? ' (currently selected)' : ''}`}
+                    className={`
+                      w-5 h-5 rounded-full shadow-sm transition-transform
+                      ${isSelected ? 'scale-125 ring-2 ring-white dark:ring-zinc-600' : 'opacity-50 hover:opacity-100 hover:scale-110'}
+                    `}
+                    style={{ backgroundColor: c.value }}
+                  />
+                );
+              })}
+              <label
+                className="relative w-5 h-5 rounded-full cursor-pointer overflow-hidden ring-1 ring-zinc-300 dark:ring-zinc-600 hover:scale-110 transition-transform"
+                title="Pick custom color"
+                style={{
+                  background: 'conic-gradient(#ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)',
+                }}
+              >
+                <input
+                  type="color"
+                  value={alert.color}
+                  onChange={(e) => onUpdate(alertKey, alert.id, { color: e.target.value })}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                />
+              </label>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => onUpdate(alertKey, alert.id, { sound: !alert.sound })}
+              title={alert.sound ? 'Sound enabled' : 'Sound disabled'}
+              className={`text-[10px] font-bold px-2 py-1 rounded border transition-colors ${alert.sound ? 'bg-zinc-800 text-white dark:bg-white dark:text-black border-transparent' : 'border-zinc-300 dark:border-zinc-700 text-zinc-400'}`}
+            >
+              SOUND
+            </button>
+          </div>
+
+          <div className="flex items-center gap-5 mt-3">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Flash</span>
+              <ToggleSwitch checked={alert.flash} onChange={(v) => onUpdate(alertKey, alert.id, { flash: v })} label="Toggle flash" />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Background</span>
+              <ToggleSwitch checked={alert.background} onChange={(v) => onUpdate(alertKey, alert.id, { background: v })} label="Toggle persistent background" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+/* --- Main Settings Component --- */
+
 interface TimerSettingsProps {
   config: TimerConfig;
   onSave: (config: TimerConfig) => void;
   onClose: () => void;
   onScheduleStart?: (scheduledTime: number) => void;
-  clockModeOnly?: boolean; // When true, only show dark mode background settings
+  clockModeOnly?: boolean;
 }
 
 const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, onScheduleStart, clockModeOnly = false }) => {
@@ -21,7 +199,6 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
   const [cuMinutes, setCuMinutes] = useState(Math.floor(((config.countupLimitSeconds || 0) % 3600) / 60));
   const [cuSeconds, setCuSeconds] = useState((config.countupLimitSeconds || 0) % 60);
 
-  // Scheduled start state
   const [scheduleDate, setScheduleDate] = useState('');
   const [scheduleTime, setScheduleTime] = useState('');
 
@@ -40,13 +217,8 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
     if (!scheduleDate || !scheduleTime || !onScheduleStart) return;
     const scheduledDateTime = new Date(`${scheduleDate}T${scheduleTime}`);
     const scheduledTimestamp = scheduledDateTime.getTime();
+    if (scheduledTimestamp <= Date.now()) return;
 
-    if (scheduledTimestamp <= Date.now()) {
-      // Time is in the past
-      return;
-    }
-
-    // Save current config first, then schedule
     const totalSeconds = hours * 3600 + minutes * 60 + seconds;
     const qaTotalSeconds = qaHours * 3600 + qaMinutes * 60 + qaSeconds;
     const cuTotalSeconds = cuHours * 3600 + cuMinutes * 60 + cuSeconds;
@@ -54,11 +226,9 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
     onScheduleStart(scheduledTimestamp);
   };
 
-  // Get today's date in YYYY-MM-DD format for min attribute
   const today = new Date().toISOString().split('T')[0];
 
-  // Generic alert helpers that work for both colorAlerts and qaColorAlerts
-  const addAlert = (key: 'colorAlerts' | 'qaColorAlerts') => {
+  const addAlert = (key: AlertKey) => {
     const newAlert: ColorAlert = {
       id: crypto.randomUUID(),
       timeInSeconds: 60,
@@ -74,14 +244,14 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
     }));
   };
 
-  const removeAlert = (key: 'colorAlerts' | 'qaColorAlerts', id: string) => {
+  const removeAlert = (key: AlertKey, id: string) => {
     setLocalConfig(prev => ({
       ...prev,
       [key]: prev[key].filter((alert: ColorAlert) => alert.id !== id),
     }));
   };
 
-  const updateAlert = (key: 'colorAlerts' | 'qaColorAlerts', id: string, updates: Partial<ColorAlert>) => {
+  const updateAlert = (key: AlertKey, id: string, updates: Partial<ColorAlert>) => {
     setLocalConfig(prev => ({
       ...prev,
       [key]: prev[key].map((alert: ColorAlert) =>
@@ -89,17 +259,6 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
       ),
     }));
   };
-
-  const colorOptions = [
-    { value: '#22C55E', label: 'Green' },
-    { value: '#EAB308', label: 'Yellow' },
-    { value: '#F97316', label: 'Orange' },
-    { value: '#EF4444', label: 'Red' },
-    { value: '#3B82F6', label: 'Blue' },
-    { value: '#A855F7', label: 'Purple' },
-  ];
-
-  /* --- iOS Style Components --- */
 
   const SegmentedControl = <T extends string>({
     options,
@@ -134,178 +293,12 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
     </div>
   );
 
-  const ToggleSwitch = ({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) => (
-    <button
-      type="button"
-      onClick={() => onChange(!checked)}
-      aria-label={label}
-      aria-pressed={checked}
-      className={`
-        relative w-11 h-6 rounded-full transition-colors duration-300 ease-in-out focus:outline-none
-        ${checked ? 'bg-blue-500' : 'bg-zinc-300 dark:bg-zinc-700'}
-      `}
-    >
-      <span
-        className={`
-          absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]
-          ${checked ? 'translate-x-5' : 'translate-x-0'}
-        `}
-      />
-    </button>
-  );
-
-  const Section = ({ title, children, className = '' }: { title?: string; children: React.ReactNode; className?: string }) => (
-    <div className={`mb-8 ${className}`}>
-      {title && <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">{title}</h3>}
-      <div className="bg-zinc-50/80 dark:bg-zinc-900/40 backdrop-blur-md border border-zinc-200/50 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
-        {children}
-      </div>
-    </div>
-  );
-
-  const SectionItem = ({ children, border = true }: { children: React.ReactNode; border?: boolean }) => (
-    <div className={`p-4 flex items-center justify-between ${border ? 'border-b border-zinc-200/50 dark:border-white/5' : ''}`}>
-      {children}
-    </div>
-  );
-
-  const AlertsSection = ({
-    title, subtitle, timeLabel, alerts, alertKey, onAdd, onRemove, onUpdate, colorOptions: colors, ToggleSwitch: Toggle,
-  }: {
-    title: string;
-    subtitle: string;
-    timeLabel: string;
-    alerts: ColorAlert[];
-    alertKey: 'colorAlerts' | 'qaColorAlerts';
-    onAdd: (key: 'colorAlerts' | 'qaColorAlerts') => void;
-    onRemove: (key: 'colorAlerts' | 'qaColorAlerts', id: string) => void;
-    onUpdate: (key: 'colorAlerts' | 'qaColorAlerts', id: string, updates: Partial<ColorAlert>) => void;
-    colorOptions: { value: string; label: string }[];
-    ToggleSwitch: React.FC<{ checked: boolean; onChange: (v: boolean) => void; label: string }>;
-  }) => (
-    <div className="mb-8">
-      <div className="flex items-center justify-between px-4 mb-1">
-        <h3 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">{title}</h3>
-        <button
-          type="button"
-          onClick={() => onAdd(alertKey)}
-          aria-label="Add new color alert"
-          className="text-xs font-bold text-blue-500 hover:text-blue-400 transition-colors uppercase"
-        >
-          + Add
-        </button>
-      </div>
-      <p className="px-4 mb-2 text-[10px] text-zinc-400 dark:text-zinc-500">{subtitle}</p>
-
-      <div className="bg-zinc-50/80 dark:bg-zinc-900/40 backdrop-blur-md border border-zinc-200/50 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
-        {alerts.length === 0 && (
-          <div className="p-8 text-center text-zinc-400 dark:text-zinc-600 text-sm">
-            No visual alerts set.
-          </div>
-        )}
-
-        {alerts.map((alert, idx) => (
-          <div key={alert.id} className={`p-4 ${idx !== alerts.length - 1 ? 'border-b border-zinc-200/50 dark:border-white/5' : ''}`}>
-            <div className="flex items-center gap-3 mb-3">
-              <div className="flex items-baseline gap-1 text-zinc-900 dark:text-zinc-100">
-                <span className="text-xs font-bold text-zinc-400 dark:text-zinc-500">{timeLabel}</span>
-                <input
-                  type="number"
-                  value={Math.floor(alert.timeInSeconds / 60)}
-                  onChange={(e) => onUpdate(alertKey, alert.id, { timeInSeconds: (parseInt(e.target.value) || 0) * 60 + (alert.timeInSeconds % 60) })}
-                  onWheel={(e) => e.currentTarget.blur()}
-                  aria-label="Alert time minutes"
-                  className="w-8 bg-transparent text-right font-mono text-lg font-medium focus:text-blue-500 focus:outline-none"
-                />
-                <span className="text-xs text-zinc-400">:</span>
-                <input
-                  type="number"
-                  value={(alert.timeInSeconds % 60).toString().padStart(2, '0')}
-                  onChange={(e) => onUpdate(alertKey, alert.id, { timeInSeconds: Math.floor(alert.timeInSeconds / 60) * 60 + (parseInt(e.target.value) || 0) })}
-                  onWheel={(e) => e.currentTarget.blur()}
-                  aria-label="Alert time seconds"
-                  className="w-8 bg-transparent font-mono text-lg font-medium focus:text-blue-500 focus:outline-none"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => onRemove(alertKey, alert.id)}
-                aria-label="Delete this alert"
-                title="Delete alert"
-                className="ml-auto w-6 h-6 flex items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-500 hover:bg-red-500 hover:text-white transition-colors"
-              >
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex gap-2 items-center" aria-label="Alert color selection">
-                {colors.map((c) => {
-                  const isSelected = alert.color === c.value;
-                  return (
-                    <button
-                      type="button"
-                      key={c.value}
-                      onClick={() => onUpdate(alertKey, alert.id, { color: c.value })}
-                      title={`${c.label}${isSelected ? ' (selected)' : ''}`}
-                      aria-label={`Select ${c.label} color${isSelected ? ' (currently selected)' : ''}`}
-                      className={`
-                        w-5 h-5 rounded-full shadow-sm transition-transform
-                        ${isSelected ? 'scale-125 ring-2 ring-white dark:ring-zinc-600' : 'opacity-50 hover:opacity-100 hover:scale-110'}
-                      `}
-                      style={{ backgroundColor: c.value }}
-                    />
-                  );
-                })}
-                <label
-                  className="relative w-5 h-5 rounded-full cursor-pointer overflow-hidden ring-1 ring-zinc-300 dark:ring-zinc-600 hover:scale-110 transition-transform"
-                  title="Pick custom color"
-                  style={{
-                    background: 'conic-gradient(#ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)',
-                  }}
-                >
-                  <input
-                    type="color"
-                    value={alert.color}
-                    onChange={(e) => onUpdate(alertKey, alert.id, { color: e.target.value })}
-                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                  />
-                </label>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => onUpdate(alertKey, alert.id, { sound: !alert.sound })}
-                title={alert.sound ? 'Sound enabled' : 'Sound disabled'}
-                className={`text-[10px] font-bold px-2 py-1 rounded border transition-colors ${alert.sound ? 'bg-zinc-800 text-white dark:bg-white dark:text-black border-transparent' : 'border-zinc-300 dark:border-zinc-700 text-zinc-400'}`}
-              >
-                SOUND
-              </button>
-            </div>
-
-            <div className="flex items-center gap-5 mt-3">
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Flash</span>
-                <Toggle checked={alert.flash} onChange={(v) => onUpdate(alertKey, alert.id, { flash: v })} label="Toggle flash" />
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Background</span>
-                <Toggle checked={alert.background} onChange={(v) => onUpdate(alertKey, alert.id, { background: v })} label="Toggle persistent background" />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/20 backdrop-blur-sm">
-      {/* Modal Container */}
-      <div 
+      <div
         className="
           w-full sm:max-w-md h-[90vh] sm:h-auto sm:max-h-[85vh]
-          bg-white/90 dark:bg-[#121212]/90 
+          bg-white/90 dark:bg-[#121212]/90
           backdrop-blur-2xl
           border-t sm:border border-white/20 dark:border-white/10
           rounded-t-[2.5rem] sm:rounded-[2.5rem]
@@ -313,7 +306,6 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
           animate-slide-up
         "
       >
-        {/* Navigation Bar */}
         <div className="relative flex items-center justify-between px-6 py-5 border-b border-zinc-200/50 dark:border-white/5 bg-white/50 dark:bg-white/5 backdrop-blur-xl z-20">
           <button
             type="button"
@@ -332,11 +324,9 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
           </button>
         </div>
 
-        {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 scrollbar-hide">
 
           {!clockModeOnly && (<>
-          {/* Mode Selector */}
           <div className="mb-8">
             <SegmentedControl
               options={[
@@ -357,7 +347,6 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
             </div>
           </div>
 
-          {/* Time Picker */}
           {localConfig.mode !== 'countup' && (
             <>
               {localConfig.mode === 'hybrid' && (
@@ -396,7 +385,6 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
             </>
           )}
 
-          {/* Count Up To - time picker (Count Up mode only) */}
           {localConfig.mode === 'countup' && (
             <div className="mb-8">
               <div className="mb-2 text-center">
@@ -438,7 +426,6 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
             </div>
           )}
 
-          {/* Q&A Time Picker (Hybrid mode only) */}
           {localConfig.mode === 'hybrid' && (
             <div className="mb-8">
               <div className="mb-2 text-center">
@@ -480,7 +467,6 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
             </div>
           )}
 
-          {/* Settings Sections */}
           <Section title="DISPLAY">
             <SectionItem>
               <span className="text-[15px] font-medium text-zinc-900 dark:text-zinc-100">Show Hours</span>
@@ -503,7 +489,6 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
             </SectionItem>
           </Section>
 
-          {/* Delayed Start */}
           <Section title="DELAYED START">
             <SectionItem>
               <div className="flex flex-col">
@@ -546,7 +531,6 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
             </div>
           </Section>
 
-          {/* Scheduled Start */}
           {onScheduleStart && (
             <Section title="SCHEDULED START">
               <SectionItem>
@@ -595,7 +579,6 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
             </Section>
           )}
 
-          {/* Color Alerts - Only for Countdown/Hybrid */}
           {localConfig.mode !== 'countup' && (
             <AlertsSection
               title={localConfig.mode === 'hybrid' ? 'PRESENTATION ALERTS' : 'COLOR ALERTS'}
@@ -606,12 +589,9 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
               onAdd={addAlert}
               onRemove={removeAlert}
               onUpdate={updateAlert}
-              colorOptions={colorOptions}
-              ToggleSwitch={ToggleSwitch}
             />
           )}
 
-          {/* Q&A Alerts - Hybrid mode only */}
           {localConfig.mode === 'hybrid' && (
             <AlertsSection
               title="Q&A ALERTS"
@@ -622,13 +602,10 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
               onAdd={addAlert}
               onRemove={removeAlert}
               onUpdate={updateAlert}
-              colorOptions={colorOptions}
-              ToggleSwitch={ToggleSwitch}
             />
           )}
           </>)}
 
-          {/* Dark Mode Background Orbs */}
           <div className="mb-8">
             <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
               DARK MODE BACKGROUND

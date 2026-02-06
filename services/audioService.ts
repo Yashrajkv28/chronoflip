@@ -32,9 +32,26 @@ class AudioService {
   private customAudioCache: Map<string, AudioBuffer> = new Map();
   private currentAudio: HTMLAudioElement | null = null;
   private tickAudio: HTMLAudioElement | null = null;
+  private alarmAudio: HTMLAudioElement | null = null;
 
   constructor() {
     // AudioContext is created lazily on first use (browser autoplay policy)
+    // Preload alarm sound so it plays instantly
+    this.preloadAlarm();
+  }
+
+  /**
+   * Preload the alarm audio element for instant playback
+   */
+  private preloadAlarm(): void {
+    try {
+      this.alarmAudio = new Audio('/sounds/my-alarm.mp3');
+      this.alarmAudio.preload = 'auto';
+      // Force the browser to start loading
+      this.alarmAudio.load();
+    } catch (e) {
+      console.warn('Alarm preload failed:', e);
+    }
   }
 
   /**
@@ -44,7 +61,12 @@ class AudioService {
     if (this.currentAudio) {
       this.currentAudio.pause();
       this.currentAudio.currentTime = 0;
-      this.currentAudio = null;
+      // Don't null alarmAudio — we reuse it
+      if (this.currentAudio !== this.alarmAudio) {
+        this.currentAudio = null;
+      } else {
+        this.currentAudio = null;
+      }
     }
     if (this.tickAudio) {
       this.tickAudio.pause();
@@ -343,16 +365,29 @@ class AudioService {
     // Stop any currently playing custom audio first
     if (this.currentAudio) {
       this.currentAudio.pause();
+      this.currentAudio.currentTime = 0;
       this.currentAudio = null;
     }
 
-    // Use HTML5 Audio for simpler, more reliable playback
+    // Reuse preloaded alarm element if it matches the URL
+    if (this.alarmAudio && url === '/sounds/my-alarm.mp3') {
+      try {
+        this.alarmAudio.currentTime = 0;
+        this.alarmAudio.volume = this.volume;
+        this.currentAudio = this.alarmAudio;
+        await this.alarmAudio.play();
+        return;
+      } catch (e) {
+        console.warn('Preloaded alarm playback failed, trying fresh element:', e);
+      }
+    }
+
+    // Fallback: create a new Audio element
     try {
       const audio = new Audio(url);
       audio.volume = this.volume;
       this.currentAudio = audio;
 
-      // Clear reference when audio ends naturally
       audio.onended = () => {
         if (this.currentAudio === audio) {
           this.currentAudio = null;
@@ -362,31 +397,7 @@ class AudioService {
       await audio.play();
     } catch (e) {
       console.warn('Custom audio playback failed:', e);
-      // Fallback to Web Audio API
-      try {
-        const ctx = await this.getContext();
-        let buffer = this.customAudioCache.get(url);
-
-        if (!buffer) {
-          const response = await fetch(url);
-          const arrayBuffer = await response.arrayBuffer();
-          buffer = await ctx.decodeAudioData(arrayBuffer);
-          this.customAudioCache.set(url, buffer);
-        }
-
-        const source = ctx.createBufferSource();
-        const gain = ctx.createGain();
-
-        source.buffer = buffer;
-        gain.gain.value = this.volume;
-
-        source.connect(gain);
-        gain.connect(ctx.destination);
-
-        source.start();
-      } catch (e2) {
-        console.warn('Web Audio API fallback also failed:', e2);
-      }
+      throw e; // Let caller's .catch() handle fallback
     }
   }
 
