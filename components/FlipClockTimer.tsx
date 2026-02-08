@@ -903,6 +903,8 @@ const FlipClockTimer: React.FC = () => {
       ...newConfig,
       showHours: newConfig.showHours || newTime >= 3600
     };
+    // Stop any playing alarm sound (timer may have completed while settings were open)
+    audioService.stop();
     // Update config - display derives from config.initialTimeInSeconds when idle
     setConfig(finalConfig);
     setStatus('idle');
@@ -1317,7 +1319,7 @@ const FlipClockTimer: React.FC = () => {
         <TimerSettings
           config={config}
           onSave={handleConfigSave}
-          onClose={() => setShowSettings(false)}
+          onClose={() => { audioService.stop(); setShowSettings(false); }}
           onScheduleStart={appMode === 'timer' ? (scheduledTime) => {
             setShowSettings(false);
             handleScheduleStart(scheduledTime);
