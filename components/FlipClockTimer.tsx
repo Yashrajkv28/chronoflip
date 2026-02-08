@@ -478,6 +478,7 @@ const FlipClockTimer: React.FC = () => {
         } else {
           // Standalone countup mode
           setTimeInSeconds(elapsedSeconds);
+          checkQaColorAlerts(elapsedSeconds);
 
           if (config.countupLimitSeconds > 0) {
             const countupRemaining = Math.max(0, config.countupLimitSeconds - elapsedSeconds);

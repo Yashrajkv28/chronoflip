@@ -592,9 +592,9 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
             />
           )}
 
-          {localConfig.mode === 'hybrid' && (
+          {(localConfig.mode === 'hybrid' || localConfig.mode === 'countup') && (
             <AlertsSection
-              title="Q&A ALERTS"
+              title={localConfig.mode === 'hybrid' ? 'Q&A ALERTS' : 'COLOR ALERTS'}
               subtitle="Triggered by elapsed count-up time"
               timeLabel="AT"
               alerts={localConfig.qaColorAlerts}
