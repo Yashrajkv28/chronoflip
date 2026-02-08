@@ -25,7 +25,7 @@ const App: React.FC = () => {
   }, [darkMode]);
 
   return (
-    <div className="relative text-gray-900 dark:text-white min-h-screen">
+    <div className="relative text-gray-900 dark:text-white h-[100dvh] overflow-hidden">
       {/* Dark Mode Toggle */}
       <button
         onClick={() => setDarkMode(!darkMode)}

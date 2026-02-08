@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react';
 import FlipClockDisplay from './FlipClockDisplay';
 import TimerSettings from './TimerSettings';
 import { audioService } from '../services/audioService';
@@ -149,6 +149,10 @@ const FlipClockTimer: React.FC = () => {
   // Wake Lock API - prevents screen sleep during timer
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
+  // Auto-scale refs — fit content to viewport on mobile
+  const outerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+
   const requestWakeLock = async () => {
     if ('wakeLock' in navigator) {
       try {
@@ -230,6 +234,31 @@ const FlipClockTimer: React.FC = () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
     };
+  }, []);
+
+  // Auto-scale content to fit viewport (prevents scrolling on mobile landscape)
+  useLayoutEffect(() => {
+    const outer = outerRef.current;
+    const content = contentRef.current;
+    if (!outer || !content) return;
+
+    const updateScale = () => {
+      const style = getComputedStyle(outer);
+      const availH = outer.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+      const availW = outer.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+      const contentH = content.scrollHeight;
+      const contentW = content.scrollWidth;
+      const scale = Math.min(1, availH / contentH, availW / contentW);
+      content.style.transform = scale < 1 ? `scale(${scale})` : '';
+    };
+
+    updateScale();
+
+    const ro = new ResizeObserver(updateScale);
+    ro.observe(outer);
+    ro.observe(content);
+
+    return () => ro.disconnect();
   }, []);
 
   // Persist config to localStorage whenever it changes
@@ -983,7 +1012,7 @@ const FlipClockTimer: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
+    <div ref={outerRef} className="h-[100dvh] flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
       
       {/* Decorative background orbs - dark mode only */}
       <div className="hidden dark:block absolute top-10 left-10 w-96 h-96 rounded-full blur-[120px]" style={{ backgroundColor: config.orbColors[0], opacity: (config.orbOpacities?.[0] ?? 30) / 100 }}></div>
@@ -1019,7 +1048,7 @@ const FlipClockTimer: React.FC = () => {
       </button>
 
       {/* Main Glass Container */}
-      <div className="relative z-10 flex flex-col items-center">
+      <div ref={contentRef} className="relative z-10 flex flex-col items-center">
 
         {/* Header Badges */}
         <div className="flex gap-4 mb-8 sm:mb-12 animate-[fadeIn_0.5s_ease-out]">
