@@ -35,8 +35,8 @@ const FlipClockDisplay: React.FC<FlipClockDisplayProps> = ({
 
   // Separator component with colon dots
   const Separator: React.FC = () => (
-    <div className="flex flex-col justify-center items-center mx-1 sm:mx-2 md:mx-3 
-                    h-20 sm:h-28 md:h-36 lg:h-44">
+    <div className="flex flex-col justify-center items-center mx-0.5 sm:mx-2 md:mx-3
+                    h-[4.5rem] sm:h-28 md:h-36 lg:h-44">
       <div className={`flex flex-col gap-3 sm:gap-4 md:gap-5 transition-opacity duration-300
                       ${isRunning ? 'animate-blink' : ''}`}>
         <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 rounded-full 

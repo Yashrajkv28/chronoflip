@@ -46,7 +46,7 @@ const FlipDigit: React.FC<FlipDigitProps> = ({ value, label, color = '' }) => {
 
   // Card styling
   const cardBg = "bg-gradient-to-b from-zinc-100 to-zinc-200 dark:from-zinc-700 dark:to-zinc-800";
-  const textStyle = 'font-mono text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold leading-none select-none text-zinc-800 dark:text-zinc-100';
+  const textStyle = 'font-mono text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold leading-none select-none text-zinc-800 dark:text-zinc-100';
   const colorStyle = color ? { color } : undefined;
 
   // LOGIC TO PREVENT FLICKER:
@@ -57,11 +57,11 @@ const FlipDigit: React.FC<FlipDigitProps> = ({ value, label, color = '' }) => {
   const upperStaticValue = (isValueMismatch && !isFlipping) ? previousValue : currentValue;
 
   return (
-    <div className="flex flex-col items-center mx-1 sm:mx-1.5 md:mx-2">
+    <div className="flex flex-col items-center mx-0.5 sm:mx-1.5 md:mx-2">
       {/* Main flip card container */}
       <div 
-        className="relative w-14 h-20 sm:w-20 sm:h-28 md:w-24 md:h-36 lg:w-32 lg:h-44 
-                   rounded-xl shadow-lg dark:shadow-2xl perspective-1000"
+        className="relative w-12 h-[4.5rem] sm:w-20 sm:h-28 md:w-24 md:h-36 lg:w-32 lg:h-44
+                   rounded-lg sm:rounded-xl shadow-lg dark:shadow-2xl perspective-1000"
         style={{ transformStyle: 'preserve-3d' }}
       >
         {/* ============================================ */}
@@ -145,8 +145,8 @@ const FlipDigit: React.FC<FlipDigitProps> = ({ value, label, color = '' }) => {
 
       {/* Label */}
       {label && (
-        <span className="mt-3 sm:mt-4 text-[10px] sm:text-xs font-bold text-zinc-400 dark:text-zinc-500 
-                        uppercase tracking-[0.15em] select-none">
+        <span className="mt-2 sm:mt-4 text-[8px] sm:text-xs font-bold text-zinc-400 dark:text-zinc-500
+                        uppercase tracking-[0.1em] sm:tracking-[0.15em] select-none">
           {label}
         </span>
       )}

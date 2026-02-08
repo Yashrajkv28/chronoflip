@@ -113,6 +113,13 @@ const FlipClockTimer: React.FC = () => {
   const [hybridPhase, setHybridPhase] = useState<'countdown' | 'countup'>('countdown');
   const [elapsedAfterZero, setElapsedAfterZero] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isStandalone] = useState(() =>
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (navigator as any).standalone === true
+  );
+  const [canFullscreen] = useState(() =>
+    !!(document.fullscreenEnabled || (document as any).webkitFullscreenEnabled)
+  );
   const [resetProgress, setResetProgress] = useState(0);
   const [isBlackout, setIsBlackout] = useState(false);
   const [isDelayPhase, setIsDelayPhase] = useState(false);
@@ -193,24 +200,36 @@ const FlipClockTimer: React.FC = () => {
     return () => clearInterval(clockInterval);
   }, [appMode]);
 
-  // Fullscreen toggle
+  // Fullscreen toggle (with webkit fallback for older mobile browsers)
   const toggleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(err => {
-        console.warn('Fullscreen request failed:', err);
-      });
+    const doc = document as any;
+    const el = document.documentElement as any;
+    const isFS = !!(document.fullscreenElement || doc.webkitFullscreenElement);
+    if (!isFS) {
+      const request = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (request) {
+        request.call(el).catch((err: Error) => {
+          console.warn('Fullscreen request failed:', err);
+        });
+      }
     } else {
-      document.exitFullscreen();
+      const exit = document.exitFullscreen || doc.webkitExitFullscreen;
+      if (exit) exit.call(document);
     }
   }, []);
 
-  // Listen for fullscreen changes
+  // Listen for fullscreen changes (standard + webkit)
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      const doc = document as any;
+      setIsFullscreen(!!(document.fullscreenElement || doc.webkitFullscreenElement));
     };
     document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+    };
   }, []);
 
   // Persist config to localStorage whenever it changes
@@ -805,11 +824,12 @@ const FlipClockTimer: React.FC = () => {
           } else if (showSettings) {
             setShowSettings(false);
           } else if (isFullscreen) {
-            document.exitFullscreen();
+            const doc = document as any;
+            (document.exitFullscreen || doc.webkitExitFullscreen)?.call(document);
           }
           break;
         case 'KeyF':
-          if (!e.metaKey && !e.ctrlKey) {
+          if (!e.metaKey && !e.ctrlKey && canFullscreen && !isStandalone) {
             e.preventDefault();
             toggleFullscreen();
           }
@@ -845,7 +865,7 @@ const FlipClockTimer: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [appMode, status, showSettings, isFullscreen, isBlackout, toggleFullscreen]);
+  }, [appMode, status, showSettings, isFullscreen, isBlackout, toggleFullscreen, canFullscreen, isStandalone]);
 
   const handleConfigSave = (newConfig: TimerConfig) => {
     const newTime = newConfig.initialTimeInSeconds;
@@ -1010,8 +1030,8 @@ const FlipClockTimer: React.FC = () => {
         {/* CLOCK DISPLAY CONTAINER - Glassmorphism */}
         <div className={`
           relative
-          p-8 sm:p-12 md:p-16
-          rounded-[2.5rem]
+          p-4 sm:p-12 md:p-16
+          rounded-2xl sm:rounded-[2.5rem]
           bg-white/30 dark:bg-white/5
           backdrop-blur-2xl backdrop-saturate-150
           border border-white/40 dark:border-white/10
@@ -1198,19 +1218,22 @@ const FlipClockTimer: React.FC = () => {
             <svg className="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>
           </button>
 
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            title={isFullscreen ? "Exit Fullscreen (F)" : "Fullscreen (F)"}
-            aria-label={isFullscreen ? "Exit fullscreen mode" : "Enter fullscreen mode"}
-            className="px-6 py-5 rounded-2xl bg-white/10 dark:bg-black/20 text-gray-600 dark:text-white font-bold border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/5 hover:scale-105 active:scale-95 transition-all duration-300 backdrop-blur-md"
-          >
-            {isFullscreen ? (
-              <svg className="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" /></svg>
-            ) : (
-              <svg className="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" /></svg>
-            )}
-          </button>
+          {/* Fullscreen button - hidden on iOS Safari (no API) and standalone PWA (already fullscreen) */}
+          {canFullscreen && !isStandalone && (
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              title={isFullscreen ? "Exit Fullscreen (F)" : "Fullscreen (F)"}
+              aria-label={isFullscreen ? "Exit fullscreen mode" : "Enter fullscreen mode"}
+              className="px-6 py-5 rounded-2xl bg-white/10 dark:bg-black/20 text-gray-600 dark:text-white font-bold border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/5 hover:scale-105 active:scale-95 transition-all duration-300 backdrop-blur-md"
+            >
+              {isFullscreen ? (
+                <svg className="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" /></svg>
+              ) : (
+                <svg className="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" /></svg>
+              )}
+            </button>
+          )}
 
           {/* Blackout button - only when timer is running */}
           {appMode === 'timer' && status === 'running' && (
