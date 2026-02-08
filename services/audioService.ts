@@ -30,43 +30,47 @@ class AudioService {
   private enabled: boolean = true;
   private vibrationEnabled: boolean = true;
   private customAudioCache: Map<string, AudioBuffer> = new Map();
+  private rawAudioCache: Map<string, ArrayBuffer> = new Map();
   private currentAudio: HTMLAudioElement | null = null;
+  private currentSource: AudioBufferSourceNode | null = null;
+  private currentSourceGain: GainNode | null = null;
   private tickAudio: HTMLAudioElement | null = null;
-  private alarmAudio: HTMLAudioElement | null = null;
 
   constructor() {
-    // AudioContext is created lazily on first use (browser autoplay policy)
-    // Preload alarm sound so it plays instantly
-    this.preloadAlarm();
+    // Pre-fetch alarm audio data (raw bytes — no AudioContext needed yet)
+    this.prefetchAlarm();
   }
 
   /**
-   * Preload the alarm audio element for instant playback
+   * Pre-fetch alarm audio as raw ArrayBuffer (no AudioContext needed).
+   * Decoding happens lazily on first playCustom() call.
    */
-  private preloadAlarm(): void {
-    try {
-      this.alarmAudio = new Audio('/sounds/my-alarm.mp3');
-      this.alarmAudio.preload = 'auto';
-      // Force the browser to start loading
-      this.alarmAudio.load();
-    } catch (e) {
-      console.warn('Alarm preload failed:', e);
-    }
+  private prefetchAlarm(): void {
+    fetch('/sounds/my-alarm.mp3')
+      .then(res => res.arrayBuffer())
+      .then(buf => { this.rawAudioCache.set('/sounds/my-alarm.mp3', buf); })
+      .catch(() => { /* will fetch on demand */ });
   }
 
   /**
    * Stop any currently playing custom audio
    */
   stop(): void {
+    // Stop Web Audio API source (primary path)
+    if (this.currentSource) {
+      try { this.currentSource.stop(); } catch (_) { /* already stopped */ }
+      this.currentSource.disconnect();
+      this.currentSource = null;
+    }
+    if (this.currentSourceGain) {
+      this.currentSourceGain.disconnect();
+      this.currentSourceGain = null;
+    }
+    // Stop HTMLAudioElement fallback
     if (this.currentAudio) {
       this.currentAudio.pause();
       this.currentAudio.currentTime = 0;
-      // Don't null alarmAudio — we reuse it
-      if (this.currentAudio !== this.alarmAudio) {
-        this.currentAudio = null;
-      } else {
-        this.currentAudio = null;
-      }
+      this.currentAudio = null;
     }
     if (this.tickAudio) {
       this.tickAudio.pause();
@@ -356,33 +360,61 @@ class AudioService {
   }
 
   /**
-   * Play a custom audio file
-   * @param url URL to the audio file
+   * Play a custom audio file.
+   * Uses Web Audio API (AudioBufferSourceNode) as the primary path — this works
+   * reliably on iOS standalone PWA where HTMLAudioElement.play() fails outside
+   * direct user gestures. Falls back to HTMLAudioElement if Web Audio API fails.
    */
   async playCustom(url: string): Promise<void> {
     if (!this.enabled || this.volume === 0) return;
 
     // Stop any currently playing custom audio first
-    if (this.currentAudio) {
-      this.currentAudio.pause();
-      this.currentAudio.currentTime = 0;
-      this.currentAudio = null;
-    }
+    this.stop();
 
-    // Reuse preloaded alarm element if it matches the URL
-    if (this.alarmAudio && url === '/sounds/my-alarm.mp3') {
-      try {
-        this.alarmAudio.currentTime = 0;
-        this.alarmAudio.volume = this.volume;
-        this.currentAudio = this.alarmAudio;
-        await this.alarmAudio.play();
-        return;
-      } catch (e) {
-        console.warn('Preloaded alarm playback failed, trying fresh element:', e);
+    // --- Primary: Web Audio API (works in iOS standalone PWA) ---
+    try {
+      const ctx = await this.getContext();
+
+      // Use cached AudioBuffer if available
+      let buffer = this.customAudioCache.get(url);
+
+      if (!buffer) {
+        // Use pre-fetched raw data if available, otherwise fetch now
+        let arrayBuffer = this.rawAudioCache.get(url);
+        if (!arrayBuffer) {
+          const response = await fetch(url);
+          arrayBuffer = await response.arrayBuffer();
+        } else {
+          // Remove from raw cache since we'll store the decoded version
+          this.rawAudioCache.delete(url);
+        }
+        // decodeAudioData consumes the ArrayBuffer, so copy if we may need it again
+        buffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
+        this.customAudioCache.set(url, buffer);
       }
+
+      const source = ctx.createBufferSource();
+      const gain = ctx.createGain();
+      source.buffer = buffer;
+      gain.gain.value = this.volume;
+      source.connect(gain);
+      gain.connect(ctx.destination);
+      source.start();
+
+      this.currentSource = source;
+      this.currentSourceGain = gain;
+      source.onended = () => {
+        if (this.currentSource === source) {
+          this.currentSource = null;
+          this.currentSourceGain = null;
+        }
+      };
+      return;
+    } catch (e) {
+      console.warn('Web Audio API playback failed, trying HTMLAudioElement:', e);
     }
 
-    // Fallback: create a new Audio element
+    // --- Fallback: HTMLAudioElement ---
     try {
       const audio = new Audio(url);
       audio.volume = this.volume;
