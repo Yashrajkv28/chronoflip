@@ -131,6 +131,8 @@ const FlipClockTimer: React.FC = () => {
   // App mode: timer or clock
   const [appMode, setAppMode] = useState<AppMode>('timer');
   const [currentTime, setCurrentTime] = useState(() => new Date());
+  const [screenOn, setScreenOn] = useState(false); // Manual wake lock for clock mode
+  const screenOnRef = useRef(false);
 
   // Refs
   const intervalRef = useRef<number | null>(null);
@@ -173,13 +175,30 @@ const FlipClockTimer: React.FC = () => {
   // Re-acquire wake lock when tab becomes visible
   useEffect(() => {
     const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'visible' && status === 'running') {
+      if (document.visibilityState === 'visible' && (status === 'running' || screenOn)) {
         await requestWakeLock();
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [status]);
+  }, [status, screenOn]);
+
+  // Manual wake lock for clock mode
+  useEffect(() => {
+    screenOnRef.current = screenOn;
+    if (screenOn) {
+      requestWakeLock();
+    } else if (status !== 'running') {
+      releaseWakeLock();
+    }
+  }, [screenOn]);
+
+  // Reset screenOn when leaving clock mode
+  useEffect(() => {
+    if (appMode !== 'clock') {
+      setScreenOn(false);
+    }
+  }, [appMode]);
 
   // Exit blackout mode on any key press
   useEffect(() => {
@@ -489,7 +508,7 @@ const FlipClockTimer: React.FC = () => {
           } else {
             // Countdown complete
             setStatus('completed');
-            releaseWakeLock(); // Allow screen to sleep
+            if (!screenOnRef.current) releaseWakeLock();
             if (config.playAlertSound) {
               audioService.vibrate('finish');
               audioService.playCustom('/sounds/my-alarm.mp3').catch(() => {
@@ -514,7 +533,7 @@ const FlipClockTimer: React.FC = () => {
 
             if (qaRemaining <= 0) {
               setStatus('completed');
-              releaseWakeLock();
+              if (!screenOnRef.current) releaseWakeLock();
               if (config.playAlertSound) {
                 audioService.vibrate('finish');
                 audioService.playCustom('/sounds/my-alarm.mp3').catch(() => {
@@ -535,7 +554,7 @@ const FlipClockTimer: React.FC = () => {
             if (countupRemaining <= 0) {
               setTimeInSeconds(config.countupLimitSeconds);
               setStatus('completed');
-              releaseWakeLock();
+              if (!screenOnRef.current) releaseWakeLock();
               if (config.playAlertSound) {
                 audioService.vibrate('finish');
                 audioService.playCustom('/sounds/my-alarm.mp3').catch(() => {
@@ -726,7 +745,7 @@ const FlipClockTimer: React.FC = () => {
     pausedAtRef.current = Date.now();
     audioService.play('pause');
     setStatus('paused');
-    releaseWakeLock(); // Allow screen to sleep
+    if (!screenOn) releaseWakeLock();
   };
 
   const handleResume = () => {
@@ -765,7 +784,7 @@ const FlipClockTimer: React.FC = () => {
     document.body.style.backgroundColor = '';
     document.body.style.backgroundImage = '';
     setIsAlertBgActive(false);
-    releaseWakeLock(); // Allow screen to sleep
+    if (!screenOn) releaseWakeLock();
   };
 
   // Reset confirmation - long press handlers
@@ -867,6 +886,12 @@ const FlipClockTimer: React.FC = () => {
           if (!e.metaKey && !e.ctrlKey && appMode === 'timer' && status === 'running') {
             e.preventDefault();
             setIsBlackout(prev => !prev);
+          }
+          break;
+        case 'KeyW':
+          if (!e.metaKey && !e.ctrlKey && appMode === 'clock') {
+            e.preventDefault();
+            setScreenOn(prev => !prev);
           }
           break;
         case 'KeyC':
@@ -1248,6 +1273,23 @@ const FlipClockTimer: React.FC = () => {
           >
             <svg className="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>
           </button>
+
+          {/* Keep Screen On button - only in clock mode */}
+          {appMode === 'clock' && (
+            <button
+              type="button"
+              onClick={() => setScreenOn(prev => !prev)}
+              title={screenOn ? "Allow Screen Sleep (W)" : "Keep Screen On (W)"}
+              aria-label={screenOn ? "Allow screen to sleep" : "Keep screen awake"}
+              className={`px-6 py-5 rounded-2xl font-bold border hover:scale-105 active:scale-95 transition-all duration-300 backdrop-blur-md ${screenOn ? 'bg-amber-500/20 text-amber-500 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/30' : 'bg-white/10 dark:bg-black/20 text-gray-600 dark:text-white border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/5'}`}
+            >
+              {screenOn ? (
+                <svg className="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" /></svg>
+              ) : (
+                <svg className="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></svg>
+              )}
+            </button>
+          )}
 
           {/* Fullscreen button - hidden on iOS Safari (no API) and standalone PWA (already fullscreen) */}
           {canFullscreen && !isStandalone && (
