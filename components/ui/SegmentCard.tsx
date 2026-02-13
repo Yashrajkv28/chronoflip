@@ -71,7 +71,7 @@ const SegmentCard: React.FC<SegmentCardProps> = ({ segment, editMode, onEdit, on
 
       {/* Sliding content wrapper */}
       <div
-        style={contentStyle}
+        style={{ ...contentStyle, touchAction: 'pan-y' }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}

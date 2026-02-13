@@ -23,9 +23,16 @@ interface UseSwipeToDeleteReturn {
   deleteZoneProps: { onClick: () => void };
 }
 
+// Mouse thresholds
 const THRESHOLD = 20;
-const MAX_SWIPE = -80;
 const DIRECTION_LOCK_PX = 5;
+// Touch thresholds (more sensitive)
+const TOUCH_THRESHOLD = 12;
+const TOUCH_DIRECTION_LOCK_PX = 3;
+// Velocity: if flick speed exceeds this (px/ms), snap open regardless of distance
+const VELOCITY_THRESHOLD = 0.3;
+
+const MAX_SWIPE = -80;
 const VERTICAL_RATIO = 1.2;
 
 export function useSwipeToDelete({
@@ -45,6 +52,12 @@ export function useSwipeToDelete({
   const directionRef = useRef<'none' | 'horizontal' | 'vertical'>('none');
   const pointerIdRef = useRef<number | null>(null);
   const wasSwipingRef = useRef(false);
+  const isTouchRef = useRef(false);
+
+  // Velocity tracking
+  const lastXRef = useRef(0);
+  const lastTimeRef = useRef(0);
+  const velocityRef = useRef(0);
 
   const close = useCallback(() => {
     setOffsetX(0);
@@ -64,6 +77,7 @@ export function useSwipeToDelete({
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     if (disabled) return;
     wasSwipingRef.current = false;
+    isTouchRef.current = e.pointerType === 'touch';
 
     // If already open and user taps card content, close it
     if (isOpen) {
@@ -81,6 +95,11 @@ export function useSwipeToDelete({
     directionRef.current = 'none';
     setIsTracking(true);
 
+    // Initialize velocity tracking
+    lastXRef.current = e.clientX;
+    lastTimeRef.current = e.timeStamp;
+    velocityRef.current = 0;
+
     // Store element ref but DON'T capture yet — capture only after horizontal lock
     // to avoid eating click events on taps
     elementRef.current = e.currentTarget as HTMLElement;
@@ -94,9 +113,11 @@ export function useSwipeToDelete({
     const absDX = Math.abs(deltaX);
     const absDY = Math.abs(deltaY);
 
+    const lockPx = isTouchRef.current ? TOUCH_DIRECTION_LOCK_PX : DIRECTION_LOCK_PX;
+
     // Lock direction on first significant movement
     if (directionRef.current === 'none') {
-      if (absDX < DIRECTION_LOCK_PX && absDY < DIRECTION_LOCK_PX) return;
+      if (absDX < lockPx && absDY < lockPx) return;
 
       if (absDY > absDX * VERTICAL_RATIO) {
         directionRef.current = 'vertical';
@@ -114,6 +135,16 @@ export function useSwipeToDelete({
     if (directionRef.current !== 'horizontal') return;
 
     wasSwipingRef.current = true;
+
+    // Update velocity (exponential moving average for smoothness)
+    const now = e.timeStamp;
+    const dt = now - lastTimeRef.current;
+    if (dt > 0) {
+      const instantVelocity = (e.clientX - lastXRef.current) / dt; // px/ms, negative = left
+      velocityRef.current = 0.7 * instantVelocity + 0.3 * velocityRef.current;
+    }
+    lastXRef.current = e.clientX;
+    lastTimeRef.current = now;
 
     // Only allow left swipe with rubber-band on right
     let clamped: number;
@@ -137,8 +168,11 @@ export function useSwipeToDelete({
     setIsTracking(false);
 
     const deltaX = e.clientX - startXRef.current;
+    const threshold = isTouchRef.current ? TOUCH_THRESHOLD : THRESHOLD;
+    const velocity = velocityRef.current; // negative = leftward
 
-    if (deltaX < THRESHOLD * -1) {
+    // Snap open if: distance exceeds threshold OR velocity is fast enough (leftward)
+    if (deltaX < threshold * -1 || velocity < -VELOCITY_THRESHOLD) {
       setOffsetX(MAX_SWIPE);
       setIsOpen(true);
       if (onOpen && id) onOpen(id);

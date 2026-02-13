@@ -73,7 +73,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, editMode, onSelect, onStar
 
       {/* Sliding content wrapper */}
       <div
-        style={contentStyle}
+        style={{ ...contentStyle, touchAction: 'pan-y' }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
