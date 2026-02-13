@@ -405,7 +405,7 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
         style={isFlashing
           ? { backgroundColor: flashColor }
           : activeAlertColor
-            ? { backgroundColor: activeAlertColor + '25' } // subtle tint (~15% opacity)
+            ? { backgroundColor: activeAlertColor }
             : undefined
         }
       >
@@ -506,7 +506,11 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
               <button
                 type="button"
                 onClick={timer.start}
-                className="group relative px-10 py-5 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/30 hover:border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:shadow-[0_0_30px_rgba(16,185,129,0.3)] backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300"
+                className={`group relative px-10 py-5 rounded-2xl font-bold backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300 ${
+                  activeAlertColor
+                    ? 'bg-white/10 dark:bg-black/20 text-gray-600 dark:text-white border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/5'
+                    : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:shadow-[0_0_30px_rgba(16,185,129,0.3)]'
+                }`}
               >
                 <div className="flex items-center gap-3">
                   <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -520,7 +524,11 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
               <button
                 type="button"
                 onClick={timer.pause}
-                className="group relative px-10 py-5 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/30 hover:border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.15)] hover:shadow-[0_0_30px_rgba(245,158,11,0.3)] backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300"
+                className={`group relative px-10 py-5 rounded-2xl font-bold backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300 ${
+                  activeAlertColor
+                    ? 'bg-white/10 dark:bg-black/20 text-gray-600 dark:text-white border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/5'
+                    : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-600 dark:text-amber-400 border border-amber-500/30 hover:border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.15)] hover:shadow-[0_0_30px_rgba(245,158,11,0.3)]'
+                }`}
               >
                 <div className="flex items-center gap-3">
                   <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
@@ -534,7 +542,11 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
               <button
                 type="button"
                 onClick={timer.resume}
-                className="group relative px-10 py-5 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/30 hover:border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:shadow-[0_0_30px_rgba(16,185,129,0.3)] backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300"
+                className={`group relative px-10 py-5 rounded-2xl font-bold backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300 ${
+                  activeAlertColor
+                    ? 'bg-white/10 dark:bg-black/20 text-gray-600 dark:text-white border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/5'
+                    : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:shadow-[0_0_30px_rgba(16,185,129,0.3)]'
+                }`}
               >
                 <div className="flex items-center gap-3">
                   <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
