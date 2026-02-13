@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TimerConfig, TimerMode, ColorAlert } from './FlipClockTimer';
+import { TimerConfig, TimerMode, ColorAlert, AppMode } from './FlipClockTimer';
 
 /* --- Reusable UI Components (defined outside to prevent remount on state change) --- */
 
@@ -184,11 +184,17 @@ interface TimerSettingsProps {
   onSave: (config: TimerConfig) => void;
   onClose: () => void;
   onScheduleStart?: (scheduledTime: number) => void;
-  clockModeOnly?: boolean;
+  appMode?: AppMode;
 }
 
-const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, onScheduleStart, clockModeOnly = false }) => {
-  const [localConfig, setLocalConfig] = useState<TimerConfig>(config);
+const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, onScheduleStart, appMode = 'countdown' }) => {
+  const clockModeOnly = appMode === 'clock';
+  const [localConfig, setLocalConfig] = useState<TimerConfig>(() => {
+    if (appMode !== 'clock') {
+      return { ...config, mode: appMode as TimerMode };
+    }
+    return config;
+  });
   const [hours, setHours] = useState(Math.floor(config.initialTimeInSeconds / 3600));
   const [minutes, setMinutes] = useState(Math.floor((config.initialTimeInSeconds % 3600) / 60));
   const [seconds, setSeconds] = useState(config.initialTimeInSeconds % 60);
@@ -314,7 +320,12 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
           >
             Cancel
           </button>
-          <span className="text-zinc-900 dark:text-white font-semibold text-[17px]">{clockModeOnly ? 'Appearance' : 'Timer'}</span>
+          <span className="text-zinc-900 dark:text-white font-semibold text-[17px]">{
+            appMode === 'clock' ? 'Appearance' :
+            appMode === 'countup' ? 'Count Up' :
+            appMode === 'countdown' ? 'Countdown' :
+            appMode === 'hybrid' ? 'Hybrid' : 'Timer'
+          }</span>
           <button
             type="button"
             onClick={handleSave}
@@ -327,25 +338,6 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
         <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 scrollbar-hide">
 
           {!clockModeOnly && (<>
-          <div className="mb-8">
-            <SegmentedControl
-              options={[
-                { value: 'countdown', label: 'Countdown' },
-                { value: 'hybrid', label: 'Hybrid' },
-                { value: 'countup', label: 'Count Up' },
-              ]}
-              value={localConfig.mode}
-              onChange={handleModeChange}
-            />
-            <div className="mt-2 px-2 text-xs text-zinc-400 dark:text-zinc-500 text-center">
-              {localConfig.mode === 'hybrid' && ((qaHours + qaMinutes + qaSeconds) > 0
-                ? "Presentation countdown → Q&A countdown → Complete"
-                : "Counts down to zero, then starts counting up.")}
-              {localConfig.mode === 'countup' && ((cuHours + cuMinutes + cuSeconds) > 0
-                ? "Counts up to the set time, then completes."
-                : "Counts up infinitely (stopwatch).")}
-            </div>
-          </div>
 
           {localConfig.mode !== 'countup' && (
             <>

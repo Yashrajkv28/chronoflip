@@ -117,7 +117,9 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
             <ShortcutRow shortcut="S" action="Toggle settings" />
             <ShortcutRow shortcut="F" action="Toggle fullscreen" />
             <ShortcutRow shortcut="B" action="Blackout mode (when running)" />
-            <ShortcutRow shortcut="C" action="Toggle Clock / Timer" />
+            <ShortcutRow shortcut="C" action="Cycle modes: Clock → Count Up → Count Down → Hybrid → Speech" />
+            <ShortcutRow shortcut="D" action="Toggle dark mode" />
+            <ShortcutRow shortcut="W" action="Keep screen on (clock mode)" />
             <ShortcutRow shortcut="Esc" action="Close / Exit fullscreen / Exit blackout" border={false} />
           </Section>
 
@@ -131,8 +133,8 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
               description="Screen goes black while the timer runs. Tap or press any key to restore. Saves battery during presentations."
             />
             <InfoRow
-              title="Clock Mode"
-              description="Switch to a live clock display with the toggle in the top-left corner, or press C."
+              title="Mode Cycling"
+              description="Cycle through 5 modes with the top-left button or C key: Clock → Count Up → Count Down → Hybrid → Speech Timer."
             />
             <InfoRow
               title="Delayed Start"
@@ -202,7 +204,9 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
             <ShortcutRow shortcut="S" action="設定の切り替え" />
             <ShortcutRow shortcut="F" action="フルスクリーン切り替え" />
             <ShortcutRow shortcut="B" action="ブラックアウトモード（実行中のみ）" />
-            <ShortcutRow shortcut="C" action="時計 / タイマー切り替え" />
+            <ShortcutRow shortcut="C" action="モード切替: 時計 → カウントアップ → カウントダウン → ハイブリッド → スピーチ" />
+            <ShortcutRow shortcut="D" action="ダークモード切り替え" />
+            <ShortcutRow shortcut="W" action="画面オン維持（時計モード）" />
             <ShortcutRow shortcut="Esc" action="閉じる / フルスクリーン解除 / ブラックアウト解除" border={false} />
           </Section>
 
@@ -216,8 +220,8 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
               description="タイマー動作中に画面が黒くなります。タップまたは任意のキーで復元。プレゼンテーション中のバッテリー節約に便利です。"
             />
             <InfoRow
-              title="時計モード"
-              description="左上のトグルまたはCキーでライブ時計表示に切り替えます。"
+              title="モード切替"
+              description="左上のボタンまたはCキーで5つのモードを切り替えます: 時計 → カウントアップ → カウントダウン → ハイブリッド → スピーチタイマー"
             />
             <InfoRow
               title="遅延開始"
