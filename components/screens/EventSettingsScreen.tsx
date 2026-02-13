@@ -45,6 +45,7 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
   const [schedDate, setSchedDate] = useState('');
   const [schedTime, setSchedTime] = useState('');
   const [schedError, setSchedError] = useState('');
+  const [swipeOpenId, setSwipeOpenId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -83,9 +84,9 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
   return (
     <div className="h-[100dvh] flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="shrink-0 px-4 sm:px-6 pt-6 pb-4">
+      <div className="shrink-0 px-4 sm:px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-4">
         <div className="max-w-2xl mx-auto">
-          {/* Top row: back, title, actions */}
+          {/* Top row: back + title */}
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
@@ -119,19 +120,8 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
               )}
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setEditMode(!editMode)}
-                className={`px-5 py-2.5 rounded-xl text-sm font-semibold backdrop-blur-xl border shadow-lg hover:scale-105 active:scale-95 transition-all duration-300 ${
-                  editMode
-                    ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-500/30'
-                    : 'bg-white/20 dark:bg-white/5 text-zinc-600 dark:text-zinc-300 border-white/30 dark:border-white/10 hover:bg-white/30 dark:hover:bg-white/10'
-                }`}
-              >
-                {editMode ? 'Done' : 'Edit'}
-              </button>
-            </div>
+            {/* Invisible spacer to keep title centered */}
+            <div className="w-[38px]" />
           </div>
 
           {/* Dynamic duration + schedule info bar */}
@@ -175,9 +165,9 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
             );
           })()}
 
-          {/* START all & ADD buttons */}
-          <div className="flex items-center justify-center gap-4 mt-5">
-            {event.segments.length > 0 && (
+          {/* START button */}
+          {event.segments.length > 0 && (
+            <div className="flex items-center justify-center mt-5">
               <button
                 type="button"
                 onClick={() => onStartEvent()}
@@ -194,11 +184,26 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
                   START
                 </div>
               </button>
-            )}
+            </div>
+          )}
+
+          {/* Edit + Add buttons centered */}
+          <div className="flex items-center justify-center gap-3 mt-4">
+            <button
+              type="button"
+              onClick={() => setEditMode(!editMode)}
+              className={`px-5 py-2.5 rounded-xl text-sm font-semibold backdrop-blur-xl border shadow-lg hover:scale-105 active:scale-95 transition-all duration-300 ${
+                editMode
+                  ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-500/30'
+                  : 'bg-white/20 dark:bg-white/5 text-zinc-600 dark:text-zinc-300 border-white/30 dark:border-white/10 hover:bg-white/30 dark:hover:bg-white/10'
+              }`}
+            >
+              {editMode ? 'Done' : 'Edit'}
+            </button>
             <button
               type="button"
               onClick={onAddSegment}
-              className="p-3 rounded-2xl
+              className="p-2.5 rounded-xl
                          bg-white/20 dark:bg-white/5
                          backdrop-blur-xl
                          border border-white/30 dark:border-white/10
@@ -208,7 +213,7 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
                          transition-all duration-300 shadow-lg"
               aria-label="Add segment"
             >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" strokeLinecap="round">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" strokeLinecap="round">
                 <path d="M12 5v14m-7-7h14" />
               </svg>
             </button>
@@ -243,6 +248,8 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
                     onEdit={() => onEditSegment(segment.id)}
                     onStart={() => onStartEvent(index)}
                     onDelete={() => onDeleteSegment(segment.id)}
+                    swipeOpenId={swipeOpenId}
+                    onSwipeOpen={setSwipeOpenId}
                   />
                 ))}
               </SortableContext>

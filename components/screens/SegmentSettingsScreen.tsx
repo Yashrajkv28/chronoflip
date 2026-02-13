@@ -120,7 +120,7 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
         </div>
 
         {/* Form */}
-        <div className="p-5 space-y-6">
+        <div className="p-5 pb-24 sm:pb-5 space-y-6">
           {/* Name */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-2">

@@ -326,7 +326,7 @@ const App: React.FC = () => {
           onClick={() => setDarkMode(!darkMode)}
           title="Toggle Dark Mode (D)"
           aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-          className="fixed top-6 right-6 z-50 p-3 rounded-full
+          className="fixed top-[max(1.5rem,env(safe-area-inset-top))] right-4 sm:right-6 z-50 p-3 rounded-full
                      bg-white/20 dark:bg-black/20 backdrop-blur-md
                      border border-white/20 dark:border-white/10
                      shadow-lg hover:scale-110 transition-all duration-200"

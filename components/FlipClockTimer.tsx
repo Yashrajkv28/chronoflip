@@ -1093,7 +1093,7 @@ const FlipClockTimer: React.FC<FlipClockTimerProps> = ({ onSwitchToSpeech }) => 
           appMode === 'countdown' ? 'Switch to hybrid timer' :
           'Switch to speech timer'
         }
-        className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20 flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-white/20 dark:bg-white/5 backdrop-blur-xl border border-white/30 dark:border-white/10 text-zinc-600 dark:text-zinc-300 hover:bg-white/30 dark:hover:bg-white/10 hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg"
+        className="absolute top-[max(1rem,env(safe-area-inset-top))] left-4 sm:top-6 sm:left-6 z-20 flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-white/20 dark:bg-white/5 backdrop-blur-xl border border-white/30 dark:border-white/10 text-zinc-600 dark:text-zinc-300 hover:bg-white/30 dark:hover:bg-white/10 hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg"
       >
         {appMode === 'clock' ? (
           <>
