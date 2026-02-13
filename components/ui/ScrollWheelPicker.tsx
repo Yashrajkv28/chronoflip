@@ -60,11 +60,13 @@ const ScrollWheelPicker: React.FC<ScrollWheelPickerProps> = ({ value, min, max, 
         <div
           ref={containerRef}
           onScroll={handleScroll}
-          className="overflow-y-scroll overflow-x-hidden scrollbar-hide snap-y snap-mandatory"
+          className="overflow-y-scroll overflow-x-hidden snap-y snap-mandatory no-scrollbar"
           style={{
             height: ITEM_HEIGHT * VISIBLE_ITEMS,
             WebkitOverflowScrolling: 'touch',
-          }}
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+          } as React.CSSProperties}
         >
           {/* Top spacer */}
           <div style={{ height: spacerHeight }} />
