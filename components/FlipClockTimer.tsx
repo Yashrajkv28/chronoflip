@@ -1093,40 +1093,40 @@ const FlipClockTimer: React.FC<FlipClockTimerProps> = ({ onSwitchToSpeech }) => 
           appMode === 'countdown' ? 'Switch to hybrid timer' :
           'Switch to speech timer'
         }
-        className="absolute top-[max(1rem,env(safe-area-inset-top))] left-4 sm:top-6 sm:left-6 z-20 flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-white/20 dark:bg-white/5 backdrop-blur-xl border border-white/30 dark:border-white/10 text-zinc-600 dark:text-zinc-300 hover:bg-white/30 dark:hover:bg-white/10 hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg"
+        className="absolute top-[max(1rem,env(safe-area-inset-top))] left-4 sm:top-6 sm:left-6 z-20 flex items-center gap-2 px-4 py-2.5 sm:px-4 sm:py-2.5 rounded-xl bg-white/20 dark:bg-white/5 backdrop-blur-xl border border-white/30 dark:border-white/10 text-zinc-600 dark:text-zinc-300 hover:bg-white/30 dark:hover:bg-white/10 hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg"
       >
         {appMode === 'clock' ? (
           <>
-            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="17,1 21,5 17,9" />
               <path d="M3 11V9a4 4 0 0 1 4-4h14" />
             </svg>
-            <span className="text-xs sm:text-sm font-semibold tracking-wide">Count Up</span>
+            <span className="text-sm font-semibold tracking-wide">Count Up</span>
           </>
         ) : appMode === 'countup' ? (
           <>
-            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="7,23 3,19 7,15" />
               <path d="M21 13v2a4 4 0 0 1-4 4H3" />
             </svg>
-            <span className="text-xs sm:text-sm font-semibold tracking-wide">Count Down</span>
+            <span className="text-sm font-semibold tracking-wide">Count Down</span>
           </>
         ) : appMode === 'countdown' ? (
           <>
-            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="17,1 21,5 17,9" />
               <path d="M3 11V9a4 4 0 0 1 4-4h14" />
               <polyline points="7,23 3,19 7,15" />
               <path d="M21 13v2a4 4 0 0 1-4 4H3" />
             </svg>
-            <span className="text-xs sm:text-sm font-semibold tracking-wide">Hybrid</span>
+            <span className="text-sm font-semibold tracking-wide">Hybrid</span>
           </>
         ) : (
           <>
-            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
-            <span className="text-xs sm:text-sm font-semibold tracking-wide">Speech</span>
+            <span className="text-sm font-semibold tracking-wide">Speech</span>
           </>
         )}
       </button>
