@@ -34,21 +34,22 @@ class AudioService {
   private currentAudio: HTMLAudioElement | null = null;
   private currentSource: AudioBufferSourceNode | null = null;
   private currentSourceGain: GainNode | null = null;
-  private tickAudio: HTMLAudioElement | null = null;
+  private tickBuffer: AudioBuffer | null = null;
 
   constructor() {
-    // Pre-fetch alarm audio data (raw bytes — no AudioContext needed yet)
-    this.prefetchAlarm();
+    // Pre-fetch alarm and tick audio data (raw bytes — no AudioContext needed yet)
+    this.prefetchAudio('/sounds/my-alarm.mp3');
+    this.prefetchAudio('/sounds/tick.mp3');
   }
 
   /**
-   * Pre-fetch alarm audio as raw ArrayBuffer (no AudioContext needed).
-   * Decoding happens lazily on first playCustom() call.
+   * Pre-fetch audio as raw ArrayBuffer (no AudioContext needed).
+   * Decoding happens lazily on first play call.
    */
-  private prefetchAlarm(): void {
-    fetch('/sounds/my-alarm.mp3')
+  private prefetchAudio(url: string): void {
+    fetch(url)
       .then(res => res.arrayBuffer())
-      .then(buf => { this.rawAudioCache.set('/sounds/my-alarm.mp3', buf); })
+      .then(buf => { this.rawAudioCache.set(url, buf); })
       .catch(() => { /* will fetch on demand */ });
   }
 
@@ -71,10 +72,6 @@ class AudioService {
       this.currentAudio.pause();
       this.currentAudio.currentTime = 0;
       this.currentAudio = null;
-    }
-    if (this.tickAudio) {
-      this.tickAudio.pause();
-      this.tickAudio.currentTime = 0;
     }
     // Also stop vibration
     if (this.isVibrationSupported()) {
@@ -201,26 +198,32 @@ class AudioService {
   }
 
   /**
-   * Tick sound - plays custom tick.mp3 (first 200ms only)
+   * Tick sound - plays custom tick.mp3 via Web Audio API (works on iOS).
+   * Falls back to synthesized tick if file loading fails.
    */
   private async playTick(ctx: AudioContext): Promise<void> {
     try {
-      // Create the tick audio element once and reuse it
-      if (!this.tickAudio) {
-        this.tickAudio = new Audio('/sounds/tick.mp3');
+      // Decode and cache the tick AudioBuffer on first use
+      if (!this.tickBuffer) {
+        let arrayBuffer = this.rawAudioCache.get('/sounds/tick.mp3');
+        if (!arrayBuffer) {
+          const response = await fetch('/sounds/tick.mp3');
+          arrayBuffer = await response.arrayBuffer();
+        } else {
+          this.rawAudioCache.delete('/sounds/tick.mp3');
+        }
+        this.tickBuffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
       }
 
-      this.tickAudio.currentTime = 0;
-      this.tickAudio.volume = this.volume;
-      await this.tickAudio.play();
+      const source = ctx.createBufferSource();
+      const gain = ctx.createGain();
+      source.buffer = this.tickBuffer;
+      gain.gain.value = this.volume;
+      source.connect(gain);
+      gain.connect(ctx.destination);
 
-      // Stop after 200ms (extract just the first tick from the file)
-      setTimeout(() => {
-        if (this.tickAudio) {
-          this.tickAudio.pause();
-          this.tickAudio.currentTime = 0;
-        }
-      }, 200);
+      // Play only the first 200ms of the tick file
+      source.start(0, 0, 0.2);
     } catch (e) {
       // Fallback to synthesized tick sound
       console.warn('Custom tick sound failed, using synthesized sound:', e);

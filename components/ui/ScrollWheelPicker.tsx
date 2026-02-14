@@ -15,19 +15,50 @@ const ScrollWheelPicker: React.FC<ScrollWheelPickerProps> = ({ value, min, max, 
   const containerRef = useRef<HTMLDivElement>(null);
   const isUserScrolling = useRef(false);
   const scrollTimeout = useRef<number | null>(null);
+  const valueRef = useRef(value);
+  valueRef.current = value;
+  // Flag to ignore onScroll events caused by the wheel handler setting scrollTop
+  const wheelScrollingRef = useRef(false);
 
   const values = Array.from({ length: max - min + 1 }, (_, i) => min + i);
   const spacerHeight = ITEM_HEIGHT * Math.floor(VISIBLE_ITEMS / 2);
 
-  // Scroll to value on mount and when value changes externally
+  // Sync scroll position when value changes from parent (presets, etc.)
   useEffect(() => {
     if (containerRef.current && !isUserScrolling.current) {
-      const targetScroll = (value - min) * ITEM_HEIGHT;
-      containerRef.current.scrollTop = targetScroll;
+      containerRef.current.scrollTop = (value - min) * ITEM_HEIGHT;
     }
   }, [value, min]);
 
+  // Mouse wheel: move exactly one item per notch, sync scroll position immediately
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaY) < 50) return; // trackpad: let native scroll handle it
+      e.preventDefault();
+
+      const current = valueRef.current;
+      const direction = Math.sign(e.deltaY);
+      const newValue = Math.max(min, Math.min(max, current + direction));
+      if (newValue !== current) {
+        valueRef.current = newValue;
+        // Sync scroll position immediately so visual matches value
+        wheelScrollingRef.current = true;
+        el.scrollTop = (newValue - min) * ITEM_HEIGHT;
+        requestAnimationFrame(() => { wheelScrollingRef.current = false; });
+        onChange(newValue);
+      }
+    };
+
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, [min, max, onChange]);
+
+  // Handle native scroll (touch/trackpad) — ignored for wheel-driven scrolls
   const handleScroll = useCallback(() => {
+    if (wheelScrollingRef.current) return;
     isUserScrolling.current = true;
 
     if (scrollTimeout.current) {
@@ -46,13 +77,13 @@ const ScrollWheelPicker: React.FC<ScrollWheelPickerProps> = ({ value, min, max, 
           behavior: 'smooth',
         });
 
-        if (newValue !== value) {
+        if (newValue !== valueRef.current) {
           onChange(newValue);
         }
       }
       isUserScrolling.current = false;
     }, 100);
-  }, [min, values.length, value, onChange]);
+  }, [min, values.length, onChange]);
 
   return (
     <div className="flex flex-col items-center">

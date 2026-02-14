@@ -18,6 +18,7 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
   const [mode, setMode] = useState(segment.mode);
   const [colorAlerts, setColorAlerts] = useState<SpeechColorAlert[]>(segment.colorAlerts);
   const [sound, setSound] = useState(segment.soundEnabled);
+  const [flash, setFlash] = useState(segment.flashEnabled ?? false);
   const [tick, setTick] = useState(segment.tickEnabled ?? false);
 
   const handleSave = () => {
@@ -27,7 +28,7 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
       mode,
       colorAlerts,
       soundEnabled: sound,
-      flashEnabled: false,
+      flashEnabled: flash,
       tickEnabled: tick,
     });
   };
@@ -210,7 +211,7 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                   }`} />
                 </button>
               </div>
-              <div className="p-4 flex items-center justify-between">
+              <div className="p-4 flex items-center justify-between border-b border-zinc-200/50 dark:border-white/5">
                 <span className="text-[15px] font-medium text-zinc-900 dark:text-zinc-100">Tick Sound</span>
                 <button
                   type="button"
@@ -224,6 +225,23 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                 >
                   <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                     tick ? 'translate-x-5' : 'translate-x-0'
+                  }`} />
+                </button>
+              </div>
+              <div className="p-4 flex items-center justify-between">
+                <span className="text-[15px] font-medium text-zinc-900 dark:text-zinc-100">Flash on Completion</span>
+                <button
+                  type="button"
+                  onClick={() => setFlash(!flash)}
+                  aria-label="Flash on Completion"
+                  role="switch"
+                  aria-checked={flash}
+                  className={`relative w-11 h-6 rounded-full transition-colors duration-300 ease-in-out ${
+                    flash ? 'bg-blue-500' : 'bg-zinc-300 dark:bg-zinc-700'
+                  }`}
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                    flash ? 'translate-x-5' : 'translate-x-0'
                   }`} />
                 </button>
               </div>

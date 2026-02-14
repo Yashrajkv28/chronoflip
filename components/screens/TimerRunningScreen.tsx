@@ -56,7 +56,9 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
   const outerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Flash effect
+  // Flash effect — isFlashing stays true for entire sequence so it
+  // blocks the activeAlertColor fallthrough in the render. flashColor
+  // alternates between the color and '' to create the visual blink.
   const triggerFlash = useCallback((color: string) => {
     let count = 0;
     const flash = () => {
@@ -65,13 +67,8 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
         setFlashColor('');
         return;
       }
-      if (count % 2 === 0) {
-        setIsFlashing(true);
-        setFlashColor(color);
-      } else {
-        setIsFlashing(false);
-        setFlashColor('');
-      }
+      setIsFlashing(true);
+      setFlashColor(count % 2 === 0 ? color : '');
       count++;
       setTimeout(flash, 250);
     };
@@ -147,7 +144,7 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
           setActiveAlertColor(alert.color);
         }
         if (alert.sound) {
-          audioService.play('alert');
+          audioService.play(alert.timeInSeconds <= 10 ? 'warning' : 'alert');
         }
         if (alert.flash) {
           triggerFlash(alert.color);
@@ -403,7 +400,7 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
         ref={outerRef}
         className="h-[100dvh] flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden transition-colors duration-500"
         style={isFlashing
-          ? { backgroundColor: flashColor }
+          ? { backgroundColor: flashColor || 'transparent', transition: 'none' }
           : activeAlertColor
             ? { backgroundColor: activeAlertColor }
             : undefined
