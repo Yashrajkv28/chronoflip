@@ -87,26 +87,46 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
             <InfoRow
               title="Hybrid"
               description="Counts down to zero, then automatically switches to counting up. Optionally set a fixed Q&A duration in Settings."
+            />
+            <InfoRow
+              title="Speech Timer"
+              description="Create multiple timed segments for presentations. Each segment has its own duration, count mode, color alerts, tick sound, alarm, and flash settings. Segments auto-advance when complete."
               border={false}
             />
           </Section>
 
           <Section title="Color Alerts">
             <InfoRow
-              title="Visual & Audio Alerts"
-              description="Set color changes, flash effects, and sound notifications at specific time thresholds. Configure in Settings. Active in Countdown and Hybrid modes only."
+              title="Background"
+              description="Persistently changes the screen background color when a time threshold is reached. Stays active until the next alert or timer end."
+            />
+            <InfoRow
+              title="Flash"
+              description="Rapidly blinks the screen 3 times in the alert color when triggered. Useful for getting the speaker's attention without looking at the screen."
+            />
+            <InfoRow
+              title="Sound"
+              description="Plays an audio beep at the threshold. Alerts at 10 seconds or below play an urgent warning sound."
+            />
+            <InfoRow
+              title="Flash on Completion"
+              description="Flashes the screen when a timer or segment finishes. Enable per-segment in Speech Timer settings."
               border={false}
             />
           </Section>
 
-          <Section title="Audio">
+          <Section title="Audio & Haptics">
             <InfoRow
               title="Tick Sound"
-              description="Optional mechanical tick that plays each second."
+              description="Optional mechanical tick that plays each second while the timer runs."
             />
             <InfoRow
               title="Alert Sounds"
-              description="Beeps and chimes at alert thresholds and on timer completion."
+              description="Beeps at alert thresholds and a chime on timer completion. Custom alarm sound supported."
+            />
+            <InfoRow
+              title="Vibration"
+              description="Haptic feedback on start, pause, alerts, and completion. Works on supported mobile devices."
               border={false}
             />
           </Section>
@@ -145,6 +165,10 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
               description="Schedule the timer to start at a specific date and time. Configure in Settings."
             />
             <InfoRow
+              title="Keep Screen On"
+              description="Prevents the screen from sleeping while the timer runs. Can also be toggled manually with the sun/moon button or W key."
+            />
+            <InfoRow
               title="Install as App"
               description="Install ChronoFlip as a standalone app from your browser's menu for quick access."
               border={false}
@@ -174,26 +198,46 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
             <InfoRow
               title="ハイブリッド"
               description="ゼロまでカウントダウンした後、自動的にカウントアップに切り替わります。設定画面でQ&A時間を固定することもできます。"
+            />
+            <InfoRow
+              title="スピーチタイマー"
+              description="プレゼンテーション用に複数のタイムセグメントを作成できます。各セグメントには独自の時間、カウントモード、カラーアラート、チック音、アラーム、フラッシュ設定があります。セグメントは完了時に自動的に次へ進みます。"
               border={false}
             />
           </Section>
 
           <Section title="カラーアラート">
             <InfoRow
-              title="視覚・音声アラート"
-              description="特定の時間にカラー変更、フラッシュ効果、サウンド通知を設定できます。設定画面で構成してください。カウントダウンとハイブリッドモードでのみ有効です。"
+              title="背景色"
+              description="時間しきい値に達すると画面の背景色が変わります。次のアラートまたはタイマー終了まで維持されます。"
+            />
+            <InfoRow
+              title="フラッシュ"
+              description="アラート発動時に画面がアラート色で3回点滅します。画面を見ずに発表者の注意を引くのに便利です。"
+            />
+            <InfoRow
+              title="サウンド"
+              description="しきい値でビープ音を再生します。残り10秒以下のアラートでは緊急警告音が鳴ります。"
+            />
+            <InfoRow
+              title="完了時フラッシュ"
+              description="タイマーまたはセグメント終了時に画面がフラッシュします。スピーチタイマーの設定でセグメントごとに有効化できます。"
               border={false}
             />
           </Section>
 
-          <Section title="オーディオ">
+          <Section title="オーディオ・触覚フィードバック">
             <InfoRow
               title="チック音"
-              description="毎秒鳴るオプションの機械的なチック音。"
+              description="タイマー動作中に毎秒鳴るオプションの機械的なチック音。"
             />
             <InfoRow
               title="アラート音"
-              description="アラートしきい値とタイマー完了時のビープ音とチャイム。"
+              description="アラートしきい値でのビープ音とタイマー完了時のチャイム。カスタムアラーム音にも対応。"
+            />
+            <InfoRow
+              title="バイブレーション"
+              description="開始、一時停止、アラート、完了時の触覚フィードバック。対応モバイルデバイスで動作します。"
               border={false}
             />
           </Section>
@@ -230,6 +274,10 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
             <InfoRow
               title="予約開始"
               description="特定の日時にタイマーを開始するようスケジュールできます。設定画面で構成してください。"
+            />
+            <InfoRow
+              title="画面オン維持"
+              description="タイマー動作中に画面がスリープしないようにします。太陽/月ボタンまたはWキーで手動切り替えも可能です。"
             />
             <InfoRow
               title="アプリとしてインストール"
