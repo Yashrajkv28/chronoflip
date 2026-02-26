@@ -27,3 +27,5 @@ old/
 user.md
 
 .vercel
+.env*.local
+nul
