@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TimerConfig, TimerMode, ColorAlert, AppMode } from './FlipClockTimer';
+import { TimerConfig, TimerMode, ColorAlert, AppMode } from '../config';
 
 /* --- Reusable UI Components (defined outside to prevent remount on state change) --- */
 

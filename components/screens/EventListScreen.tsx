@@ -24,7 +24,6 @@ interface EventListScreenProps {
   onDeleteEvent: (eventId: string) => void;
   onReorderEvents: (activeId: string, overId: string) => void;
   onShowHelp: () => void;
-  onSwitchMode: () => void;
 }
 
 const EventListScreen: React.FC<EventListScreenProps> = ({
@@ -35,7 +34,6 @@ const EventListScreen: React.FC<EventListScreenProps> = ({
   onDeleteEvent,
   onReorderEvents,
   onShowHelp,
-  onSwitchMode,
 }) => {
   const [editMode, setEditMode] = useState(false);
   const [swipeOpenId, setSwipeOpenId] = useState<string | null>(null);
@@ -56,19 +54,6 @@ const EventListScreen: React.FC<EventListScreenProps> = ({
     <div className="h-[100dvh] flex flex-col overflow-hidden">
       {/* Header */}
       <div className="shrink-0 px-4 sm:px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-4 relative">
-        {/* Clock button - absolute top-left */}
-        <button
-          type="button"
-          onClick={() => onSwitchMode()}
-          className="absolute top-[max(1.5rem,env(safe-area-inset-top))] left-4 sm:left-6 z-10 flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-white/20 dark:bg-white/5 backdrop-blur-xl border border-white/30 dark:border-white/10 text-zinc-600 dark:text-zinc-300 hover:bg-white/30 dark:hover:bg-white/10 hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg"
-          title="Switch to Clock Mode (C)"
-        >
-          <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" /><polyline points="12,6 12,12 16,14" />
-          </svg>
-          <span className="text-xs sm:text-sm font-semibold tracking-wide">Clock</span>
-        </button>
-
         <div className="max-w-2xl mx-auto">
           {/* Row 1: Speech Timer badge centered */}
           <div className="flex items-center justify-center mb-3">

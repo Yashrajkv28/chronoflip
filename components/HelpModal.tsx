@@ -75,19 +75,7 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
 
           {/* ===== ENGLISH ===== */}
 
-          <Section title="Timer Modes">
-            <InfoRow
-              title="Countdown"
-              description="Counts down from a set duration to zero."
-            />
-            <InfoRow
-              title="Count Up"
-              description="Counts up from zero. Optionally set a target time in Settings to complete with an alarm."
-            />
-            <InfoRow
-              title="Hybrid"
-              description="Counts down to zero, then automatically switches to counting up. Optionally set a fixed Q&A duration in Settings."
-            />
+          <Section title="Speech Timer">
             <InfoRow
               title="Speech Timer"
               description="Create multiple timed segments for presentations. Each segment has its own duration, count mode, color alerts, tick sound, alarm, and flash settings. Segments auto-advance when complete."
@@ -110,7 +98,7 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
             />
             <InfoRow
               title="Flash on Completion"
-              description="Flashes the screen when a timer or segment finishes. Enable per-segment in Speech Timer settings."
+              description="Flashes the screen when a timer or segment finishes. Enable per-segment in segment settings."
               border={false}
             />
           </Section>
@@ -134,12 +122,9 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
           <Section title="Keyboard Shortcuts">
             <ShortcutRow shortcut="Space" action="Start / Pause / Resume" />
             <ShortcutRow shortcut="R" action="Reset (hold 1.5s when running)" />
-            <ShortcutRow shortcut="S" action="Toggle settings" />
             <ShortcutRow shortcut="F" action="Toggle fullscreen" />
             <ShortcutRow shortcut="B" action="Blackout mode (when running)" />
-            <ShortcutRow shortcut="C" action="Cycle modes: Clock → Count Up → Count Down → Hybrid → Speech" />
             <ShortcutRow shortcut="D" action="Toggle dark mode" />
-            <ShortcutRow shortcut="W" action="Keep screen on (clock mode)" />
             <ShortcutRow shortcut="Esc" action="Close / Exit fullscreen / Exit blackout" border={false} />
           </Section>
 
@@ -153,20 +138,8 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
               description="Screen goes black while the timer runs. Tap or press any key to restore. Saves battery during presentations."
             />
             <InfoRow
-              title="Mode Cycling"
-              description="Cycle through 5 modes with the top-left button or C key: Clock → Count Up → Count Down → Hybrid → Speech Timer."
-            />
-            <InfoRow
-              title="Delayed Start"
-              description="Set a countdown delay before the main timer begins. Configure in Settings."
-            />
-            <InfoRow
               title="Scheduled Start"
-              description="Schedule the timer to start at a specific date and time. Configure in Settings."
-            />
-            <InfoRow
-              title="Keep Screen On"
-              description="Prevents the screen from sleeping while the timer runs. Can also be toggled manually with the sun/moon button or W key."
+              description="Schedule the timer to start at a specific date and time. Configure in event settings."
             />
             <InfoRow
               title="Install as App"
@@ -186,19 +159,7 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
 
           {/* ===== JAPANESE ===== */}
 
-          <Section title="タイマーモード">
-            <InfoRow
-              title="カウントダウン"
-              description="設定した時間からゼロまでカウントダウンします。"
-            />
-            <InfoRow
-              title="カウントアップ"
-              description="ゼロからカウントアップします。設定画面で目標時間を設定すると、アラームで完了します。"
-            />
-            <InfoRow
-              title="ハイブリッド"
-              description="ゼロまでカウントダウンした後、自動的にカウントアップに切り替わります。設定画面でQ&A時間を固定することもできます。"
-            />
+          <Section title="スピーチタイマー">
             <InfoRow
               title="スピーチタイマー"
               description="プレゼンテーション用に複数のタイムセグメントを作成できます。各セグメントには独自の時間、カウントモード、カラーアラート、チック音、アラーム、フラッシュ設定があります。セグメントは完了時に自動的に次へ進みます。"
@@ -221,7 +182,7 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
             />
             <InfoRow
               title="完了時フラッシュ"
-              description="タイマーまたはセグメント終了時に画面がフラッシュします。スピーチタイマーの設定でセグメントごとに有効化できます。"
+              description="タイマーまたはセグメント終了時に画面がフラッシュします。セグメント設定でセグメントごとに有効化できます。"
               border={false}
             />
           </Section>
@@ -245,12 +206,9 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
           <Section title="キーボードショートカット">
             <ShortcutRow shortcut="Space" action="開始 / 一時停止 / 再開" />
             <ShortcutRow shortcut="R" action="リセット（実行中は1.5秒長押し）" />
-            <ShortcutRow shortcut="S" action="設定の切り替え" />
             <ShortcutRow shortcut="F" action="フルスクリーン切り替え" />
             <ShortcutRow shortcut="B" action="ブラックアウトモード（実行中のみ）" />
-            <ShortcutRow shortcut="C" action="モード切替: 時計 → カウントアップ → カウントダウン → ハイブリッド → スピーチ" />
             <ShortcutRow shortcut="D" action="ダークモード切り替え" />
-            <ShortcutRow shortcut="W" action="画面オン維持（時計モード）" />
             <ShortcutRow shortcut="Esc" action="閉じる / フルスクリーン解除 / ブラックアウト解除" border={false} />
           </Section>
 
@@ -264,20 +222,8 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
               description="タイマー動作中に画面が黒くなります。タップまたは任意のキーで復元。プレゼンテーション中のバッテリー節約に便利です。"
             />
             <InfoRow
-              title="モード切替"
-              description="左上のボタンまたはCキーで5つのモードを切り替えます: 時計 → カウントアップ → カウントダウン → ハイブリッド → スピーチタイマー"
-            />
-            <InfoRow
-              title="遅延開始"
-              description="メインタイマー開始前のカウントダウン遅延を設定できます。設定画面で構成してください。"
-            />
-            <InfoRow
               title="予約開始"
-              description="特定の日時にタイマーを開始するようスケジュールできます。設定画面で構成してください。"
-            />
-            <InfoRow
-              title="画面オン維持"
-              description="タイマー動作中に画面がスリープしないようにします。太陽/月ボタンまたはWキーで手動切り替えも可能です。"
+              description="特定の日時にタイマーを開始するようスケジュールできます。イベント設定画面で構成してください。"
             />
             <InfoRow
               title="アプリとしてインストール"

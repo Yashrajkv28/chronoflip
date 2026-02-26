@@ -3,7 +3,7 @@ import { arrayMove } from '@dnd-kit/sortable';
 import type { SpeechEvent, Segment, Screen, AppState } from './types';
 import { createDefaultEvent, createDefaultSegment } from './types';
 import { loadAppState, saveEvents, saveDarkMode } from './hooks/usePersistence';
-import FlipClockTimer, { loadConfig, saveConfig, type TimerConfig } from './components/FlipClockTimer';
+import { loadConfig, saveConfig, type TimerConfig } from './config';
 import TimerSettings from './components/TimerSettings';
 import EventListScreen from './components/screens/EventListScreen';
 import EventSettingsScreen from './components/screens/EventSettingsScreen';
@@ -11,10 +11,8 @@ import SegmentSettingsScreen from './components/screens/SegmentSettingsScreen';
 import TimerRunningScreen from './components/screens/TimerRunningScreen';
 import HelpModal from './components/HelpModal';
 
-const SPEECHMODE_KEY = 'chronoflip-speechmode';
-
 const App: React.FC = () => {
-  // ===== v1 state (dark mode, help) =====
+  // ===== State =====
   const [showHelp, setShowHelp] = useState(false);
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     const saved = localStorage.getItem('chronoflip-darkmode');
@@ -22,17 +20,12 @@ const App: React.FC = () => {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
-  // ===== Speech mode toggle =====
-  const [isSpeechMode, setIsSpeechMode] = useState<boolean>(() => {
-    return localStorage.getItem(SPEECHMODE_KEY) === 'true';
-  });
-
-  // ===== Orb config (shared with v1 timer) =====
-  const [speechOrbConfig, setSpeechOrbConfig] = useState(() => {
+  // ===== Orb config =====
+  const [orbConfig, setOrbConfig] = useState(() => {
     const cfg = loadConfig();
     return { colors: cfg.orbColors, opacities: cfg.orbOpacities };
   });
-  const [showSpeechSettings, setShowSpeechSettings] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   // ===== Speech timer state =====
   const [appState, setAppState] = useState<AppState>(loadAppState);
@@ -41,11 +34,10 @@ const App: React.FC = () => {
   const activeEvent = appState.events.find(e => e.id === appState.activeEventId) ?? null;
   const activeSegment = activeEvent?.segments.find(s => s.id === appState.activeSegmentId) ?? null;
   const runningEvent = appState.events.find(e => e.id === appState.runningEventId) ?? null;
-  const isSpeechTimerRunning = isSpeechMode && appState.currentScreen === 'timerRunning';
+  const isTimerRunning = appState.currentScreen === 'timerRunning';
 
   // ===== Persistence =====
 
-  // Persist dark mode + apply body classes (v1 logic)
   useEffect(() => {
     localStorage.setItem('chronoflip-darkmode', String(darkMode));
     saveDarkMode(darkMode);
@@ -61,12 +53,6 @@ const App: React.FC = () => {
     }
   }, [darkMode]);
 
-  // Persist speech mode
-  useEffect(() => {
-    localStorage.setItem(SPEECHMODE_KEY, String(isSpeechMode));
-  }, [isSpeechMode]);
-
-  // Persist events
   useEffect(() => {
     saveEvents(appState.events);
   }, [appState.events]);
@@ -75,7 +61,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (isSpeechTimerRunning) return;
+      if (isTimerRunning) return;
       if (e.code === 'KeyD' && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         setDarkMode(prev => !prev);
@@ -83,9 +69,9 @@ const App: React.FC = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isSpeechTimerRunning]);
+  }, [isTimerRunning]);
 
-  // ===== Speech timer navigation =====
+  // ===== Navigation =====
 
   const navigateTo = useCallback((screen: Screen, opts?: { eventId?: string; segmentId?: string }) => {
     setAppState(prev => ({
@@ -207,119 +193,87 @@ const App: React.FC = () => {
     }));
   }, []);
 
-  // ===== Speech mode settings (orb customization) =====
+  // ===== Appearance settings (orb customization) =====
 
-  const handleShowSpeechSettings = useCallback(() => {
-    setShowSpeechSettings(true);
-  }, []);
-
-  const handleSpeechSettingsSave = useCallback((newConfig: TimerConfig) => {
+  const handleSettingsSave = useCallback((newConfig: TimerConfig) => {
     saveConfig(newConfig);
-    setSpeechOrbConfig({ colors: newConfig.orbColors, opacities: newConfig.orbOpacities });
-    setShowSpeechSettings(false);
+    setOrbConfig({ colors: newConfig.orbColors, opacities: newConfig.orbOpacities });
+    setShowSettings(false);
   }, []);
-
-  // Re-read orb config when entering speech mode (picks up changes from v1 settings)
-  useEffect(() => {
-    if (isSpeechMode) {
-      const cfg = loadConfig();
-      setSpeechOrbConfig({ colors: cfg.orbColors, opacities: cfg.orbOpacities });
-    }
-  }, [isSpeechMode]);
 
   // ===== Render =====
 
-  // Hide global UI during speech timer running screen
-  const showGlobalUI = !isSpeechTimerRunning;
+  const showGlobalUI = !isTimerRunning;
 
   return (
     <div className="relative text-gray-900 dark:text-white h-[100dvh] overflow-hidden">
 
-      {/* ====== FlipClockTimer modes (clock, countup, countdown) ====== */}
-      {!isSpeechMode && (
-        <FlipClockTimer
-          onSwitchToSpeech={() => {
-            setIsSpeechMode(true);
-            setAppState(prev => ({ ...prev, currentScreen: 'eventList' }));
+      {/* Background Orbs (dark mode only) */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="hidden dark:block absolute top-10 left-10 w-96 h-96 rounded-full blur-[120px]" style={{ backgroundColor: orbConfig.colors[0], opacity: orbConfig.opacities[0] / 100 }} />
+        <div className="hidden dark:block absolute bottom-10 right-10 w-[500px] h-[500px] rounded-full blur-[150px]" style={{ backgroundColor: orbConfig.colors[1], opacity: orbConfig.opacities[1] / 100 }} />
+        <div className="hidden dark:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[180px]" style={{ backgroundColor: orbConfig.colors[2], opacity: orbConfig.opacities[2] / 100 }} />
+      </div>
+
+      {appState.currentScreen === 'eventList' && (
+        <EventListScreen
+          events={appState.events}
+          onAddEvent={addEvent}
+          onSelectEvent={(id) => navigateTo('eventSettings', { eventId: id })}
+          onStartEvent={(id) => startEvent(id)}
+          onDeleteEvent={deleteEvent}
+          onReorderEvents={reorderEvents}
+          onShowHelp={() => setShowHelp(true)}
+        />
+      )}
+
+      {appState.currentScreen === 'eventSettings' && activeEvent && (
+        <EventSettingsScreen
+          event={activeEvent}
+          onBack={() => navigateTo('eventList')}
+          onUpdateEvent={(updates) => updateEvent(activeEvent.id, updates)}
+          onAddSegment={() => addSegment(activeEvent.id)}
+          onEditSegment={(segId) => navigateTo('segmentSettings', { segmentId: segId })}
+          onDeleteSegment={(segId) => deleteSegment(activeEvent.id, segId)}
+          onReorderSegments={(activeId, overId) => reorderSegments(activeEvent.id, activeId, overId)}
+          onStartEvent={(idx) => startEvent(activeEvent.id, idx)}
+          onScheduleStart={(time) => {
+            setAppState(prev => ({
+              ...prev,
+              events: prev.events.map(e =>
+                e.id === activeEvent.id ? { ...e, scheduledStartTime: time } : e
+              ),
+              activeEventId: activeEvent.id,
+              runningEventId: activeEvent.id,
+              runningSegmentIndex: 0,
+              currentScreen: 'timerRunning',
+            }));
           }}
         />
       )}
 
-      {/* ====== Speech Timer mode ====== */}
-      {isSpeechMode && (
-        <>
-          {/* Background Orbs - v1 style with shared config (dark mode only) */}
-          <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-            <div className="hidden dark:block absolute top-10 left-10 w-96 h-96 rounded-full blur-[120px]" style={{ backgroundColor: speechOrbConfig.colors[0], opacity: speechOrbConfig.opacities[0] / 100 }} />
-            <div className="hidden dark:block absolute bottom-10 right-10 w-[500px] h-[500px] rounded-full blur-[150px]" style={{ backgroundColor: speechOrbConfig.colors[1], opacity: speechOrbConfig.opacities[1] / 100 }} />
-            <div className="hidden dark:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[180px]" style={{ backgroundColor: speechOrbConfig.colors[2], opacity: speechOrbConfig.opacities[2] / 100 }} />
-          </div>
-
-          {appState.currentScreen === 'eventList' && (
-            <EventListScreen
-              events={appState.events}
-              onAddEvent={addEvent}
-              onSelectEvent={(id) => navigateTo('eventSettings', { eventId: id })}
-              onStartEvent={(id) => startEvent(id)}
-              onDeleteEvent={deleteEvent}
-              onReorderEvents={reorderEvents}
-              onShowHelp={() => setShowHelp(true)}
-              onSwitchMode={() => {
-                localStorage.setItem('chronoflip-appmode', 'clock');
-                setIsSpeechMode(false);
-              }}
-            />
-          )}
-
-          {appState.currentScreen === 'eventSettings' && activeEvent && (
-            <EventSettingsScreen
-              event={activeEvent}
-              onBack={() => navigateTo('eventList')}
-              onUpdateEvent={(updates) => updateEvent(activeEvent.id, updates)}
-              onAddSegment={() => addSegment(activeEvent.id)}
-              onEditSegment={(segId) => navigateTo('segmentSettings', { segmentId: segId })}
-              onDeleteSegment={(segId) => deleteSegment(activeEvent.id, segId)}
-              onReorderSegments={(activeId, overId) => reorderSegments(activeEvent.id, activeId, overId)}
-              onStartEvent={(idx) => startEvent(activeEvent.id, idx)}
-              onScheduleStart={(time) => {
-                setAppState(prev => ({
-                  ...prev,
-                  events: prev.events.map(e =>
-                    e.id === activeEvent.id ? { ...e, scheduledStartTime: time } : e
-                  ),
-                  activeEventId: activeEvent.id,
-                  runningEventId: activeEvent.id,
-                  runningSegmentIndex: 0,
-                  currentScreen: 'timerRunning',
-                }));
-              }}
-            />
-          )}
-
-          {appState.currentScreen === 'segmentSettings' && activeEvent && activeSegment && (
-            <SegmentSettingsScreen
-              segment={activeSegment}
-              onSave={(updates) => {
-                updateSegment(activeEvent.id, activeSegment.id, updates);
-                navigateTo('eventSettings');
-              }}
-              onClose={() => navigateTo('eventSettings')}
-            />
-          )}
-
-          {appState.currentScreen === 'timerRunning' && runningEvent && (
-            <TimerRunningScreen
-              event={runningEvent}
-              startSegmentIndex={appState.runningSegmentIndex}
-              onExit={exitTimer}
-            />
-          )}
-        </>
+      {appState.currentScreen === 'segmentSettings' && activeEvent && activeSegment && (
+        <SegmentSettingsScreen
+          segment={activeSegment}
+          onSave={(updates) => {
+            updateSegment(activeEvent.id, activeSegment.id, updates);
+            navigateTo('eventSettings');
+          }}
+          onClose={() => navigateTo('eventSettings')}
+        />
       )}
 
-      {/* ====== Global UI (v1 style - always visible except during speech timer running) ====== */}
+      {appState.currentScreen === 'timerRunning' && runningEvent && (
+        <TimerRunningScreen
+          event={runningEvent}
+          startSegmentIndex={appState.runningSegmentIndex}
+          onExit={exitTimer}
+        />
+      )}
 
-      {/* Dark Mode Toggle - fixed top-right (v1 position) */}
+      {/* ====== Global UI ====== */}
+
+      {/* Dark Mode Toggle */}
       {showGlobalUI && (
         <button
           type="button"
@@ -343,7 +297,7 @@ const App: React.FC = () => {
         </button>
       )}
 
-      {/* Help Button - fixed bottom-left (v1 position) */}
+      {/* Help Button */}
       {showGlobalUI && (
         <button
           type="button"
@@ -363,11 +317,11 @@ const App: React.FC = () => {
         </button>
       )}
 
-      {/* Settings Button - fixed bottom-right (speech mode only) */}
-      {showGlobalUI && isSpeechMode && (
+      {/* Settings Button */}
+      {showGlobalUI && (
         <button
           type="button"
-          onClick={handleShowSpeechSettings}
+          onClick={() => setShowSettings(true)}
           title="Appearance Settings"
           aria-label="Open appearance settings"
           className="fixed bottom-6 right-6 z-50 p-3 rounded-full
@@ -382,12 +336,12 @@ const App: React.FC = () => {
         </button>
       )}
 
-      {/* Speech Mode Appearance Settings */}
-      {showSpeechSettings && (
+      {/* Appearance Settings */}
+      {showSettings && (
         <TimerSettings
           config={loadConfig()}
-          onSave={handleSpeechSettingsSave}
-          onClose={() => setShowSpeechSettings(false)}
+          onSave={handleSettingsSave}
+          onClose={() => setShowSettings(false)}
           appMode="clock"
         />
       )}
