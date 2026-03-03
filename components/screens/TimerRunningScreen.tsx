@@ -367,12 +367,13 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
     return () => { document.title = 'ChronoFlip Premium'; };
   }, [allComplete, currentSegment, timer.timeInSeconds, timer.status]);
 
-  // Sync timer state to Firebase for viewers (debounced — never drops state changes)
+  // Sync timer state to Firebase for viewers
   const syncTimeoutRef = useRef<number | null>(null);
+  const prevStatusRef = useRef<string>('');
   useEffect(() => {
     if (!event.shareId) return;
 
-    const doSync = () => {
+    const buildState = (): TimerSyncState => {
       let syncStatus: TimerSyncState['status'];
       if (allComplete) syncStatus = 'completed';
       else if (isWaitingSchedule) syncStatus = 'waiting';
@@ -380,7 +381,7 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
       else if (timer.status === 'running') syncStatus = 'running';
       else syncStatus = 'waiting';
 
-      const state: TimerSyncState = {
+      return {
         status: syncStatus,
         currentSegmentIndex,
         timeInSeconds: timer.timeInSeconds,
@@ -392,11 +393,25 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
         eventTitle: event.title,
         scheduledStartTime: event.scheduledStartTime ?? null,
       };
-      publishTimerState(event.shareId!, state).catch(() => {});
     };
 
+    // Publish immediately on status changes (start/pause/resume/complete)
+    const currentStatus = allComplete ? 'completed' : timer.status;
+    const statusChanged = currentStatus !== prevStatusRef.current;
+    prevStatusRef.current = currentStatus;
+
+    if (statusChanged) {
+      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+      syncTimeoutRef.current = null;
+      publishTimerState(event.shareId!, buildState()).catch(() => {});
+      return;
+    }
+
+    // Debounce regular ticks at 300ms
     if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
-    syncTimeoutRef.current = window.setTimeout(doSync, 900);
+    syncTimeoutRef.current = window.setTimeout(() => {
+      publishTimerState(event.shareId!, buildState()).catch(() => {});
+    }, 300);
 
     return () => {
       if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
