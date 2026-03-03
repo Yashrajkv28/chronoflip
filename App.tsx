@@ -4,6 +4,7 @@ import type { SpeechEvent, Segment, Screen, AppState } from './types';
 import { createDefaultEvent, createDefaultSegment } from './types';
 import { loadAppState, saveEvents, saveDarkMode } from './hooks/usePersistence';
 import { loadConfig, saveConfig, type TimerConfig } from './config';
+import { removeSharedEvent } from './services/syncService';
 import TimerSettings from './components/TimerSettings';
 import EventListScreen from './components/screens/EventListScreen';
 import EventSettingsScreen from './components/screens/EventSettingsScreen';
@@ -102,11 +103,17 @@ const App: React.FC = () => {
   }, []);
 
   const deleteEvent = useCallback((eventId: string) => {
-    setAppState(prev => ({
-      ...prev,
-      events: prev.events.filter(e => e.id !== eventId),
-      activeEventId: prev.activeEventId === eventId ? null : prev.activeEventId,
-    }));
+    setAppState(prev => {
+      const deleted = prev.events.find(e => e.id === eventId);
+      if (deleted?.shareId) {
+        removeSharedEvent(deleted.shareId).catch(() => {});
+      }
+      return {
+        ...prev,
+        events: prev.events.filter(e => e.id !== eventId),
+        activeEventId: prev.activeEventId === eventId ? null : prev.activeEventId,
+      };
+    });
   }, []);
 
   const reorderEvents = useCallback((activeId: string, overId: string) => {

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, useLayoutEffect } from 'react';
-import type { SpeechEvent, SpeechColorAlert } from '../../types';
+import type { SpeechEvent, SpeechColorAlert, TimerSyncState } from '../../types';
 import { useTimer } from '../../hooks/useTimer';
 import { useWakeLock } from '../../hooks/useWakeLock';
 import { audioService } from '../../services/audioService';
+import { publishTimerState } from '../../services/syncService';
 import FlipClockDisplay from '../FlipClockDisplay';
 import SegmentTransition from '../ui/SegmentTransition';
 
@@ -365,6 +366,42 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
     }
     return () => { document.title = 'ChronoFlip Premium'; };
   }, [allComplete, currentSegment, timer.timeInSeconds, timer.status]);
+
+  // Sync timer state to Firebase for viewers (debounced — never drops state changes)
+  const syncTimeoutRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!event.shareId) return;
+
+    const doSync = () => {
+      let syncStatus: TimerSyncState['status'];
+      if (allComplete) syncStatus = 'completed';
+      else if (isWaitingSchedule) syncStatus = 'waiting';
+      else if (timer.status === 'paused') syncStatus = 'paused';
+      else if (timer.status === 'running') syncStatus = 'running';
+      else syncStatus = 'waiting';
+
+      const state: TimerSyncState = {
+        status: syncStatus,
+        currentSegmentIndex,
+        timeInSeconds: timer.timeInSeconds,
+        segmentName: currentSegment?.name ?? '',
+        segmentMode: currentSegment?.mode ?? 'countdown',
+        totalSegments: event.segments.length,
+        activeAlertColor: activeAlertColor || null,
+        lastUpdatedAt: Date.now(),
+        eventTitle: event.title,
+        scheduledStartTime: event.scheduledStartTime ?? null,
+      };
+      publishTimerState(event.shareId!, state).catch(() => {});
+    };
+
+    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+    syncTimeoutRef.current = window.setTimeout(doSync, 900);
+
+    return () => {
+      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+    };
+  }, [timer.timeInSeconds, timer.status, allComplete, isWaitingSchedule, currentSegmentIndex, activeAlertColor, event.shareId, event.title, event.segments.length, event.scheduledStartTime, currentSegment?.name, currentSegment?.mode]);
 
   // Compute display values
   const displaySeconds = timer.timeInSeconds % 60;

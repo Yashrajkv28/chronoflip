@@ -39,6 +39,22 @@ export interface SpeechEvent {
   endTime: string;               // HH:mm e.g. '17:00'
   segments: Segment[];
   scheduledStartTime: number | null;  // Unix timestamp for scheduled auto-start
+  shareId?: string;              // Firebase share ID for QR code viewing
+}
+
+// ========== Timer Sync (real-time viewer) ==========
+
+export interface TimerSyncState {
+  status: 'waiting' | 'running' | 'paused' | 'completed';
+  currentSegmentIndex: number;
+  timeInSeconds: number;
+  segmentName: string;
+  segmentMode: TimerMode;
+  totalSegments: number;
+  activeAlertColor: string | null;
+  lastUpdatedAt: number;
+  eventTitle: string;
+  scheduledStartTime: number | null;
 }
 
 // ========== App State ==========

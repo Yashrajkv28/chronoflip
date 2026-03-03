@@ -15,6 +15,8 @@ import {
 } from '@dnd-kit/sortable';
 import type { SpeechEvent } from '../../types';
 import SegmentCard from '../ui/SegmentCard';
+import QRCodeModal from '../ui/QRCodeModal';
+import { publishEvent } from '../../services/syncService';
 
 interface EventSettingsScreenProps {
   event: SpeechEvent;
@@ -46,6 +48,8 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
   const [schedTime, setSchedTime] = useState('');
   const [schedError, setSchedError] = useState('');
   const [swipeOpenId, setSwipeOpenId] = useState<string | null>(null);
+  const [showQR, setShowQR] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -64,6 +68,22 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
       onUpdateEvent({ title: titleValue.trim() });
     }
     setEditingTitle(false);
+  };
+
+  const handleShare = async () => {
+    if (sharing) return;
+    setSharing(true);
+    try {
+      const shareId = await publishEvent(event);
+      if (!event.shareId) {
+        onUpdateEvent({ shareId });
+      }
+      setShowQR(true);
+    } catch (err) {
+      console.error('Failed to share event:', err);
+    } finally {
+      setSharing(false);
+    }
   };
 
   const handleScheduleStart = () => {
@@ -187,7 +207,7 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
             </div>
           )}
 
-          {/* Edit + Add buttons centered */}
+          {/* Edit + Add + Share buttons centered */}
           <div className="flex items-center justify-center gap-3 mt-4">
             <button
               type="button"
@@ -217,6 +237,35 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
                 <path d="M12 5v14m-7-7h14" />
               </svg>
             </button>
+            {event.segments.length > 0 && (
+              <button
+                type="button"
+                onClick={handleShare}
+                disabled={sharing}
+                className="p-2.5 rounded-xl
+                           bg-violet-500/15 dark:bg-violet-500/10
+                           backdrop-blur-xl
+                           border border-violet-500/25 dark:border-violet-500/20
+                           text-violet-600 dark:text-violet-400
+                           hover:bg-violet-500/25 dark:hover:bg-violet-500/20
+                           hover:scale-110 active:scale-95
+                           disabled:opacity-50
+                           transition-all duration-300 shadow-lg"
+                aria-label="Share event via QR code"
+              >
+                {sharing ? (
+                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
+                    <path strokeLinecap="round" d="M12 3a9 9 0 1 0 9 9" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                    <polyline points="16 6 12 2 8 6" />
+                    <line x1="12" y1="2" x2="12" y2="15" />
+                  </svg>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -316,6 +365,14 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
           </div>
         )}
       </div>
+      {/* QR Code Modal */}
+      {showQR && event.shareId && (
+        <QRCodeModal
+          eventTitle={event.title}
+          shareId={event.shareId}
+          onClose={() => setShowQR(false)}
+        />
+      )}
     </div>
   );
 };
