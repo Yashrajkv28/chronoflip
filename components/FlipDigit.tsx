@@ -45,8 +45,8 @@ const FlipDigit: React.FC<FlipDigitProps> = ({ value, label, color = '' }) => {
   }, [value]); 
 
   // Card styling
-  const cardBg = "bg-gradient-to-b from-zinc-100 to-zinc-200 dark:from-zinc-700 dark:to-zinc-800";
-  const textStyle = 'font-mono text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold leading-none select-none text-zinc-800 dark:text-zinc-100';
+  const cardBg = "bg-gradient-to-b from-zinc-100 to-zinc-200";
+  const textStyle = 'font-mono text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold leading-none select-none text-zinc-800';
   const colorStyle = color ? { color } : undefined;
 
   // LOGIC TO PREVENT FLICKER:
@@ -61,7 +61,7 @@ const FlipDigit: React.FC<FlipDigitProps> = ({ value, label, color = '' }) => {
       {/* Main flip card container */}
       <div 
         className="relative w-12 h-[4.5rem] sm:w-20 sm:h-28 md:w-24 md:h-36 lg:w-32 lg:h-44
-                   rounded-lg sm:rounded-xl shadow-lg dark:shadow-2xl perspective-1000"
+                   rounded-lg sm:rounded-xl shadow-lg perspective-1000"
         style={{ transformStyle: 'preserve-3d' }}
       >
         {/* ============================================ */}
@@ -77,7 +77,7 @@ const FlipDigit: React.FC<FlipDigitProps> = ({ value, label, color = '' }) => {
           <span className={`${textStyle} translate-y-1/2`} style={colorStyle}>
             {upperStaticValue}
           </span>
-          <div className="absolute inset-0 bg-gradient-to-b from-black/5 to-transparent dark:from-black/20 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/5 to-transparent pointer-events-none" />
         </div>
 
         {/* LOWER STATIC - Shows the OLD value */}
@@ -89,7 +89,7 @@ const FlipDigit: React.FC<FlipDigitProps> = ({ value, label, color = '' }) => {
           <span className={`${textStyle} -translate-y-1/2`} style={colorStyle}>
             {previousValue}
           </span>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent dark:from-black/30 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
         </div>
 
         {/* ============================================ */}
@@ -137,7 +137,7 @@ const FlipDigit: React.FC<FlipDigitProps> = ({ value, label, color = '' }) => {
 
         {/* CENTER HINGE LINE */}
         <div 
-          className="absolute top-1/2 left-0 right-0 h-[2px] bg-black/20 dark:bg-black/60 
+          className="absolute top-1/2 left-0 right-0 h-[2px] bg-black/20 
                      transform -translate-y-1/2 shadow-sm"
           style={{ zIndex: 20 }}
         />
@@ -145,7 +145,7 @@ const FlipDigit: React.FC<FlipDigitProps> = ({ value, label, color = '' }) => {
 
       {/* Label */}
       {label && (
-        <span className="mt-2 sm:mt-4 text-[8px] sm:text-xs font-bold text-zinc-400 dark:text-zinc-500
+        <span className="mt-2 sm:mt-4 text-[8px] sm:text-xs font-bold text-zinc-400
                         uppercase tracking-[0.1em] sm:tracking-[0.15em] select-none">
           {label}
         </span>

@@ -1,4 +1,4 @@
-// Orb/appearance configuration extracted from FlipClockTimer for shared use
+// Timer configuration extracted from FlipClockTimer for shared use
 
 export type TimerMode = 'countdown' | 'countup' | 'hybrid';
 export type AppMode = 'clock' | 'countup' | 'countdown' | 'hybrid';
@@ -25,8 +25,6 @@ export interface TimerConfig {
   delayedStartSeconds: number;
   scheduledStartTime: number | null;
   qaTimeInSeconds: number;
-  orbColors: [string, string, string];
-  orbOpacities: [number, number, number];
   countupLimitSeconds: number;
 }
 
@@ -48,8 +46,6 @@ const DEFAULT_CONFIG: TimerConfig = {
   delayedStartSeconds: 0,
   scheduledStartTime: null,
   qaTimeInSeconds: 0,
-  orbColors: ['#A855F7', '#3B82F6', '#6366F1'],
-  orbOpacities: [30, 25, 25],
   countupLimitSeconds: 0,
 };
 

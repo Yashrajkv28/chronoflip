@@ -111,7 +111,7 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
             <button
               type="button"
               onClick={onBack}
-              className="p-2.5 -ml-2 rounded-xl text-zinc-500 dark:text-zinc-400 hover:bg-white/20 dark:hover:bg-white/5 transition-all"
+              className="p-2.5 -ml-2 rounded-xl text-zinc-500 hover:bg-white/20 transition-all"
               aria-label="Back to event list"
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
@@ -128,12 +128,12 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
                   onBlur={handleTitleSave}
                   onKeyDown={e => e.key === 'Enter' && handleTitleSave()}
                   autoFocus
-                  className="w-full text-center text-lg font-bold bg-transparent border-b-2 border-blue-500/50 text-zinc-800 dark:text-white outline-none py-1"
+                  className="w-full text-center text-lg font-bold bg-transparent border-b-2 border-blue-500/50 text-zinc-800 outline-none py-1"
                 />
               ) : (
                 <h1
                   onClick={() => { setTitleValue(event.title); setEditingTitle(true); }}
-                  className="text-lg sm:text-xl font-bold text-zinc-800 dark:text-white truncate cursor-pointer hover:opacity-70 transition-opacity"
+                  className="text-lg sm:text-xl font-bold text-zinc-800 truncate cursor-pointer hover:opacity-70 transition-opacity"
                 >
                   {event.title}
                 </h1>
@@ -170,14 +170,14 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
                 {/* Total duration pill */}
                 {totalSec > 0 && (
                   <span className="px-5 py-2 rounded-full text-sm font-semibold font-mono
-                                   bg-purple-500/10 border border-purple-500/20 text-purple-500 dark:text-purple-400">
+                                   bg-purple-500/10 border border-purple-500/20 text-purple-500">
                     {fmtDur(totalSec)}
                   </span>
                 )}
                 {/* Scheduled time range */}
                 {hasSchedule && totalSec > 0 && (
                   <span className="px-4 py-1.5 rounded-full text-xs font-semibold
-                                   bg-pink-500/10 border border-pink-500/20 text-pink-500 dark:text-pink-400">
+                                   bg-pink-500/10 border border-pink-500/20 text-pink-500">
                     {fmtTime(event.scheduledStartTime!)} → {fmtTime(endTs)}
                   </span>
                 )}
@@ -192,7 +192,7 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
                 type="button"
                 onClick={() => onStartEvent()}
                 className="px-7 py-3 rounded-2xl text-sm font-bold uppercase tracking-wider
-                           bg-emerald-500/15 text-emerald-600 dark:text-emerald-400
+                           bg-emerald-500/15 text-emerald-600
                            border border-emerald-500/25
                            hover:bg-emerald-500/25 hover:border-emerald-500/40
                            shadow-[0_0_15px_rgba(16,185,129,0.1)] hover:shadow-[0_0_25px_rgba(16,185,129,0.2)]
@@ -214,8 +214,8 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
               onClick={() => setEditMode(!editMode)}
               className={`px-5 py-2.5 rounded-xl text-sm font-semibold backdrop-blur-xl border shadow-lg hover:scale-105 active:scale-95 transition-all duration-300 ${
                 editMode
-                  ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-500/30'
-                  : 'bg-white/20 dark:bg-white/5 text-zinc-600 dark:text-zinc-300 border-white/30 dark:border-white/10 hover:bg-white/30 dark:hover:bg-white/10'
+                  ? 'bg-blue-500/20 text-blue-600 border-blue-500/30 hover:bg-blue-500/30'
+                  : 'bg-white/20 text-zinc-600 border-white/30 hover:bg-white/30'
               }`}
             >
               {editMode ? 'Done' : 'Edit'}
@@ -224,11 +224,11 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
               type="button"
               onClick={onAddSegment}
               className="p-2.5 rounded-xl
-                         bg-white/20 dark:bg-white/5
+                         bg-white/20
                          backdrop-blur-xl
-                         border border-white/30 dark:border-white/10
-                         text-zinc-600 dark:text-zinc-300
-                         hover:bg-white/30 dark:hover:bg-white/10
+                         border border-white/30
+                         text-zinc-600
+                         hover:bg-white/30
                          hover:scale-110 active:scale-95
                          transition-all duration-300 shadow-lg"
               aria-label="Add segment"
@@ -243,11 +243,11 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
                 onClick={handleShare}
                 disabled={sharing}
                 className="p-2.5 rounded-xl
-                           bg-violet-500/15 dark:bg-violet-500/10
+                           bg-violet-500/15
                            backdrop-blur-xl
-                           border border-violet-500/25 dark:border-violet-500/20
-                           text-violet-600 dark:text-violet-400
-                           hover:bg-violet-500/25 dark:hover:bg-violet-500/20
+                           border border-violet-500/25
+                           text-violet-600
+                           hover:bg-violet-500/25
                            hover:scale-110 active:scale-95
                            disabled:opacity-50
                            transition-all duration-300 shadow-lg"
@@ -275,7 +275,7 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
         <div className="max-w-2xl mx-auto space-y-2">
           {event.segments.length === 0 ? (
             <div className="text-center py-16">
-              <p className="text-zinc-500 dark:text-zinc-400 text-sm">
+              <p className="text-zinc-500 text-sm">
                 No segments yet. Tap + to add a speech.
               </p>
             </div>
@@ -309,14 +309,14 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
         {/* Schedule Start Section */}
         {event.segments.length > 0 && (
           <div className="max-w-2xl mx-auto mt-8">
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-400 dark:text-zinc-500 mb-2 px-1">
+            <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-400 mb-2 px-1">
               Scheduled Start
             </h3>
             <div className="p-5 rounded-2xl
-                            bg-zinc-50/80 dark:bg-zinc-900/40
+                            bg-zinc-50/80
                             backdrop-blur-xl
-                            border border-zinc-200/50 dark:border-white/10">
-              <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300 mb-4">
+                            border border-zinc-200/50">
+              <p className="text-sm font-medium text-zinc-600 mb-4">
                 Start at specific time
               </p>
               <div className="flex items-center gap-3">
@@ -324,13 +324,13 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
                   type="date"
                   value={schedDate}
                   onChange={e => setSchedDate(e.target.value)}
-                  className="flex-1 min-w-0 bg-white/60 dark:bg-white/5 border border-zinc-200/60 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300 outline-none focus:border-pink-500/50 focus:ring-1 focus:ring-pink-500/20 transition-all"
+                  className="flex-1 min-w-0 bg-white/60 border border-zinc-200/60 rounded-xl px-4 py-3 text-sm text-zinc-700 outline-none focus:border-pink-500/50 focus:ring-1 focus:ring-pink-500/20 transition-all"
                 />
                 <input
                   type="time"
                   value={schedTime}
                   onChange={e => setSchedTime(e.target.value)}
-                  className="flex-1 min-w-0 bg-white/60 dark:bg-white/5 border border-zinc-200/60 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300 outline-none focus:border-pink-500/50 focus:ring-1 focus:ring-pink-500/20 transition-all"
+                  className="flex-1 min-w-0 bg-white/60 border border-zinc-200/60 rounded-xl px-4 py-3 text-sm text-zinc-700 outline-none focus:border-pink-500/50 focus:ring-1 focus:ring-pink-500/20 transition-all"
                 />
               </div>
               <button
@@ -338,7 +338,7 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
                 onClick={handleScheduleStart}
                 disabled={!schedDate || !schedTime}
                 className="w-full mt-4 px-5 py-3.5 rounded-2xl text-sm font-bold
-                           bg-pink-500/15 text-pink-600 dark:text-pink-400
+                           bg-pink-500/15 text-pink-600
                            border border-pink-500/25
                            hover:bg-pink-500/25 hover:border-pink-500/40
                            shadow-[0_0_15px_rgba(236,72,153,0.1)] hover:shadow-[0_0_25px_rgba(236,72,153,0.2)]
@@ -356,9 +356,9 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
                 Schedule Start
               </button>
               {schedError && (
-                <p className="text-xs text-red-500 dark:text-red-400 mt-2">{schedError}</p>
+                <p className="text-xs text-red-500 mt-2">{schedError}</p>
               )}
-              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-2.5 text-center">
+              <p className="text-[10px] text-zinc-400 mt-2.5 text-center">
                 Timer will automatically start at the scheduled time
               </p>
             </div>

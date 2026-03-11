@@ -57,7 +57,7 @@ const EventListScreen: React.FC<EventListScreenProps> = ({
         <div className="max-w-2xl mx-auto">
           {/* Row 1: Speech Timer badge centered */}
           <div className="flex items-center justify-center mb-3">
-            <span className="px-4 py-1.5 sm:px-5 sm:py-2 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em] border bg-purple-500/10 border-purple-500/20 text-purple-500 dark:bg-purple-400/10 dark:border-purple-400/20 dark:text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.15)] dark:shadow-[0_0_20px_rgba(192,132,252,0.2)]">
+            <span className="px-4 py-1.5 sm:px-5 sm:py-2 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em] border bg-purple-500/10 border-purple-500/20 text-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.15)]">
               Speech Timer
             </span>
           </div>
@@ -69,8 +69,8 @@ const EventListScreen: React.FC<EventListScreenProps> = ({
               onClick={() => setEditMode(!editMode)}
               className={`px-5 py-2.5 rounded-xl text-sm font-semibold backdrop-blur-xl border shadow-lg hover:scale-105 active:scale-95 transition-all duration-300 ${
                 editMode
-                  ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-500/30'
-                  : 'bg-white/20 dark:bg-white/5 text-zinc-600 dark:text-zinc-300 border-white/30 dark:border-white/10 hover:bg-white/30 dark:hover:bg-white/10'
+                  ? 'bg-blue-500/20 text-blue-600 border-blue-500/30 hover:bg-blue-500/30'
+                  : 'bg-white/20 text-zinc-600 border-white/30 hover:bg-white/30'
               }`}
             >
               {editMode ? 'Done' : 'Edit'}
@@ -79,10 +79,10 @@ const EventListScreen: React.FC<EventListScreenProps> = ({
               type="button"
               onClick={onAddEvent}
               className="p-2.5 rounded-xl
-                         bg-white/20 dark:bg-white/5 backdrop-blur-md
-                         border border-white/30 dark:border-white/10
-                         text-zinc-600 dark:text-zinc-300
-                         hover:bg-white/30 dark:hover:bg-white/10
+                         bg-white/20 backdrop-blur-md
+                         border border-white/30
+                         text-zinc-600
+                         hover:bg-white/30
                          hover:scale-110 active:scale-95
                          transition-all duration-200 shadow-md"
               aria-label="Add new event"
@@ -101,7 +101,7 @@ const EventListScreen: React.FC<EventListScreenProps> = ({
           {events.length === 0 ? (
             <div className="text-center py-20">
               <div className="text-5xl mb-4 opacity-30">+</div>
-              <p className="text-zinc-500 dark:text-zinc-400 text-sm">
+              <p className="text-zinc-500 text-sm">
                 No events yet. Tap + to create one.
               </p>
             </div>

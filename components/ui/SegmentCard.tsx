@@ -77,12 +77,12 @@ const SegmentCard: React.FC<SegmentCardProps> = ({ segment, editMode, onEdit, on
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
         className="relative
-                   bg-white/20 dark:bg-white/5
+                   bg-white/20
                    backdrop-blur-xl
-                   border border-white/25 dark:border-white/10
+                   border border-white/25
                    shadow-[0_2px_8px_rgba(0,0,0,0.04)]
-                   dark:shadow-[0_2px_8px_rgba(0,0,0,0.2)]
-                   hover:bg-white/30 dark:hover:bg-white/8
+                  
+                   hover:bg-white/30
                    transition-[background-color] duration-200
                    rounded-xl"
       >
@@ -97,7 +97,7 @@ const SegmentCard: React.FC<SegmentCardProps> = ({ segment, editMode, onEdit, on
           {editMode && (
             <button
               type="button"
-              className="cursor-grab active:cursor-grabbing p-1 text-zinc-400 dark:text-zinc-500 touch-none"
+              className="cursor-grab active:cursor-grabbing p-1 text-zinc-400 touch-none"
               {...attributes}
               {...listeners}
             >
@@ -112,18 +112,18 @@ const SegmentCard: React.FC<SegmentCardProps> = ({ segment, editMode, onEdit, on
           {/* Content - clickable */}
           <div className="flex-1 min-w-0 cursor-pointer" onClick={isOpen ? undefined : onEdit}>
             <div className="flex items-center gap-2 mb-0.5">
-              <span className="font-semibold text-sm sm:text-base text-zinc-800 dark:text-zinc-100 truncate">
+              <span className="font-semibold text-sm sm:text-base text-zinc-800 truncate">
                 {segment.name}
               </span>
               <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider shrink-0 ${
                 segment.mode === 'countdown'
-                  ? 'bg-red-500/15 text-red-500 dark:text-red-400'
-                  : 'bg-blue-500/15 text-blue-500 dark:text-blue-400'
+                  ? 'bg-red-500/15 text-red-500'
+                  : 'bg-blue-500/15 text-blue-500'
               }`}>
                 {segment.mode === 'countdown' ? 'CountDown' : 'CountUp'}
               </span>
             </div>
-            <span className="text-xs sm:text-sm font-mono text-zinc-500 dark:text-zinc-400">
+            <span className="text-xs sm:text-sm font-mono text-zinc-500">
               {formatDurationString(segment.durationSeconds)}
             </span>
           </div>
@@ -145,7 +145,7 @@ const SegmentCard: React.FC<SegmentCardProps> = ({ segment, editMode, onEdit, on
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onStart(); }}
-                className="p-1.5 rounded-lg text-emerald-500 dark:text-emerald-400
+                className="p-1.5 rounded-lg text-emerald-500
                            hover:bg-emerald-500/10 hover:scale-110 active:scale-95
                            transition-all duration-200"
                 aria-label="Start from this segment"

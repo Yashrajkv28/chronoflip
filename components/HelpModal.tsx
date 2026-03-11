@@ -6,28 +6,28 @@ interface HelpModalProps {
 
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="mb-6">
-    <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+    <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wide">
       {title}
     </h3>
-    <div className="bg-zinc-50/80 dark:bg-zinc-900/40 backdrop-blur-md border border-zinc-200/50 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
+    <div className="bg-zinc-50/80 backdrop-blur-md border border-zinc-200/50 rounded-2xl overflow-hidden shadow-sm">
       {children}
     </div>
   </div>
 );
 
 const InfoRow = ({ title, description, border = true }: { title: string; description: string; border?: boolean }) => (
-  <div className={`p-4 ${border ? 'border-b border-zinc-200/50 dark:border-white/5' : ''}`}>
-    <div className="text-[15px] font-medium text-zinc-900 dark:text-zinc-100">{title}</div>
-    <div className="text-[13px] text-zinc-500 dark:text-zinc-400 mt-0.5">{description}</div>
+  <div className={`p-4 ${border ? 'border-b border-zinc-200/50' : ''}`}>
+    <div className="text-[15px] font-medium text-zinc-900">{title}</div>
+    <div className="text-[13px] text-zinc-500 mt-0.5">{description}</div>
   </div>
 );
 
 const ShortcutRow = ({ shortcut, action, border = true }: { shortcut: string; action: string; border?: boolean }) => (
-  <div className={`p-4 flex items-center justify-between ${border ? 'border-b border-zinc-200/50 dark:border-white/5' : ''}`}>
-    <kbd className="px-2.5 py-1 rounded-lg bg-zinc-200/80 dark:bg-zinc-700/80 text-[13px] font-mono font-semibold text-zinc-700 dark:text-zinc-200 border border-zinc-300/50 dark:border-zinc-600/50 shadow-sm min-w-[3rem] text-center">
+  <div className={`p-4 flex items-center justify-between ${border ? 'border-b border-zinc-200/50' : ''}`}>
+    <kbd className="px-2.5 py-1 rounded-lg bg-zinc-200/80 text-[13px] font-mono font-semibold text-zinc-700 border border-zinc-300/50 shadow-sm min-w-[3rem] text-center">
       {shortcut}
     </kbd>
-    <span className="text-[14px] text-zinc-600 dark:text-zinc-300 ml-4 text-right flex-1">{action}</span>
+    <span className="text-[14px] text-zinc-600 ml-4 text-right flex-1">{action}</span>
   </div>
 );
 
@@ -49,18 +49,18 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
     >
       <div
         className="w-full sm:max-w-md h-[90vh] sm:h-auto sm:max-h-[85vh]
-                   bg-white/90 dark:bg-[#121212]/90
+                   bg-white/90
                    backdrop-blur-2xl
-                   border-t sm:border border-white/20 dark:border-white/10
+                   border-t sm:border border-white/20
                    rounded-t-[2.5rem] sm:rounded-[2.5rem]
                    shadow-2xl overflow-hidden flex flex-col
                    animate-slide-up"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="relative flex items-center justify-between px-6 py-5 border-b border-zinc-200/50 dark:border-white/5 bg-white/50 dark:bg-white/5 backdrop-blur-xl z-20">
+        <div className="relative flex items-center justify-between px-6 py-5 border-b border-zinc-200/50 bg-white/50 backdrop-blur-xl z-20">
           <div className="w-16" />
-          <span className="text-zinc-900 dark:text-white font-semibold text-[17px]">Help</span>
+          <span className="text-zinc-900 font-semibold text-[17px]">Help</span>
           <button
             type="button"
             onClick={onClose}
@@ -124,7 +124,6 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
             <ShortcutRow shortcut="R" action="Reset (hold 1.5s when running)" />
             <ShortcutRow shortcut="F" action="Toggle fullscreen" />
             <ShortcutRow shortcut="B" action="Blackout mode (when running)" />
-            <ShortcutRow shortcut="D" action="Toggle dark mode" />
             <ShortcutRow shortcut="Esc" action="Close / Exit fullscreen / Exit blackout" border={false} />
           </Section>
 
@@ -150,11 +149,11 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
 
           {/* ===== LANGUAGE DIVIDER ===== */}
           <div className="flex items-center gap-3 my-8">
-            <div className="flex-1 h-px bg-zinc-300/50 dark:bg-white/10" />
-            <span className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
+            <div className="flex-1 h-px bg-zinc-300/50" />
+            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">
               日本語 / Japanese
             </span>
-            <div className="flex-1 h-px bg-zinc-300/50 dark:bg-white/10" />
+            <div className="flex-1 h-px bg-zinc-300/50" />
           </div>
 
           {/* ===== JAPANESE ===== */}
@@ -208,7 +207,6 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
             <ShortcutRow shortcut="R" action="リセット（実行中は1.5秒長押し）" />
             <ShortcutRow shortcut="F" action="フルスクリーン切り替え" />
             <ShortcutRow shortcut="B" action="ブラックアウトモード（実行中のみ）" />
-            <ShortcutRow shortcut="D" action="ダークモード切り替え" />
             <ShortcutRow shortcut="Esc" action="閉じる / フルスクリーン解除 / ブラックアウト解除" border={false} />
           </Section>
 

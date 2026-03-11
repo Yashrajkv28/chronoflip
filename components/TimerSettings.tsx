@@ -11,7 +11,7 @@ const ToggleSwitch = ({ checked, onChange, label }: { checked: boolean; onChange
     aria-pressed={checked}
     className={`
       relative w-11 h-6 rounded-full transition-colors duration-300 ease-in-out focus:outline-none
-      ${checked ? 'bg-blue-500' : 'bg-zinc-300 dark:bg-zinc-700'}
+      ${checked ? 'bg-blue-500' : 'bg-zinc-300'}
     `}
   >
     <span
@@ -25,15 +25,15 @@ const ToggleSwitch = ({ checked, onChange, label }: { checked: boolean; onChange
 
 const Section = ({ title, children, className = '' }: { title?: string; children: React.ReactNode; className?: string }) => (
   <div className={`mb-8 ${className}`}>
-    {title && <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">{title}</h3>}
-    <div className="bg-zinc-50/80 dark:bg-zinc-900/40 backdrop-blur-md border border-zinc-200/50 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
+    {title && <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wide">{title}</h3>}
+    <div className="bg-zinc-50/80 backdrop-blur-md border border-zinc-200/50 rounded-2xl overflow-hidden shadow-sm">
       {children}
     </div>
   </div>
 );
 
 const SectionItem = ({ children, border = true }: { children: React.ReactNode; border?: boolean }) => (
-  <div className={`p-4 flex items-center justify-between ${border ? 'border-b border-zinc-200/50 dark:border-white/5' : ''}`}>
+  <div className={`p-4 flex items-center justify-between ${border ? 'border-b border-zinc-200/50' : ''}`}>
     {children}
   </div>
 );
@@ -63,7 +63,7 @@ const AlertsSection = ({
 }) => (
   <div className="mb-8">
     <div className="flex items-center justify-between px-4 mb-1">
-      <h3 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">{title}</h3>
+      <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">{title}</h3>
       <button
         type="button"
         onClick={() => onAdd(alertKey)}
@@ -73,20 +73,20 @@ const AlertsSection = ({
         + Add
       </button>
     </div>
-    <p className="px-4 mb-2 text-[10px] text-zinc-400 dark:text-zinc-500">{subtitle}</p>
+    <p className="px-4 mb-2 text-[10px] text-zinc-400">{subtitle}</p>
 
-    <div className="bg-zinc-50/80 dark:bg-zinc-900/40 backdrop-blur-md border border-zinc-200/50 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
+    <div className="bg-zinc-50/80 backdrop-blur-md border border-zinc-200/50 rounded-2xl overflow-hidden shadow-sm">
       {alerts.length === 0 && (
-        <div className="p-8 text-center text-zinc-400 dark:text-zinc-600 text-sm">
+        <div className="p-8 text-center text-zinc-400 text-sm">
           No visual alerts set.
         </div>
       )}
 
       {alerts.map((alert, idx) => (
-        <div key={alert.id} className={`p-4 ${idx !== alerts.length - 1 ? 'border-b border-zinc-200/50 dark:border-white/5' : ''}`}>
+        <div key={alert.id} className={`p-4 ${idx !== alerts.length - 1 ? 'border-b border-zinc-200/50' : ''}`}>
           <div className="flex items-center gap-3 mb-3">
-            <div className="flex items-baseline gap-1 text-zinc-900 dark:text-zinc-100">
-              <span className="text-xs font-bold text-zinc-400 dark:text-zinc-500">{timeLabel}</span>
+            <div className="flex items-baseline gap-1 text-zinc-900">
+              <span className="text-xs font-bold text-zinc-400">{timeLabel}</span>
               <input
                 type="number"
                 value={Math.floor(alert.timeInSeconds / 60)}
@@ -110,7 +110,7 @@ const AlertsSection = ({
               onClick={() => onRemove(alertKey, alert.id)}
               aria-label="Delete this alert"
               title="Delete alert"
-              className="ml-auto w-6 h-6 flex items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-500 hover:bg-red-500 hover:text-white transition-colors"
+              className="ml-auto w-6 h-6 flex items-center justify-center rounded-full bg-zinc-200 text-zinc-500 hover:bg-red-500 hover:text-white transition-colors"
             >
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
@@ -129,14 +129,14 @@ const AlertsSection = ({
                     aria-label={`Select ${c.label} color${isSelected ? ' (currently selected)' : ''}`}
                     className={`
                       w-5 h-5 rounded-full shadow-sm transition-transform
-                      ${isSelected ? 'scale-125 ring-2 ring-white dark:ring-zinc-600' : 'opacity-50 hover:opacity-100 hover:scale-110'}
+                      ${isSelected ? 'scale-125 ring-2 ring-white' : 'opacity-50 hover:opacity-100 hover:scale-110'}
                     `}
                     style={{ backgroundColor: c.value }}
                   />
                 );
               })}
               <label
-                className="relative w-5 h-5 rounded-full cursor-pointer overflow-hidden ring-1 ring-zinc-300 dark:ring-zinc-600 hover:scale-110 transition-transform"
+                className="relative w-5 h-5 rounded-full cursor-pointer overflow-hidden ring-1 ring-zinc-300 hover:scale-110 transition-transform"
                 title="Pick custom color"
                 style={{
                   background: 'conic-gradient(#ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)',
@@ -155,7 +155,7 @@ const AlertsSection = ({
               type="button"
               onClick={() => onUpdate(alertKey, alert.id, { sound: !alert.sound })}
               title={alert.sound ? 'Sound enabled' : 'Sound disabled'}
-              className={`text-[10px] font-bold px-2 py-1 rounded border transition-colors ${alert.sound ? 'bg-zinc-800 text-white dark:bg-white dark:text-black border-transparent' : 'border-zinc-300 dark:border-zinc-700 text-zinc-400'}`}
+              className={`text-[10px] font-bold px-2 py-1 rounded border transition-colors ${alert.sound ? 'bg-zinc-800 text-white border-transparent' : 'border-zinc-300 text-zinc-400'}`}
             >
               SOUND
             </button>
@@ -163,11 +163,11 @@ const AlertsSection = ({
 
           <div className="flex items-center gap-5 mt-3">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Flash</span>
+              <span className="text-[11px] font-semibold text-zinc-500">Flash</span>
               <ToggleSwitch checked={alert.flash} onChange={(v) => onUpdate(alertKey, alert.id, { flash: v })} label="Toggle flash" />
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Background</span>
+              <span className="text-[11px] font-semibold text-zinc-500">Background</span>
               <ToggleSwitch checked={alert.background} onChange={(v) => onUpdate(alertKey, alert.id, { background: v })} label="Toggle persistent background" />
             </div>
           </div>
@@ -275,7 +275,7 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
     value: T;
     onChange: (val: T) => void;
   }) => (
-    <div className="flex p-1 bg-zinc-200/80 dark:bg-zinc-800/80 rounded-xl backdrop-blur-sm" role="tablist">
+    <div className="flex p-1 bg-zinc-200/80 rounded-xl backdrop-blur-sm" role="tablist">
       {options.map((opt) => {
         const isActive = value === opt.value;
         return (
@@ -288,8 +288,8 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
             className={`
               flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all duration-300
               ${isActive
-                ? 'bg-white dark:bg-zinc-600 text-black dark:text-white shadow-sm'
-                : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'}
+                ? 'bg-white text-black shadow-sm'
+                : 'text-zinc-500 hover:text-zinc-800'}
             `}
           >
             {opt.label}
@@ -304,15 +304,15 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
       <div
         className="
           w-full sm:max-w-md h-[90vh] sm:h-auto sm:max-h-[85vh]
-          bg-white/90 dark:bg-[#121212]/90
+          bg-white/90
           backdrop-blur-2xl
-          border-t sm:border border-white/20 dark:border-white/10
+          border-t sm:border border-white/20
           rounded-t-[2.5rem] sm:rounded-[2.5rem]
           shadow-2xl overflow-hidden flex flex-col
           animate-slide-up
         "
       >
-        <div className="relative flex items-center justify-between px-6 py-5 border-b border-zinc-200/50 dark:border-white/5 bg-white/50 dark:bg-white/5 backdrop-blur-xl z-20">
+        <div className="relative flex items-center justify-between px-6 py-5 border-b border-zinc-200/50 bg-white/50 backdrop-blur-xl z-20">
           <button
             type="button"
             onClick={onClose}
@@ -320,7 +320,7 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
           >
             Cancel
           </button>
-          <span className="text-zinc-900 dark:text-white font-semibold text-[17px]">{
+          <span className="text-zinc-900 font-semibold text-[17px]">{
             appMode === 'clock' ? 'Appearance' :
             appMode === 'countup' ? 'Count Up' :
             appMode === 'countdown' ? 'Countdown' :
@@ -343,7 +343,7 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
             <>
               {localConfig.mode === 'hybrid' && (
                 <div className="mb-2 text-center">
-                  <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Presentation</span>
+                  <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Presentation</span>
                 </div>
               )}
               <div className="mb-4 flex justify-center items-center">
@@ -364,12 +364,12 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
                         className="
                           w-[2ch] bg-transparent p-0 text-center
                           text-6xl font-light tracking-tight
-                          text-zinc-800 dark:text-white
+                          text-zinc-800
                           focus:outline-none focus:text-blue-500
                           selection:bg-blue-500/20
                         "
                       />
-                      <span className="text-xl font-medium text-zinc-400 dark:text-zinc-600 mr-2">{item.label}</span>
+                      <span className="text-xl font-medium text-zinc-400 mr-2">{item.label}</span>
                     </div>
                   ))}
                 </div>
@@ -380,7 +380,7 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
           {localConfig.mode === 'countup' && (
             <div className="mb-8">
               <div className="mb-2 text-center">
-                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Count Up To</span>
+                <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Count Up To</span>
               </div>
               <div className="flex justify-center items-center">
                 <div className="flex items-baseline gap-1">
@@ -400,17 +400,17 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
                         className="
                           w-[2ch] bg-transparent p-0 text-center
                           text-6xl font-light tracking-tight
-                          text-zinc-800 dark:text-white
+                          text-zinc-800
                           focus:outline-none focus:text-blue-500
                           selection:bg-blue-500/20
                         "
                       />
-                      <span className="text-xl font-medium text-zinc-400 dark:text-zinc-600 mr-2">{item.label}</span>
+                      <span className="text-xl font-medium text-zinc-400 mr-2">{item.label}</span>
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="mt-2 px-2 text-xs text-zinc-400 dark:text-zinc-500 text-center">
+              <div className="mt-2 px-2 text-xs text-zinc-400 text-center">
                 {(cuHours === 0 && cuMinutes === 0 && cuSeconds === 0)
                   ? "Set to 0 for unlimited stopwatch"
                   : ""}
@@ -421,7 +421,7 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
           {localConfig.mode === 'hybrid' && (
             <div className="mb-8">
               <div className="mb-2 text-center">
-                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Q&A</span>
+                <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Q&A</span>
               </div>
               <div className="flex justify-center items-center">
                 <div className="flex items-baseline gap-1">
@@ -441,17 +441,17 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
                         className="
                           w-[2ch] bg-transparent p-0 text-center
                           text-6xl font-light tracking-tight
-                          text-zinc-800 dark:text-white
+                          text-zinc-800
                           focus:outline-none focus:text-blue-500
                           selection:bg-blue-500/20
                         "
                       />
-                      <span className="text-xl font-medium text-zinc-400 dark:text-zinc-600 mr-2">{item.label}</span>
+                      <span className="text-xl font-medium text-zinc-400 mr-2">{item.label}</span>
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="mt-2 px-2 text-xs text-zinc-400 dark:text-zinc-500 text-center">
+              <div className="mt-2 px-2 text-xs text-zinc-400 text-center">
                 {(qaHours === 0 && qaMinutes === 0 && qaSeconds === 0)
                   ? "Set to 0 for unlimited count-up"
                   : ""}
@@ -461,22 +461,22 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
 
           <Section title="DISPLAY">
             <SectionItem>
-              <span className="text-[15px] font-medium text-zinc-900 dark:text-zinc-100">Show Hours</span>
+              <span className="text-[15px] font-medium text-zinc-900">Show Hours</span>
               <ToggleSwitch checked={localConfig.showHours} onChange={(v) => setLocalConfig(p => ({ ...p, showHours: v }))} label="Toggle show hours" />
             </SectionItem>
             <SectionItem border={false}>
-              <span className="text-[15px] font-medium text-zinc-900 dark:text-zinc-100">Show Days</span>
+              <span className="text-[15px] font-medium text-zinc-900">Show Days</span>
               <ToggleSwitch checked={localConfig.showDays} onChange={(v) => setLocalConfig(p => ({ ...p, showDays: v }))} label="Toggle show days" />
             </SectionItem>
           </Section>
 
           <Section title="AUDIO">
             <SectionItem>
-              <span className="text-[15px] font-medium text-zinc-900 dark:text-zinc-100">Tick Sound</span>
+              <span className="text-[15px] font-medium text-zinc-900">Tick Sound</span>
               <ToggleSwitch checked={localConfig.playTickSound} onChange={(v) => setLocalConfig(p => ({ ...p, playTickSound: v }))} label="Toggle tick sound" />
             </SectionItem>
             <SectionItem border={false}>
-              <span className="text-[15px] font-medium text-zinc-900 dark:text-zinc-100">Alert Sounds</span>
+              <span className="text-[15px] font-medium text-zinc-900">Alert Sounds</span>
               <ToggleSwitch checked={localConfig.playAlertSound} onChange={(v) => setLocalConfig(p => ({ ...p, playAlertSound: v }))} label="Toggle alert sounds" />
             </SectionItem>
           </Section>
@@ -484,8 +484,8 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
           <Section title="DELAYED START">
             <SectionItem>
               <div className="flex flex-col">
-                <span className="text-[15px] font-medium text-zinc-900 dark:text-zinc-100">Start Delay</span>
-                <span className="text-xs text-zinc-400 dark:text-zinc-500">Timer will start after this delay</span>
+                <span className="text-[15px] font-medium text-zinc-900">Start Delay</span>
+                <span className="text-xs text-zinc-400">Timer will start after this delay</span>
               </div>
               <div className="flex items-baseline gap-1">
                 <input
@@ -499,7 +499,7 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
                     setLocalConfig(p => ({ ...p, delayedStartSeconds: mins * 60 + secs }));
                   }}
                   aria-label="Delay minutes"
-                  className="w-8 bg-transparent text-right font-mono text-lg font-medium text-zinc-800 dark:text-white focus:text-blue-500 focus:outline-none"
+                  className="w-8 bg-transparent text-right font-mono text-lg font-medium text-zinc-800 focus:text-blue-500 focus:outline-none"
                 />
                 <span className="text-sm text-zinc-400">m</span>
                 <input
@@ -513,12 +513,12 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
                     setLocalConfig(p => ({ ...p, delayedStartSeconds: mins * 60 + secs }));
                   }}
                   aria-label="Delay seconds"
-                  className="w-8 bg-transparent text-right font-mono text-lg font-medium text-zinc-800 dark:text-white focus:text-blue-500 focus:outline-none"
+                  className="w-8 bg-transparent text-right font-mono text-lg font-medium text-zinc-800 focus:text-blue-500 focus:outline-none"
                 />
                 <span className="text-sm text-zinc-400">s</span>
               </div>
             </SectionItem>
-            <div className="px-4 pb-3 text-xs text-zinc-400 dark:text-zinc-500">
+            <div className="px-4 pb-3 text-xs text-zinc-400">
               Set to 0:00 to start immediately
             </div>
           </Section>
@@ -527,7 +527,7 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
             <Section title="SCHEDULED START">
               <SectionItem>
                 <div className="flex flex-col flex-1">
-                  <span className="text-[15px] font-medium text-zinc-900 dark:text-zinc-100 mb-2">Start at specific time</span>
+                  <span className="text-[15px] font-medium text-zinc-900 mb-2">Start at specific time</span>
                   <div className="flex gap-2">
                     <input
                       type="date"
@@ -535,14 +535,14 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
                       onChange={(e) => setScheduleDate(e.target.value)}
                       min={today}
                       aria-label="Schedule date"
-                      className="flex-1 px-3 py-2 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm text-zinc-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                      className="flex-1 px-3 py-2 bg-zinc-100 border border-zinc-200 rounded-lg text-sm text-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                     />
                     <input
                       type="time"
                       value={scheduleTime}
                       onChange={(e) => setScheduleTime(e.target.value)}
                       aria-label="Schedule time"
-                      className="px-3 py-2 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm text-zinc-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                      className="px-3 py-2 bg-zinc-100 border border-zinc-200 rounded-lg text-sm text-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                     />
                   </div>
                 </div>
@@ -552,7 +552,7 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
                   type="button"
                   onClick={handleScheduleStart}
                   disabled={!scheduleDate || !scheduleTime}
-                  className="w-full py-3 rounded-xl bg-pink-500/20 hover:bg-pink-500/30 text-pink-600 dark:text-pink-400 font-bold border border-pink-500/30 hover:border-pink-500/50 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full py-3 rounded-xl bg-pink-500/20 hover:bg-pink-500/30 text-pink-600 font-bold border border-pink-500/30 hover:border-pink-500/50 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-center justify-center gap-2">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -564,7 +564,7 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
                     <span>Schedule Start</span>
                   </div>
                 </button>
-                <p className="mt-2 text-xs text-zinc-400 dark:text-zinc-500 text-center">
+                <p className="mt-2 text-xs text-zinc-400 text-center">
                   Timer will automatically start at the scheduled time
                 </p>
               </div>
@@ -598,78 +598,7 @@ const TimerSettings: React.FC<TimerSettingsProps> = ({ config, onSave, onClose, 
           )}
           </>)}
 
-          <div className="mb-8">
-            <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
-              DARK MODE BACKGROUND
-            </h3>
-            <div className="bg-zinc-50/80 dark:bg-zinc-900/40 backdrop-blur-md border border-zinc-200/50 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
-              {([
-                { label: 'Orb 1 — Top Left', idx: 0 },
-                { label: 'Orb 2 — Center', idx: 2 },
-                { label: 'Orb 3 — Bottom Right', idx: 1 },
-              ] as const).map(({ label, idx: i }, displayIdx) => (
-                <div key={i} className={`p-4 ${displayIdx < 2 ? 'border-b border-zinc-200/50 dark:border-white/5' : ''}`}>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-[15px] text-zinc-700 dark:text-zinc-200">{label}</span>
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-8 h-8 rounded-xl border-2 border-zinc-200 dark:border-zinc-600 shadow-sm"
-                        style={{ backgroundColor: localConfig.orbColors[i] }}
-                      />
-                      <label className="relative w-8 h-8 rounded-xl cursor-pointer overflow-hidden ring-1 ring-zinc-300 dark:ring-zinc-600 hover:scale-110 transition-transform"
-                        style={{
-                          background: 'conic-gradient(#ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)',
-                        }}
-                      >
-                        <input
-                          type="color"
-                          value={localConfig.orbColors[i]}
-                          onChange={(e) => {
-                            const newOrbs = [...localConfig.orbColors] as [string, string, string];
-                            newOrbs[i] = e.target.value;
-                            setLocalConfig(prev => ({ ...prev, orbColors: newOrbs }));
-                          }}
-                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                        />
-                      </label>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-[11px] text-zinc-400 dark:text-zinc-500 w-14 shrink-0">Intensity</span>
-                    <input
-                      type="range"
-                      min="5"
-                      max="80"
-                      value={localConfig.orbOpacities?.[i] ?? [30, 25, 25][i]}
-                      onChange={(e) => {
-                        const newOpacities = [...(localConfig.orbOpacities || [30, 25, 25])] as [number, number, number];
-                        newOpacities[i] = parseInt(e.target.value);
-                        setLocalConfig(prev => ({ ...prev, orbOpacities: newOpacities }));
-                      }}
-                      className="flex-1 h-1.5 rounded-full appearance-none bg-zinc-200 dark:bg-zinc-700 cursor-pointer accent-blue-500"
-                    />
-                    <span className="text-[11px] text-zinc-400 dark:text-zinc-500 w-8 text-right">{localConfig.orbOpacities?.[i] ?? [30, 25, 25][i]}%</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="flex items-center justify-between px-4 mt-2">
-              <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
-                Customize the gradient orbs visible in dark mode
-              </p>
-              <button
-                type="button"
-                onClick={() => setLocalConfig(prev => ({
-                  ...prev,
-                  orbColors: ['#A855F7', '#3B82F6', '#6366F1'],
-                  orbOpacities: [30, 25, 25],
-                }))}
-                className="text-[10px] font-bold text-blue-500 hover:text-blue-400 transition-colors uppercase"
-              >
-                Reset
-              </button>
-            </div>
-          </div>
+
 
         </div>
       </div>

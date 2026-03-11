@@ -17,11 +17,10 @@ const ViewerScreen: React.FC<ViewerScreenProps> = ({ shareId }) => {
   const timerStateRef = useRef<TimerSyncState | null>(null);
   const hadStateRef = useRef(false);
 
-  // Dark mode — always dark for viewers (standalone route, no cleanup needed)
+  // Force light mode for viewer
   useEffect(() => {
-    document.documentElement.classList.add('dark');
-    document.body.classList.remove('light-mesh-bg');
-    document.body.classList.add('mesh-bg');
+    document.documentElement.classList.remove('dark');
+    document.body.classList.add('light-mesh-bg');
   }, []);
 
   // Fetch event data
@@ -151,11 +150,7 @@ const ViewerScreen: React.FC<ViewerScreenProps> = ({ shareId }) => {
       className="h-[100dvh] flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden transition-colors duration-500"
       style={bgColor ? { backgroundColor: bgColor } : undefined}
     >
-      {/* Background orbs */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-10 left-10 w-96 h-96 rounded-full blur-[120px] bg-purple-600/20" />
-        <div className="absolute bottom-10 right-10 w-[500px] h-[500px] rounded-full blur-[150px] bg-blue-600/15" />
-      </div>
+
 
       <div className="relative z-10 flex flex-col items-center">
         {/* Header */}

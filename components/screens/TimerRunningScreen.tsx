@@ -466,13 +466,13 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
             <div className="flex items-center gap-3">
               {getStatusBadge()}
               {currentSegment && !allComplete && (
-                <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                <span className="text-xs text-zinc-400">
                   {currentSegmentIndex + 1} / {event.segments.length}
                 </span>
               )}
             </div>
             {currentSegment && !allComplete && !isScheduledWaiting && (
-              <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-zinc-700 dark:text-zinc-200">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-zinc-700">
                 {currentSegment.name}
               </h2>
             )}
@@ -484,17 +484,17 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
               <div className={`
                 relative p-4 sm:p-12 md:p-16
                 rounded-2xl sm:rounded-[2.5rem]
-                bg-white/30 dark:bg-white/5
+                bg-white/30
                 backdrop-blur-2xl backdrop-saturate-150
-                border border-white/40 dark:border-white/10
+                border border-white/40
                 shadow-[0_8px_32px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.4)]
-                dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1)]
+               
                 transition-all duration-500
               `}>
-                <h2 className="text-3xl sm:text-5xl font-bold font-mono tracking-tight text-zinc-800 dark:text-white">
+                <h2 className="text-3xl sm:text-5xl font-bold font-mono tracking-tight text-zinc-800">
                   {scheduleCountdown}
                 </h2>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-4">
+                <p className="text-sm text-zinc-500 mt-4">
                   Starting at {new Date(event.scheduledStartTime!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
@@ -502,7 +502,7 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsWaitingSchedule(false)}
-                  className="group relative px-10 py-5 rounded-2xl bg-pink-500/20 hover:bg-pink-500/30 text-pink-600 dark:text-pink-400 font-bold border border-pink-500/30 hover:border-pink-500/50 shadow-[0_0_20px_rgba(236,72,153,0.15)] hover:shadow-[0_0_30px_rgba(236,72,153,0.3)] backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300"
+                  className="group relative px-10 py-5 rounded-2xl bg-pink-500/20 hover:bg-pink-500/30 text-pink-600 font-bold border border-pink-500/30 hover:border-pink-500/50 shadow-[0_0_20px_rgba(236,72,153,0.15)] hover:shadow-[0_0_30px_rgba(236,72,153,0.3)] backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300"
                 >
                   <div className="flex items-center gap-3">
                     <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -515,26 +515,26 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
             <div className={`
               relative p-4 sm:p-12 md:p-16
               rounded-2xl sm:rounded-[2.5rem]
-              bg-white/30 dark:bg-white/5
+              bg-white/30
               backdrop-blur-2xl backdrop-saturate-150
-              border border-white/40 dark:border-white/10
+              border border-white/40
               shadow-[0_8px_32px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.4)]
-              dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1)]
+             
               transition-all duration-500
             `}>
-              <h2 className="text-2xl sm:text-3xl font-bold text-zinc-800 dark:text-white">Timer Complete</h2>
-              <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-3">All {event.segments.length} segments finished</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-zinc-800">Timer Complete</h2>
+              <p className="text-zinc-500 text-sm mt-3">All {event.segments.length} segments finished</p>
             </div>
           ) : (
             <div className={`
               relative
               p-4 sm:p-12 md:p-16
               rounded-2xl sm:rounded-[2.5rem]
-              bg-white/30 dark:bg-white/5
+              bg-white/30
               backdrop-blur-2xl backdrop-saturate-150
-              border border-white/40 dark:border-white/10
+              border border-white/40
               shadow-[0_8px_32px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.4)]
-              dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1)]
+             
               transition-all duration-500
             `}>
               <FlipClockDisplay
@@ -557,8 +557,8 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
                 onClick={timer.start}
                 className={`group relative px-10 py-5 rounded-2xl font-bold backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300 ${
                   activeAlertColor
-                    ? 'bg-white/10 dark:bg-black/20 text-gray-600 dark:text-white border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/5'
-                    : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:shadow-[0_0_30px_rgba(16,185,129,0.3)]'
+                    ? 'bg-white/10 text-gray-600 border border-white/20 hover:bg-white/20'
+                    : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-600 border border-emerald-500/30 hover:border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:shadow-[0_0_30px_rgba(16,185,129,0.3)]'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -575,8 +575,8 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
                 onClick={timer.pause}
                 className={`group relative px-10 py-5 rounded-2xl font-bold backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300 ${
                   activeAlertColor
-                    ? 'bg-white/10 dark:bg-black/20 text-gray-600 dark:text-white border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/5'
-                    : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-600 dark:text-amber-400 border border-amber-500/30 hover:border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.15)] hover:shadow-[0_0_30px_rgba(245,158,11,0.3)]'
+                    ? 'bg-white/10 text-gray-600 border border-white/20 hover:bg-white/20'
+                    : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-600 border border-amber-500/30 hover:border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.15)] hover:shadow-[0_0_30px_rgba(245,158,11,0.3)]'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -593,8 +593,8 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
                 onClick={timer.resume}
                 className={`group relative px-10 py-5 rounded-2xl font-bold backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300 ${
                   activeAlertColor
-                    ? 'bg-white/10 dark:bg-black/20 text-gray-600 dark:text-white border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/5'
-                    : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:shadow-[0_0_30px_rgba(16,185,129,0.3)]'
+                    ? 'bg-white/10 text-gray-600 border border-white/20 hover:bg-white/20'
+                    : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-600 border border-emerald-500/30 hover:border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:shadow-[0_0_30px_rgba(16,185,129,0.3)]'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -614,7 +614,7 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
               onTouchEnd={(e) => { e.preventDefault(); handleResetMouseUp(); }}
               title={timer.status === 'running' || timer.status === 'paused' ? 'Hold to Exit (1.5s)' : 'Exit (R)'}
               aria-label="Reset and exit timer"
-              className="relative px-6 py-5 rounded-2xl bg-white/10 dark:bg-black/20 text-gray-600 dark:text-white font-bold border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/5 hover:scale-105 active:scale-95 transition-all duration-300 backdrop-blur-md overflow-hidden"
+              className="relative px-6 py-5 rounded-2xl bg-white/10 text-gray-600 font-bold border border-white/20 hover:bg-white/20 hover:scale-105 active:scale-95 transition-all duration-300 backdrop-blur-md overflow-hidden"
             >
               {resetProgress > 0 && (
                 <div
@@ -635,8 +635,8 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
               aria-label={screenOn ? "Allow screen to sleep" : "Keep screen awake"}
               className={`px-6 py-5 rounded-2xl font-bold border hover:scale-105 active:scale-95 transition-all duration-300 backdrop-blur-md ${
                 screenOn
-                  ? 'bg-amber-500/20 text-amber-500 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/30'
-                  : 'bg-white/10 dark:bg-black/20 text-gray-600 dark:text-white border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/5'
+                  ? 'bg-amber-500/20 text-amber-500 border-amber-500/30 hover:bg-amber-500/30'
+                  : 'bg-white/10 text-gray-600 border-white/20 hover:bg-white/20'
               }`}
             >
               {screenOn ? (
@@ -653,7 +653,7 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
                 onClick={toggleFullscreen}
                 title={isFullscreen ? "Exit Fullscreen (F)" : "Fullscreen (F)"}
                 aria-label={isFullscreen ? "Exit fullscreen mode" : "Enter fullscreen mode"}
-                className="px-6 py-5 rounded-2xl bg-white/10 dark:bg-black/20 text-gray-600 dark:text-white font-bold border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/5 hover:scale-105 active:scale-95 transition-all duration-300 backdrop-blur-md"
+                className="px-6 py-5 rounded-2xl bg-white/10 text-gray-600 font-bold border border-white/20 hover:bg-white/20 hover:scale-105 active:scale-95 transition-all duration-300 backdrop-blur-md"
               >
                 {isFullscreen ? (
                   <svg className="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" /></svg>
@@ -670,7 +670,7 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
                 onClick={() => setIsBlackout(true)}
                 title="Blackout Mode (B)"
                 aria-label="Enter blackout mode - tap to restore"
-                className="px-6 py-5 rounded-2xl bg-white/10 dark:bg-black/20 text-gray-600 dark:text-white font-bold border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/5 hover:scale-105 active:scale-95 transition-all duration-300 backdrop-blur-md"
+                className="px-6 py-5 rounded-2xl bg-white/10 text-gray-600 font-bold border border-white/20 hover:bg-white/20 hover:scale-105 active:scale-95 transition-all duration-300 backdrop-blur-md"
               >
                 <svg className="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />

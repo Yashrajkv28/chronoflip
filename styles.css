@@ -46,11 +46,6 @@ body {
 
 /* ===== BACKGROUND STYLES ===== */
 
-.mesh-bg {
-  background-color: #000000;
-  background-image:
-    radial-gradient(circle at 50% -20%, #1c1c1e, #000000 60%);
-}
 
 .light-mesh-bg {
   background-color: #f2f2f7;

@@ -1,17 +1,8 @@
 import type { SpeechEvent, AppState, SpeechColorAlert } from '../types';
 
 const EVENTS_KEY = 'chronoflip-v2-events';
-const DARKMODE_KEY = 'chronoflip-v2-darkmode';
 
 export function loadAppState(): AppState {
-  let darkMode = false;
-
-  const savedDark = localStorage.getItem(DARKMODE_KEY);
-  if (savedDark !== null) {
-    darkMode = savedDark === 'true';
-  } else {
-    darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  }
 
   // Load events
   try {
@@ -48,7 +39,6 @@ export function loadAppState(): AppState {
           activeSegmentId: null,
           runningEventId: null,
           runningSegmentIndex: 0,
-          darkMode,
         };
       }
     }
@@ -64,7 +54,6 @@ export function loadAppState(): AppState {
     activeSegmentId: null,
     runningEventId: null,
     runningSegmentIndex: 0,
-    darkMode,
   };
 }
 
@@ -73,13 +62,5 @@ export function saveEvents(events: SpeechEvent[]): void {
     localStorage.setItem(EVENTS_KEY, JSON.stringify(events));
   } catch (e) {
     console.warn('Failed to save events:', e);
-  }
-}
-
-export function saveDarkMode(darkMode: boolean): void {
-  try {
-    localStorage.setItem(DARKMODE_KEY, String(darkMode));
-  } catch (e) {
-    console.warn('Failed to save dark mode:', e);
   }
 }

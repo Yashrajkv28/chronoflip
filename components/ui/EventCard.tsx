@@ -79,14 +79,14 @@ const EventCard: React.FC<EventCardProps> = ({ event, editMode, onSelect, onStar
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
         className="relative
-                   bg-white/25 dark:bg-white/5
+                   bg-white/25
                    backdrop-blur-xl
-                   border border-white/30 dark:border-white/10
+                   border border-white/30
                    shadow-[0_4px_16px_rgba(0,0,0,0.06)]
-                   dark:shadow-[0_4px_16px_rgba(0,0,0,0.3)]
+                  
                    hover:shadow-[0_8px_32px_rgba(0,0,0,0.1)]
-                   dark:hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)]
-                   hover:bg-white/35 dark:hover:bg-white/8
+                  
+                   hover:bg-white/35
                    transition-[background-color,box-shadow] duration-300
                    rounded-2xl"
       >
@@ -95,7 +95,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, editMode, onSelect, onStar
           {editMode && (
             <button
               type="button"
-              className="cursor-grab active:cursor-grabbing p-1 text-zinc-400 dark:text-zinc-500 touch-none"
+              className="cursor-grab active:cursor-grabbing p-1 text-zinc-400 touch-none"
               {...attributes}
               {...listeners}
             >
@@ -109,14 +109,14 @@ const EventCard: React.FC<EventCardProps> = ({ event, editMode, onSelect, onStar
 
           {/* Content - clickable */}
           <div className="flex-1 min-w-0 cursor-pointer" onClick={isOpen ? undefined : onSelect}>
-            <h3 className="font-semibold text-zinc-800 dark:text-zinc-100 truncate text-base sm:text-lg">
+            <h3 className="font-semibold text-zinc-800 truncate text-base sm:text-lg">
               {event.title}
             </h3>
-            <div className="flex items-center gap-3 mt-1.5 text-xs text-zinc-400 dark:text-zinc-500">
+            <div className="flex items-center gap-3 mt-1.5 text-xs text-zinc-400">
               <span>{segmentCount} segment{segmentCount !== 1 ? 's' : ''}</span>
               {totalDuration > 0 && (
                 <>
-                  <span className="text-zinc-300 dark:text-zinc-600">|</span>
+                  <span className="text-zinc-300">|</span>
                   <span>
                     {totalDuration >= 3600
                       ? `${Math.floor(totalDuration / 3600)}h ${Math.floor((totalDuration % 3600) / 60)}m`
@@ -126,8 +126,8 @@ const EventCard: React.FC<EventCardProps> = ({ event, editMode, onSelect, onStar
               )}
               {event.scheduledStartTime != null && event.scheduledStartTime > 0 && (
                 <>
-                  <span className="text-zinc-300 dark:text-zinc-600">|</span>
-                  <span className="text-pink-500 dark:text-pink-400">
+                  <span className="text-zinc-300">|</span>
+                  <span className="text-pink-500">
                     {new Date(event.scheduledStartTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </>
@@ -153,7 +153,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, editMode, onSelect, onStar
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onStart(); }}
                 className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider
-                           bg-emerald-500/15 text-emerald-600 dark:text-emerald-400
+                           bg-emerald-500/15 text-emerald-600
                            border border-emerald-500/20
                            hover:bg-emerald-500/25 hover:border-emerald-500/40
                            hover:scale-105 active:scale-95

@@ -63,15 +63,15 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/20 backdrop-blur-sm">
       <div className="
         w-full sm:max-w-md h-[90vh] sm:h-auto sm:max-h-[85vh]
-        bg-white/90 dark:bg-[#121212]/90
+        bg-white/90
         backdrop-blur-2xl
-        border-t sm:border border-white/20 dark:border-white/10
+        border-t sm:border border-white/20
         rounded-t-[2.5rem] sm:rounded-[2.5rem]
         shadow-2xl overflow-hidden flex flex-col
         animate-slide-up
       ">
         {/* Header — iOS style text buttons */}
-        <div className="relative flex items-center justify-between px-6 py-5 border-b border-zinc-200/50 dark:border-white/5 bg-white/50 dark:bg-white/5 backdrop-blur-xl z-20">
+        <div className="relative flex items-center justify-between px-6 py-5 border-b border-zinc-200/50 bg-white/50 backdrop-blur-xl z-20">
           <button
             type="button"
             onClick={onClose}
@@ -79,7 +79,7 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
           >
             Cancel
           </button>
-          <span className="text-zinc-900 dark:text-white font-semibold text-[17px]">Segment</span>
+          <span className="text-zinc-900 font-semibold text-[17px]">Segment</span>
           <button
             type="button"
             onClick={handleSave}
@@ -94,15 +94,15 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
 
           {/* SUBTITLE Section */}
           <div className="mb-8">
-            <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Subtitle</h3>
-            <div className="bg-zinc-50/80 dark:bg-zinc-900/40 backdrop-blur-md border border-zinc-200/50 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
+            <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Subtitle</h3>
+            <div className="bg-zinc-50/80 backdrop-blur-md border border-zinc-200/50 rounded-2xl overflow-hidden shadow-sm">
               <div className="p-4">
                 <input
                   type="text"
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="Speech name"
-                  className="w-full bg-transparent text-[15px] font-medium text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-600 outline-none"
+                  className="w-full bg-transparent text-[15px] font-medium text-zinc-900 placeholder-zinc-400 outline-none"
                 />
               </div>
             </div>
@@ -110,8 +110,8 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
 
           {/* DURATION Section */}
           <div className="mb-8">
-            <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Duration</h3>
-            <div className="bg-zinc-50/80 dark:bg-zinc-900/40 backdrop-blur-md border border-zinc-200/50 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
+            <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Duration</h3>
+            <div className="bg-zinc-50/80 backdrop-blur-md border border-zinc-200/50 rounded-2xl overflow-hidden shadow-sm">
               <div className="p-4">
                 <div className="flex items-start justify-center gap-4 sm:gap-8">
                   <ScrollWheelPicker value={hours} min={0} max={23} onChange={setHours} label="hours" />
@@ -141,8 +141,8 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                       }}
                       className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold transition-all duration-200
                         ${hours * 3600 + minutes * 60 + seconds === p.sec
-                          ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30'
-                          : 'bg-white/15 dark:bg-white/5 text-zinc-500 dark:text-zinc-400 border border-white/15 dark:border-white/10 hover:bg-white/25 dark:hover:bg-white/10'
+                          ? 'bg-blue-500/20 text-blue-600 border border-blue-500/30'
+                          : 'bg-white/15 text-zinc-500 border border-white/15 hover:bg-white/25'
                         }`}
                     >
                       {p.label}
@@ -155,10 +155,10 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
 
           {/* COUNT MODE Section — SegmentedControl style */}
           <div className="mb-8">
-            <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Count Mode</h3>
-            <div className="bg-zinc-50/80 dark:bg-zinc-900/40 backdrop-blur-md border border-zinc-200/50 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
+            <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Count Mode</h3>
+            <div className="bg-zinc-50/80 backdrop-blur-md border border-zinc-200/50 rounded-2xl overflow-hidden shadow-sm">
               <div className="p-4">
-                <div className="flex p-1 bg-zinc-200/80 dark:bg-zinc-800/80 rounded-xl backdrop-blur-sm" role="tablist">
+                <div className="flex p-1 bg-zinc-200/80 rounded-xl backdrop-blur-sm" role="tablist">
                   <button
                     type="button"
                     onClick={() => setMode('countdown')}
@@ -166,8 +166,8 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                     aria-selected={mode === 'countdown'}
                     className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all duration-300 ${
                       mode === 'countdown'
-                        ? 'bg-red-500/20 text-red-600 dark:text-red-400 shadow-sm'
-                        : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
+                        ? 'bg-red-500/20 text-red-600 shadow-sm'
+                        : 'text-zinc-500 hover:text-zinc-800'
                     }`}
                   >
                     Countdown
@@ -179,8 +179,8 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                     aria-selected={mode === 'countup'}
                     className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all duration-300 ${
                       mode === 'countup'
-                        ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400 shadow-sm'
-                        : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
+                        ? 'bg-blue-500/20 text-blue-600 shadow-sm'
+                        : 'text-zinc-500 hover:text-zinc-800'
                     }`}
                   >
                     Count Up
@@ -192,10 +192,10 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
 
           {/* AUDIO Section */}
           <div className="mb-8">
-            <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Audio</h3>
-            <div className="bg-zinc-50/80 dark:bg-zinc-900/40 backdrop-blur-md border border-zinc-200/50 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
-              <div className="p-4 flex items-center justify-between border-b border-zinc-200/50 dark:border-white/5">
-                <span className="text-[15px] font-medium text-zinc-900 dark:text-zinc-100">Alarm on Completion</span>
+            <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Audio</h3>
+            <div className="bg-zinc-50/80 backdrop-blur-md border border-zinc-200/50 rounded-2xl overflow-hidden shadow-sm">
+              <div className="p-4 flex items-center justify-between border-b border-zinc-200/50">
+                <span className="text-[15px] font-medium text-zinc-900">Alarm on Completion</span>
                 <button
                   type="button"
                   onClick={() => setSound(!sound)}
@@ -203,7 +203,7 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                   role="switch"
                   aria-checked={sound}
                   className={`relative w-11 h-6 rounded-full transition-colors duration-300 ease-in-out ${
-                    sound ? 'bg-blue-500' : 'bg-zinc-300 dark:bg-zinc-700'
+                    sound ? 'bg-blue-500' : 'bg-zinc-300'
                   }`}
                 >
                   <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
@@ -211,8 +211,8 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                   }`} />
                 </button>
               </div>
-              <div className="p-4 flex items-center justify-between border-b border-zinc-200/50 dark:border-white/5">
-                <span className="text-[15px] font-medium text-zinc-900 dark:text-zinc-100">Tick Sound</span>
+              <div className="p-4 flex items-center justify-between border-b border-zinc-200/50">
+                <span className="text-[15px] font-medium text-zinc-900">Tick Sound</span>
                 <button
                   type="button"
                   onClick={() => setTick(!tick)}
@@ -220,7 +220,7 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                   role="switch"
                   aria-checked={tick}
                   className={`relative w-11 h-6 rounded-full transition-colors duration-300 ease-in-out ${
-                    tick ? 'bg-blue-500' : 'bg-zinc-300 dark:bg-zinc-700'
+                    tick ? 'bg-blue-500' : 'bg-zinc-300'
                   }`}
                 >
                   <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
@@ -229,7 +229,7 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                 </button>
               </div>
               <div className="p-4 flex items-center justify-between">
-                <span className="text-[15px] font-medium text-zinc-900 dark:text-zinc-100">Flash on Completion</span>
+                <span className="text-[15px] font-medium text-zinc-900">Flash on Completion</span>
                 <button
                   type="button"
                   onClick={() => setFlash(!flash)}
@@ -237,7 +237,7 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                   role="switch"
                   aria-checked={flash}
                   className={`relative w-11 h-6 rounded-full transition-colors duration-300 ease-in-out ${
-                    flash ? 'bg-blue-500' : 'bg-zinc-300 dark:bg-zinc-700'
+                    flash ? 'bg-blue-500' : 'bg-zinc-300'
                   }`}
                 >
                   <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
@@ -251,7 +251,7 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
           {/* COLOR ALERTS Section */}
           <div className="mb-8">
             <div className="flex items-center justify-between px-4 mb-2">
-              <h3 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Color Alerts</h3>
+              <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Color Alerts</h3>
               <button
                 type="button"
                 onClick={addAlert}
@@ -261,22 +261,22 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                 + Add
               </button>
             </div>
-            <p className="px-4 mb-2 text-[10px] text-zinc-400 dark:text-zinc-500">
+            <p className="px-4 mb-2 text-[10px] text-zinc-400">
               {mode === 'countdown' ? 'Triggers at X seconds remaining' : 'Triggers at X seconds elapsed'}
             </p>
 
-            <div className="bg-zinc-50/80 dark:bg-zinc-900/40 backdrop-blur-md border border-zinc-200/50 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
+            <div className="bg-zinc-50/80 backdrop-blur-md border border-zinc-200/50 rounded-2xl overflow-hidden shadow-sm">
               {colorAlerts.length === 0 ? (
-                <div className="p-8 text-center text-zinc-400 dark:text-zinc-600 text-sm">
+                <div className="p-8 text-center text-zinc-400 text-sm">
                   No visual alerts set.
                 </div>
               ) : (
                 [...colorAlerts].sort((a, b) => b.timeInSeconds - a.timeInSeconds).map((alert, idx) => (
-                  <div key={alert.id} className={`p-4 ${idx !== colorAlerts.length - 1 ? 'border-b border-zinc-200/50 dark:border-white/5' : ''}`}>
+                  <div key={alert.id} className={`p-4 ${idx !== colorAlerts.length - 1 ? 'border-b border-zinc-200/50' : ''}`}>
                     {/* Row 1: MM:SS time + delete */}
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="flex items-baseline gap-1 text-zinc-900 dark:text-zinc-100">
-                        <span className="text-xs font-bold text-zinc-400 dark:text-zinc-500">AT</span>
+                      <div className="flex items-baseline gap-1 text-zinc-900">
+                        <span className="text-xs font-bold text-zinc-400">AT</span>
                         <input
                           type="number"
                           min={0}
@@ -312,7 +312,7 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                         onClick={() => deleteAlert(alert.id)}
                         aria-label="Delete this alert"
                         title="Delete alert"
-                        className="ml-auto w-6 h-6 flex items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-500 hover:bg-red-500 hover:text-white transition-colors"
+                        className="ml-auto w-6 h-6 flex items-center justify-center rounded-full bg-zinc-200 text-zinc-500 hover:bg-red-500 hover:text-white transition-colors"
                       >
                         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
                       </button>
@@ -327,14 +327,14 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                             type="button"
                             onClick={() => updateAlert(alert.id, { color: c })}
                             className={`w-5 h-5 rounded-full transition-transform shadow-sm ${
-                              alert.color === c ? 'scale-125 ring-2 ring-white dark:ring-zinc-600' : 'opacity-50 hover:opacity-100 hover:scale-110'
+                              alert.color === c ? 'scale-125 ring-2 ring-white' : 'opacity-50 hover:opacity-100 hover:scale-110'
                             }`}
                             style={{ backgroundColor: c }}
                           />
                         ))}
                         {/* Custom color picker */}
                         <label
-                          className="relative w-5 h-5 rounded-full cursor-pointer overflow-hidden ring-1 ring-zinc-300 dark:ring-zinc-600 hover:scale-110 transition-transform"
+                          className="relative w-5 h-5 rounded-full cursor-pointer overflow-hidden ring-1 ring-zinc-300 hover:scale-110 transition-transform"
                           title="Custom color"
                           style={{ background: 'conic-gradient(#ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)' }}
                         >
@@ -352,8 +352,8 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                         title={alert.sound ? 'Sound enabled' : 'Sound disabled'}
                         className={`text-[10px] font-bold px-2 py-1 rounded border transition-colors ${
                           alert.sound
-                            ? 'bg-zinc-800 text-white dark:bg-white dark:text-black border-transparent'
-                            : 'border-zinc-300 dark:border-zinc-700 text-zinc-400'
+                            ? 'bg-zinc-800 text-white border-transparent'
+                            : 'border-zinc-300 text-zinc-400'
                         }`}
                       >
                         SOUND
@@ -363,7 +363,7 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                     {/* Row 3: Flash + Background toggles */}
                     <div className="flex items-center gap-5">
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Flash</span>
+                        <span className="text-[11px] font-semibold text-zinc-500">Flash</span>
                         <button
                           type="button"
                           onClick={() => updateAlert(alert.id, { flash: !alert.flash })}
@@ -371,7 +371,7 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                           role="switch"
                           aria-checked={alert.flash}
                           className={`relative w-11 h-6 rounded-full transition-colors duration-300 ease-in-out ${
-                            alert.flash ? 'bg-blue-500' : 'bg-zinc-300 dark:bg-zinc-700'
+                            alert.flash ? 'bg-blue-500' : 'bg-zinc-300'
                           }`}
                         >
                           <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
@@ -380,7 +380,7 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                         </button>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">Background</span>
+                        <span className="text-[11px] font-semibold text-zinc-500">Background</span>
                         <button
                           type="button"
                           onClick={() => updateAlert(alert.id, { background: !alert.background })}
@@ -388,7 +388,7 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                           role="switch"
                           aria-checked={alert.background}
                           className={`relative w-11 h-6 rounded-full transition-colors duration-300 ease-in-out ${
-                            alert.background ? 'bg-blue-500' : 'bg-zinc-300 dark:bg-zinc-700'
+                            alert.background ? 'bg-blue-500' : 'bg-zinc-300'
                           }`}
                         >
                           <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${

@@ -40,9 +40,9 @@ const FlipClockDisplay: React.FC<FlipClockDisplayProps> = ({
       <div className={`flex flex-col gap-3 sm:gap-4 md:gap-5 transition-opacity duration-300
                       ${isRunning ? 'animate-blink' : ''}`}>
         <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 rounded-full 
-                       bg-zinc-400 dark:bg-zinc-500 shadow-sm" />
+                       bg-zinc-400 shadow-sm" />
         <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 rounded-full 
-                       bg-zinc-400 dark:bg-zinc-500 shadow-sm" />
+                       bg-zinc-400 shadow-sm" />
       </div>
     </div>
   );

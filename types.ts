@@ -66,7 +66,6 @@ export interface AppState {
   activeSegmentId: string | null;
   runningEventId: string | null;
   runningSegmentIndex: number;
-  darkMode: boolean;
 }
 
 // ========== Color Palette ==========

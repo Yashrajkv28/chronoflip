@@ -16,7 +16,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ value, onChange }) => {
           onClick={() => onChange(color)}
           className={`w-8 h-8 rounded-full transition-all duration-200 border-2 hover:scale-110 active:scale-95 ${
             value === color
-              ? 'border-white dark:border-white scale-110 shadow-lg'
+              ? 'border-white scale-110 shadow-lg'
               : 'border-transparent opacity-70 hover:opacity-100'
           }`}
           style={{ backgroundColor: color }}

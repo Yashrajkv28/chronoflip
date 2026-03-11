@@ -36,11 +36,11 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ eventTitle, shareId, onClose 
 
       {/* Modal */}
       <div className="relative w-full max-w-sm rounded-3xl
-                      bg-white/80 dark:bg-zinc-900/80
+                      bg-white/80
                       backdrop-blur-2xl backdrop-saturate-150
-                      border border-white/40 dark:border-white/10
+                      border border-white/40
                       shadow-[0_8px_32px_rgba(0,0,0,0.15)]
-                      dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)]
+                     
                       p-6 sm:p-8
                       animate-[fadeIn_0.2s_ease-out]">
 
@@ -49,8 +49,8 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ eventTitle, shareId, onClose 
           type="button"
           onClick={onClose}
           className="absolute top-4 right-4 p-2 rounded-full
-                     text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200
-                     hover:bg-black/5 dark:hover:bg-white/10
+                     text-zinc-400 hover:text-zinc-600
+                     hover:bg-black/5
                      transition-all"
           aria-label="Close"
         >
@@ -60,10 +60,10 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ eventTitle, shareId, onClose 
         </button>
 
         {/* Title */}
-        <h2 className="text-lg font-bold text-zinc-800 dark:text-white text-center mb-1">
+        <h2 className="text-lg font-bold text-zinc-800 text-center mb-1">
           Share
         </h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center mb-6 truncate">
+        <p className="text-sm text-zinc-500 text-center mb-6 truncate">
           {eventTitle}
         </p>
 
@@ -81,7 +81,7 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ eventTitle, shareId, onClose 
         </div>
 
         {/* Description */}
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center mb-5">
+        <p className="text-xs text-zinc-500 text-center mb-5">
           Participants can scan this code to view the live timer
         </p>
 
@@ -90,7 +90,7 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ eventTitle, shareId, onClose 
           type="button"
           onClick={handleCopy}
           className="w-full py-3 rounded-2xl text-sm font-semibold
-                     bg-blue-500/15 text-blue-600 dark:text-blue-400
+                     bg-blue-500/15 text-blue-600
                      border border-blue-500/25
                      hover:bg-blue-500/25 hover:border-blue-500/40
                      active:scale-[0.98]
