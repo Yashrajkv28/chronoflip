@@ -172,7 +172,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, editMode, onSelect, onStar
               <div
                 key={seg.id}
                 className="flex-1"
-                style={{ backgroundColor: seg.colorAlerts?.[0]?.color ?? '#3B82F6' }}
+                style={{ backgroundColor: seg.color ?? '#3B82F6' }}
               />
             ))}
           </div>
