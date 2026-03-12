@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import type { Segment, SpeechColorAlert } from '../../types';
-import { formatDuration } from '../../types';
+import type { Segment } from '../../types';
+import { formatDuration, SEGMENT_COLORS } from '../../types';
 import ScrollWheelPicker from '../ui/ScrollWheelPicker';
 
 interface SegmentSettingsScreenProps {
@@ -16,7 +16,7 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
   const [minutes, setMinutes] = useState(m);
   const [seconds, setSeconds] = useState(s);
   const [mode, setMode] = useState(segment.mode);
-  const [colorAlerts, setColorAlerts] = useState<SpeechColorAlert[]>(segment.colorAlerts);
+  const [color, setColor] = useState(segment.color);
   const [sound, setSound] = useState(segment.soundEnabled);
   const [flash, setFlash] = useState(segment.flashEnabled ?? false);
   const [tick, setTick] = useState(segment.tickEnabled ?? false);
@@ -26,37 +26,11 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
       name: name.trim() || 'Untitled',
       durationSeconds: hours * 3600 + minutes * 60 + seconds,
       mode,
-      colorAlerts,
+      color,
       soundEnabled: sound,
       flashEnabled: flash,
       tickEnabled: tick,
     });
-  };
-
-  const addAlert = () => {
-    setColorAlerts(prev => [...prev, {
-      id: crypto.randomUUID(),
-      timeInSeconds: 30,
-      color: '#EF4444',
-      background: true,
-      flash: false,
-      sound: false,
-      label: '30 sec',
-    }]);
-  };
-
-  const updateAlert = (id: string, updates: Partial<SpeechColorAlert>) => {
-    setColorAlerts(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
-  };
-
-  const deleteAlert = (id: string) => {
-    setColorAlerts(prev => prev.filter(a => a.id !== id));
-  };
-
-  const formatAlertTime = (totalSec: number): string => {
-    if (totalSec >= 3600) return `${Math.floor(totalSec / 3600)}h ${Math.floor((totalSec % 3600) / 60)}m`;
-    if (totalSec >= 60) return `${Math.floor(totalSec / 60)}m ${totalSec % 60 > 0 ? (totalSec % 60) + 's' : ''}`.trim();
-    return `${totalSec}s`;
   };
 
   return (
@@ -248,158 +222,50 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
             </div>
           </div>
 
-          {/* COLOR ALERTS Section */}
+          {/* SEGMENT COLOR Section */}
           <div className="mb-8">
-            <div className="flex items-center justify-between px-4 mb-2">
-              <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Color Alerts</h3>
-              <button
-                type="button"
-                onClick={addAlert}
-                aria-label="Add new color alert"
-                className="text-xs font-bold text-blue-500 hover:text-blue-400 transition-colors uppercase"
-              >
-                + Add
-              </button>
-            </div>
-            <p className="px-4 mb-2 text-[10px] text-zinc-400">
-              {mode === 'countdown' ? 'Triggers at X seconds remaining' : 'Triggers at X seconds elapsed'}
+            <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Segment Color</h3>
+            <p className="px-4 mb-3 text-[10px] text-zinc-400">
+              Background color while this segment is active
             </p>
-
             <div className="bg-zinc-50/80 backdrop-blur-md border border-zinc-200/50 rounded-2xl overflow-hidden shadow-sm">
-              {colorAlerts.length === 0 ? (
-                <div className="p-8 text-center text-zinc-400 text-sm">
-                  No visual alerts set.
+              <div className="p-4">
+                {/* Color preview bar */}
+                <div
+                  className="w-full h-10 rounded-xl mb-4 shadow-inner border border-black/5"
+                  style={{ backgroundColor: color }}
+                />
+                {/* Color swatches */}
+                <div className="flex flex-wrap gap-3 justify-center">
+                  {SEGMENT_COLORS.map(c => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setColor(c)}
+                      className={`w-8 h-8 rounded-full transition-all duration-200 border-2 hover:scale-110 active:scale-95 ${
+                        color === c
+                          ? 'border-zinc-800 scale-110 shadow-lg'
+                          : 'border-transparent opacity-70 hover:opacity-100'
+                      }`}
+                      style={{ backgroundColor: c }}
+                      aria-label={`Select color ${c}`}
+                    />
+                  ))}
+                  {/* Custom color picker */}
+                  <label
+                    className="relative w-8 h-8 rounded-full cursor-pointer overflow-hidden ring-1 ring-zinc-300 hover:scale-110 transition-transform"
+                    title="Custom color"
+                    style={{ background: 'conic-gradient(#ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)' }}
+                  >
+                    <input
+                      type="color"
+                      value={color}
+                      onChange={e => setColor(e.target.value)}
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    />
+                  </label>
                 </div>
-              ) : (
-                [...colorAlerts].sort((a, b) => b.timeInSeconds - a.timeInSeconds).map((alert, idx) => (
-                  <div key={alert.id} className={`p-4 ${idx !== colorAlerts.length - 1 ? 'border-b border-zinc-200/50' : ''}`}>
-                    {/* Row 1: MM:SS time + delete */}
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="flex items-baseline gap-1 text-zinc-900">
-                        <span className="text-xs font-bold text-zinc-400">AT</span>
-                        <input
-                          type="number"
-                          min={0}
-                          max={1440}
-                          value={Math.floor(alert.timeInSeconds / 60)}
-                          onChange={e => {
-                            const mins = parseInt(e.target.value) || 0;
-                            const secs = alert.timeInSeconds % 60;
-                            const total = mins * 60 + secs;
-                            updateAlert(alert.id, { timeInSeconds: total, label: formatAlertTime(total) });
-                          }}
-                          onWheel={e => e.currentTarget.blur()}
-                          className="w-8 bg-transparent text-right font-mono text-lg font-medium focus:text-blue-500 focus:outline-none"
-                        />
-                        <span className="text-xs text-zinc-400">:</span>
-                        <input
-                          type="number"
-                          min={0}
-                          max={59}
-                          value={(alert.timeInSeconds % 60).toString().padStart(2, '0')}
-                          onChange={e => {
-                            const mins = Math.floor(alert.timeInSeconds / 60);
-                            const secs = Math.min(59, parseInt(e.target.value) || 0);
-                            const total = mins * 60 + secs;
-                            updateAlert(alert.id, { timeInSeconds: total, label: formatAlertTime(total) });
-                          }}
-                          onWheel={e => e.currentTarget.blur()}
-                          className="w-8 bg-transparent font-mono text-lg font-medium focus:text-blue-500 focus:outline-none"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => deleteAlert(alert.id)}
-                        aria-label="Delete this alert"
-                        title="Delete alert"
-                        className="ml-auto w-6 h-6 flex items-center justify-center rounded-full bg-zinc-200 text-zinc-500 hover:bg-red-500 hover:text-white transition-colors"
-                      >
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
-                      </button>
-                    </div>
-
-                    {/* Row 2: Color swatches + Sound toggle */}
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex gap-2 items-center" aria-label="Alert color selection">
-                        {['#EAB308', '#F97316', '#EF4444', '#22C55E', '#3B82F6', '#8B5CF6'].map(c => (
-                          <button
-                            key={c}
-                            type="button"
-                            onClick={() => updateAlert(alert.id, { color: c })}
-                            className={`w-5 h-5 rounded-full transition-transform shadow-sm ${
-                              alert.color === c ? 'scale-125 ring-2 ring-white' : 'opacity-50 hover:opacity-100 hover:scale-110'
-                            }`}
-                            style={{ backgroundColor: c }}
-                          />
-                        ))}
-                        {/* Custom color picker */}
-                        <label
-                          className="relative w-5 h-5 rounded-full cursor-pointer overflow-hidden ring-1 ring-zinc-300 hover:scale-110 transition-transform"
-                          title="Custom color"
-                          style={{ background: 'conic-gradient(#ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)' }}
-                        >
-                          <input
-                            type="color"
-                            value={alert.color}
-                            onChange={e => updateAlert(alert.id, { color: e.target.value })}
-                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                          />
-                        </label>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => updateAlert(alert.id, { sound: !alert.sound })}
-                        title={alert.sound ? 'Sound enabled' : 'Sound disabled'}
-                        className={`text-[10px] font-bold px-2 py-1 rounded border transition-colors ${
-                          alert.sound
-                            ? 'bg-zinc-800 text-white border-transparent'
-                            : 'border-zinc-300 text-zinc-400'
-                        }`}
-                      >
-                        SOUND
-                      </button>
-                    </div>
-
-                    {/* Row 3: Flash + Background toggles */}
-                    <div className="flex items-center gap-5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-semibold text-zinc-500">Flash</span>
-                        <button
-                          type="button"
-                          onClick={() => updateAlert(alert.id, { flash: !alert.flash })}
-                          aria-label="Toggle flash"
-                          role="switch"
-                          aria-checked={alert.flash}
-                          className={`relative w-11 h-6 rounded-full transition-colors duration-300 ease-in-out ${
-                            alert.flash ? 'bg-blue-500' : 'bg-zinc-300'
-                          }`}
-                        >
-                          <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                            alert.flash ? 'translate-x-5' : 'translate-x-0'
-                          }`} />
-                        </button>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-semibold text-zinc-500">Background</span>
-                        <button
-                          type="button"
-                          onClick={() => updateAlert(alert.id, { background: !alert.background })}
-                          aria-label="Toggle persistent background"
-                          role="switch"
-                          aria-checked={alert.background}
-                          className={`relative w-11 h-6 rounded-full transition-colors duration-300 ease-in-out ${
-                            alert.background ? 'bg-blue-500' : 'bg-zinc-300'
-                          }`}
-                        >
-                          <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                            alert.background ? 'translate-x-5' : 'translate-x-0'
-                          }`} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
+              </div>
             </div>
           </div>
 
