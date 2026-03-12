@@ -77,6 +77,31 @@ const ViewerScreen: React.FC<ViewerScreenProps> = ({ shareId }) => {
     return () => { document.title = 'ChronoFlip'; };
   }, [timerState?.eventTitle]);
 
+  // Flash animation for viewer when organizer has blocking flash active
+  const [viewerFlashOn, setViewerFlashOn] = useState(true);
+  const viewerFlashRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (timerState?.isFlashing) {
+      let on = true;
+      viewerFlashRef.current = window.setInterval(() => {
+        on = !on;
+        setViewerFlashOn(on);
+      }, 500);
+    } else {
+      if (viewerFlashRef.current) {
+        clearInterval(viewerFlashRef.current);
+        viewerFlashRef.current = null;
+      }
+      setViewerFlashOn(true);
+    }
+    return () => {
+      if (viewerFlashRef.current) {
+        clearInterval(viewerFlashRef.current);
+      }
+    };
+  }, [timerState?.isFlashing]);
+
   // Loading state
   if (loading) {
     return (
@@ -126,7 +151,9 @@ const ViewerScreen: React.FC<ViewerScreenProps> = ({ shareId }) => {
   const displaySeconds = time % 60;
   const showHours = time >= 3600;
 
-  const bgColor = state?.activeAlertColor ?? undefined;
+  const bgColor = state?.isFlashing
+    ? (viewerFlashOn ? state?.activeAlertColor ?? undefined : undefined)
+    : (state?.activeAlertColor ?? undefined);
   const status = state?.status ?? 'waiting';
 
   const getStatusBadge = () => {
