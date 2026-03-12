@@ -7,6 +7,7 @@ interface UseTimerOptions {
   onComplete: () => void;
   autoStart?: boolean;
   playTickSound?: boolean;
+  resetKey?: number;  // NEW — increment to force a reset even on the same segment
 }
 
 interface UseTimerReturn {
@@ -18,7 +19,7 @@ interface UseTimerReturn {
   reset: () => void;
 }
 
-export function useTimer({ segment, onComplete, autoStart = false, playTickSound = false }: UseTimerOptions): UseTimerReturn {
+export function useTimer({ segment, onComplete, autoStart = false, playTickSound = false, resetKey = 0 }: UseTimerOptions): UseTimerReturn {
   const [status, setStatus] = useState<SegmentStatus>('idle');
   const [timeInSeconds, setTimeInSeconds] = useState(() =>
     segment ? (segment.mode === 'countdown' ? segment.durationSeconds : 0) : 0
@@ -33,10 +34,12 @@ export function useTimer({ segment, onComplete, autoStart = false, playTickSound
   const lastTickSecondRef = useRef<number | null>(null);
   const onCompleteRef = useRef(onComplete);
   const segmentRef = useRef(segment);
+  const autoStartRef = useRef(autoStart);
 
   // Keep refs in sync
   onCompleteRef.current = onComplete;
   segmentRef.current = segment;
+  autoStartRef.current = autoStart;
 
   // Reset when segment changes
   useEffect(() => {
@@ -55,13 +58,13 @@ export function useTimer({ segment, onComplete, autoStart = false, playTickSound
     lastTickSecondRef.current = null;
     setTimeInSeconds(segment.mode === 'countdown' ? segment.durationSeconds : 0);
 
-    if (autoStart) {
+    if (autoStartRef.current) {
       audioService.play('start');
       setStatus('running');
     } else {
       setStatus('idle');
     }
-  }, [segment?.id, autoStart]);
+  }, [segment?.id, resetKey]);
 
   const start = useCallback(() => {
     if (!segmentRef.current) return;

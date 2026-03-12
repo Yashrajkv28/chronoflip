@@ -40,12 +40,23 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
     !!(document.fullscreenEnabled || (document as any).webkitFullscreenEnabled)
   );
 
-  // Long-press reset
-  const [resetProgress, setResetProgress] = useState(0);
-  const resetTimerRef = useRef<number | null>(null);
-  const resetIntervalRef = useRef<number | null>(null);
+  // Restart / force-idle
+  const [forceIdle, setForceIdle] = useState(false);
+  const [resetKey, setResetKey] = useState(0);
+
+  // Exit button long-press
+  const [exitProgress, setExitProgress] = useState(0);
+  const exitTimerRef = useRef<number | null>(null);
+  const exitIntervalRef = useRef<number | null>(null);
+  const eKeyHeldRef = useRef(false);
+  const EXIT_HOLD_DURATION = 3000;
+
+  // Long-press restart
+  const [restartProgress, setRestartProgress] = useState(0);
+  const restartTimerRef = useRef<number | null>(null);
+  const restartIntervalRef = useRef<number | null>(null);
   const rKeyHeldRef = useRef(false);
-  const RESET_HOLD_DURATION = 1500;
+  const RESTART_HOLD_DURATION = 1500;
   const PROGRESS_UPDATE_INTERVAL = 50;
 
   const currentSegment = event.segments[currentSegmentIndex] ?? null;
@@ -135,8 +146,9 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
   const timer = useTimer({
     segment: currentSegment,
     onComplete: handleSegmentComplete,
-    autoStart: !isWaitingSchedule,
+    autoStart: !isWaitingSchedule && !forceIdle,
     playTickSound: currentSegment?.tickEnabled ?? false,
+    resetKey,
   });
 
 
@@ -221,41 +233,94 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
     setCurrentSegmentIndex(prev => prev + 1);
   }, []);
 
-  // Long-press reset logic
-  const clearResetTimers = useCallback(() => {
-    if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
-    if (resetIntervalRef.current) clearInterval(resetIntervalRef.current);
-    resetTimerRef.current = null;
-    resetIntervalRef.current = null;
+  // Long-press restart logic
+  const clearRestartTimers = useCallback(() => {
+    if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
+    if (restartIntervalRef.current) clearInterval(restartIntervalRef.current);
+    restartTimerRef.current = null;
+    restartIntervalRef.current = null;
   }, []);
 
-  const handleResetAction = useCallback(() => {
-    // When idle or complete, reset acts as exit/back
-    if (timer.status === 'idle' || allComplete) {
-      audioService.stop();
-      onExit();
-      return;
-    }
-    // Otherwise start long-press
+  const clearExitTimers = useCallback(() => {
+    if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
+    if (exitIntervalRef.current) clearInterval(exitIntervalRef.current);
+    exitTimerRef.current = null;
+    exitIntervalRef.current = null;
+  }, []);
+
+  const handleRestartAction = useCallback(() => {
+    // Always long-press — start progress animation
     let progress = 0;
-    resetIntervalRef.current = window.setInterval(() => {
-      progress += (PROGRESS_UPDATE_INTERVAL / RESET_HOLD_DURATION) * 100;
-      setResetProgress(Math.min(progress, 100));
+    restartIntervalRef.current = window.setInterval(() => {
+      progress += (PROGRESS_UPDATE_INTERVAL / RESTART_HOLD_DURATION) * 100;
+      setRestartProgress(Math.min(progress, 100));
     }, PROGRESS_UPDATE_INTERVAL);
 
-    resetTimerRef.current = window.setTimeout(() => {
+    restartTimerRef.current = window.setTimeout(() => {
+      // Stop all audio
       audioService.stop();
-      onExit();
-      clearResetTimers();
-      setResetProgress(0);
-      if ('vibrate' in navigator) navigator.vibrate(50);
-    }, RESET_HOLD_DURATION);
-  }, [timer.status, allComplete, onExit, clearResetTimers]);
 
-  const handleResetMouseUp = useCallback(() => {
-    clearResetTimers();
-    setResetProgress(0);
-  }, [clearResetTimers]);
+      // Clear any active flash
+      if (flashIntervalRef.current) {
+        clearInterval(flashIntervalRef.current);
+        flashIntervalRef.current = null;
+      }
+      setIsFlashing(false);
+      setFlashColor('');
+      setIsFlashBlocking(false);
+
+      // Clear transition and completion states
+      setIsTransitioning(false);
+      setAllComplete(false);
+
+      // Force idle and go to segment 0
+      setForceIdle(true);
+      setCurrentSegmentIndex(0);
+      setResetKey(prev => prev + 1);
+
+      // Clean up
+      clearRestartTimers();
+      setRestartProgress(0);
+      if ('vibrate' in navigator) navigator.vibrate(50);
+    }, RESTART_HOLD_DURATION);
+  }, [clearRestartTimers]);
+
+  const handleRestartMouseUp = useCallback(() => {
+    clearRestartTimers();
+    setRestartProgress(0);
+  }, [clearRestartTimers]);
+
+  const handleExitAction = useCallback(() => {
+    // Always long-press — start progress animation
+    let progress = 0;
+    exitIntervalRef.current = window.setInterval(() => {
+      progress += (PROGRESS_UPDATE_INTERVAL / EXIT_HOLD_DURATION) * 100;
+      setExitProgress(Math.min(progress, 100));
+    }, PROGRESS_UPDATE_INTERVAL);
+
+    exitTimerRef.current = window.setTimeout(() => {
+      audioService.stop();
+      // Clear any active flash
+      if (flashIntervalRef.current) {
+        clearInterval(flashIntervalRef.current);
+        flashIntervalRef.current = null;
+      }
+      onExit();
+      clearExitTimers();
+      setExitProgress(0);
+      if ('vibrate' in navigator) navigator.vibrate(50);
+    }, EXIT_HOLD_DURATION);
+  }, [onExit, clearExitTimers]);
+
+  const handleExitMouseUp = useCallback(() => {
+    clearExitTimers();
+    setExitProgress(0);
+  }, [clearExitTimers]);
+
+  const handleManualStart = useCallback(() => {
+    setForceIdle(false);
+    timer.start();
+  }, [timer]);
 
   // Exit blackout on any key/tap
   useEffect(() => {
@@ -276,7 +341,7 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
           if (isFlashBlocking) {
             dismissFlash();
           } else if (timer.status === 'idle' || allComplete) {
-            timer.start();
+            handleManualStart();
           } else if (timer.status === 'running') {
             timer.pause();
           } else if (timer.status === 'paused') {
@@ -286,12 +351,18 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
         case 'KeyR':
           if (!e.metaKey && !e.ctrlKey && !e.repeat) {
             e.preventDefault();
-            if (timer.status === 'idle' || allComplete) {
-              audioService.stop();
-              onExit();
-            } else if (!rKeyHeldRef.current) {
+            if (!rKeyHeldRef.current) {
               rKeyHeldRef.current = true;
-              handleResetAction();
+              handleRestartAction();
+            }
+          }
+          break;
+        case 'KeyE':
+          if (!e.metaKey && !e.ctrlKey && !e.repeat) {
+            e.preventDefault();
+            if (!eKeyHeldRef.current) {
+              eKeyHeldRef.current = true;
+              handleExitAction();
             }
           }
           break;
@@ -320,10 +391,8 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
             setIsBlackout(false);
           } else if (isFullscreen) {
             (document.exitFullscreen || (document as any).webkitExitFullscreen)?.call(document);
-          } else if (timer.status === 'idle' || allComplete) {
-            audioService.stop();
-            onExit();
           }
+          // NOTE: Escape no longer exits to edit screen — use E key (3s hold) instead
           break;
       }
     };
@@ -331,7 +400,11 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.code === 'KeyR' && rKeyHeldRef.current) {
         rKeyHeldRef.current = false;
-        handleResetMouseUp();
+        handleRestartMouseUp();
+      }
+      if (e.code === 'KeyE' && eKeyHeldRef.current) {
+        eKeyHeldRef.current = false;
+        handleExitMouseUp();
       }
     };
 
@@ -341,7 +414,7 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [timer.status, allComplete, isBlackout, isFullscreen, canFullscreen, isStandalone, onExit, handleResetAction, handleResetMouseUp, toggleFullscreen, isFlashBlocking, dismissFlash]);
+  }, [timer.status, allComplete, isBlackout, isFullscreen, canFullscreen, isStandalone, handleRestartAction, handleRestartMouseUp, handleExitAction, handleExitMouseUp, toggleFullscreen, isFlashBlocking, dismissFlash, handleManualStart]);
 
   // Update tab title
   useEffect(() => {
@@ -551,7 +624,7 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
             {!allComplete && !isScheduledWaiting && timer.status === 'idle' && (
               <button
                 type="button"
-                onClick={timer.start}
+                onClick={handleManualStart}
                 className={`group relative px-10 py-5 rounded-2xl font-bold backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300 ${
                   currentSegment?.color
                     ? 'bg-white/10 text-gray-600 border border-white/20 hover:bg-white/20'
@@ -601,26 +674,51 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
               </button>
             )}
 
-            {/* RESET / EXIT - always visible (long-press when running/paused, instant otherwise) */}
+            {/* RESTART - always visible, always 1.5s hold */}
             <button
               type="button"
-              onMouseDown={handleResetAction}
-              onMouseUp={handleResetMouseUp}
-              onMouseLeave={handleResetMouseUp}
-              onTouchStart={(e) => { e.preventDefault(); handleResetAction(); }}
-              onTouchEnd={(e) => { e.preventDefault(); handleResetMouseUp(); }}
-              title={timer.status === 'running' || timer.status === 'paused' ? 'Hold to Exit (1.5s)' : 'Exit (R)'}
-              aria-label="Reset and exit timer"
+              onMouseDown={handleRestartAction}
+              onMouseUp={handleRestartMouseUp}
+              onMouseLeave={handleRestartMouseUp}
+              onTouchStart={(e) => { e.preventDefault(); handleRestartAction(); }}
+              onTouchEnd={(e) => { e.preventDefault(); handleRestartMouseUp(); }}
+              title="Restart from first segment (hold 1.5s) (R)"
+              aria-label="Restart timer from first segment"
               className="relative px-6 py-5 rounded-2xl bg-white/10 text-gray-600 font-bold border border-white/20 hover:bg-white/20 hover:scale-105 active:scale-95 transition-all duration-300 backdrop-blur-md overflow-hidden"
             >
-              {resetProgress > 0 && (
+              {restartProgress > 0 && (
                 <div
                   className="absolute inset-0 rounded-2xl pointer-events-none"
-                  style={{ background: `conic-gradient(rgba(239,68,68,0.4) ${resetProgress}%, transparent ${resetProgress}%)` }}
+                  style={{ background: `conic-gradient(rgba(59,130,246,0.4) ${restartProgress}%, transparent ${restartProgress}%)` }}
                 />
               )}
               <svg className="w-6 h-6 stroke-current relative z-10" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" />
+              </svg>
+            </button>
+
+            {/* EXIT - always visible, always 3s hold */}
+            <button
+              type="button"
+              onMouseDown={handleExitAction}
+              onMouseUp={handleExitMouseUp}
+              onMouseLeave={handleExitMouseUp}
+              onTouchStart={(e) => { e.preventDefault(); handleExitAction(); }}
+              onTouchEnd={(e) => { e.preventDefault(); handleExitMouseUp(); }}
+              title="Exit to edit screen (hold 3s) (E)"
+              aria-label="Exit timer and return to edit screen"
+              className="relative px-6 py-5 rounded-2xl bg-white/10 text-gray-600 font-bold border border-white/20 hover:bg-white/20 hover:scale-105 active:scale-95 transition-all duration-300 backdrop-blur-md overflow-hidden"
+            >
+              {exitProgress > 0 && (
+                <div
+                  className="absolute inset-0 rounded-2xl pointer-events-none"
+                  style={{ background: `conic-gradient(rgba(239,68,68,0.4) ${exitProgress}%, transparent ${exitProgress}%)` }}
+                />
+              )}
+              <svg className="w-6 h-6 stroke-current relative z-10" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
             </button>
 

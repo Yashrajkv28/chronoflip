@@ -36,3 +36,10 @@
 - **Date:** 2026-03-12
 - **Scope:** `EventSettingsScreen.tsx` — icon swap only
 - **Summary:** Replaced share/upload icon on the event share button with a miniature QR code icon.
+
+### Change 4: Restart Button + Exit Button Rework
+
+- **Date:** 2026-03-13
+- **Scope:** `useTimer.ts`, `TimerRunningScreen.tsx`, `HelpModal.tsx`
+- **Summary:** Current Reset/Exit button becomes Restart (1.5s hold, returns to segment 1 in idle). New Exit button added (3s hold, returns to edit screen). Keyboard: R=Restart, E=Exit. Escape no longer exits to edit screen.
+- **Plan file:** `docs/plans/restart-exit-buttons.md`
