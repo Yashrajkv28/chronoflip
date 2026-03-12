@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo, useLayoutEffect } from 'react';
-import type { SpeechEvent, SpeechColorAlert, TimerSyncState } from '../../types';
+import React, { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
+import type { SpeechEvent, TimerSyncState } from '../../types';
 import { useTimer } from '../../hooks/useTimer';
 import { useWakeLock } from '../../hooks/useWakeLock';
 import { audioService } from '../../services/audioService';
@@ -24,8 +24,8 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
   const [isBlackout, setIsBlackout] = useState(false);
   const [isFlashing, setIsFlashing] = useState(false);
   const [flashColor, setFlashColor] = useState('');
-  const [activeAlertColor, setActiveAlertColor] = useState('');
-  const triggeredAlertIdsRef = useRef<Set<string>>(new Set());
+  const [isFlashBlocking, setIsFlashBlocking] = useState(false);
+  const flashIntervalRef = useRef<number | null>(null);
   const [isWaitingSchedule, setIsWaitingSchedule] = useState(() => {
     return event.scheduledStartTime != null && event.scheduledStartTime > Date.now();
   });
@@ -57,29 +57,58 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
   const outerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Flash effect — isFlashing stays true for entire sequence so it
-  // blocks the activeAlertColor fallthrough in the render. flashColor
-  // alternates between the color and '' to create the visual blink.
-  const triggerFlash = useCallback((color: string) => {
-    let count = 0;
-    const flash = () => {
-      if (count >= 6) {
-        setIsFlashing(false);
-        setFlashColor('');
-        return;
+  // Start continuous blocking flash (0.5s interval, infinite until dismissed)
+  const startBlockingFlash = useCallback((color: string) => {
+    // Clear any existing flash interval
+    if (flashIntervalRef.current) {
+      clearInterval(flashIntervalRef.current);
+    }
+
+    let isColorOn = true;
+    setIsFlashing(true);
+    setFlashColor(color);
+    setIsFlashBlocking(true);
+
+    flashIntervalRef.current = window.setInterval(() => {
+      isColorOn = !isColorOn;
+      setFlashColor(isColorOn ? color : '');
+    }, 500);
+  }, []);
+
+  // Dismiss flash and proceed to next segment (or complete)
+  const dismissFlash = useCallback(() => {
+    // Stop the flash interval
+    if (flashIntervalRef.current) {
+      clearInterval(flashIntervalRef.current);
+      flashIntervalRef.current = null;
+    }
+    setIsFlashing(false);
+    setFlashColor('');
+    setIsFlashBlocking(false);
+    audioService.stop();
+
+    // Now advance to next segment or mark all complete
+    if (currentSegmentIndex < event.segments.length - 1) {
+      setIsTransitioning(true);
+    } else {
+      setAllComplete(true);
+    }
+  }, [currentSegmentIndex, event.segments.length]);
+
+  // Cleanup flash interval on unmount
+  useEffect(() => {
+    return () => {
+      if (flashIntervalRef.current) {
+        clearInterval(flashIntervalRef.current);
       }
-      setIsFlashing(true);
-      setFlashColor(count % 2 === 0 ? color : '');
-      count++;
-      setTimeout(flash, 250);
     };
-    flash();
   }, []);
 
   const handleSegmentComplete = useCallback(() => {
     const seg = event.segments[currentSegmentIndex];
     if (!seg) return;
 
+    // Play alarm sound if enabled
     if (seg.soundEnabled) {
       audioService.vibrate('finish');
       audioService.playCustom('/sounds/my-alarm.mp3').catch(() => {
@@ -88,19 +117,20 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
     }
 
     if (seg.flashEnabled) {
-      // Use last triggered alert color, or red as fallback
-      const flashCol = activeAlertColor || '#EF4444';
-      triggerFlash(flashCol);
-    }
-
-    if (currentSegmentIndex < event.segments.length - 1) {
-      setIsTransitioning(true);
-      setTimeout(() => audioService.stop(), 2000);
+      // Start blocking flash — prevents auto-advance until user dismisses
+      startBlockingFlash(seg.color);
+      // Do NOT set isTransitioning or allComplete here
     } else {
-      setAllComplete(true);
-      setTimeout(() => audioService.stop(), 4000);
+      // Normal auto-advance (no flash blocking)
+      if (currentSegmentIndex < event.segments.length - 1) {
+        setIsTransitioning(true);
+        setTimeout(() => audioService.stop(), 2000);
+      } else {
+        setAllComplete(true);
+        setTimeout(() => audioService.stop(), 4000);
+      }
     }
-  }, [currentSegmentIndex, event.segments, triggerFlash, activeAlertColor]);
+  }, [currentSegmentIndex, event.segments, startBlockingFlash]);
 
   const timer = useTimer({
     segment: currentSegment,
@@ -109,50 +139,7 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
     playTickSound: currentSegment?.tickEnabled ?? false,
   });
 
-  // Sort alerts for current segment (high to low for countdown, low to high for countup)
-  const sortedAlerts = useMemo(() => {
-    if (!currentSegment) return [];
-    const alerts = [...currentSegment.colorAlerts];
-    if (currentSegment.mode === 'countdown') {
-      return alerts.sort((a, b) => b.timeInSeconds - a.timeInSeconds); // 300, 60, 10
-    }
-    return alerts.sort((a, b) => a.timeInSeconds - b.timeInSeconds); // 10, 60, 300
-  }, [currentSegment]);
 
-  // Reset triggered alerts when segment changes
-  useEffect(() => {
-    triggeredAlertIdsRef.current = new Set();
-    setActiveAlertColor('');
-  }, [currentSegment?.id]);
-
-  // Color alert checking on each tick
-  useEffect(() => {
-    if (timer.status !== 'running' || !currentSegment || sortedAlerts.length === 0) return;
-
-    const time = timer.timeInSeconds;
-
-    for (const alert of sortedAlerts) {
-      if (triggeredAlertIdsRef.current.has(alert.id)) continue;
-
-      const shouldTrigger = currentSegment.mode === 'countdown'
-        ? time <= alert.timeInSeconds  // countdown: trigger when remaining <= threshold
-        : time >= alert.timeInSeconds; // countup: trigger when elapsed >= threshold
-
-      if (shouldTrigger) {
-        triggeredAlertIdsRef.current.add(alert.id);
-
-        if (alert.background) {
-          setActiveAlertColor(alert.color);
-        }
-        if (alert.sound) {
-          audioService.play(alert.timeInSeconds <= 10 ? 'warning' : 'alert');
-        }
-        if (alert.flash) {
-          triggerFlash(alert.color);
-        }
-      }
-    }
-  }, [timer.timeInSeconds, timer.status, currentSegment, sortedAlerts, triggerFlash]);
 
   // Scheduled start countdown
   useEffect(() => {
@@ -286,9 +273,15 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
       switch (e.code) {
         case 'Space':
           e.preventDefault();
-          if (timer.status === 'idle' || allComplete) timer.start();
-          else if (timer.status === 'running') timer.pause();
-          else if (timer.status === 'paused') timer.resume();
+          if (isFlashBlocking) {
+            dismissFlash();
+          } else if (timer.status === 'idle' || allComplete) {
+            timer.start();
+          } else if (timer.status === 'running') {
+            timer.pause();
+          } else if (timer.status === 'paused') {
+            timer.resume();
+          }
           break;
         case 'KeyR':
           if (!e.metaKey && !e.ctrlKey && !e.repeat) {
@@ -321,8 +314,11 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
           }
           break;
         case 'Escape':
-          if (isBlackout) setIsBlackout(false);
-          else if (isFullscreen) {
+          if (isFlashBlocking) {
+            dismissFlash();
+          } else if (isBlackout) {
+            setIsBlackout(false);
+          } else if (isFullscreen) {
             (document.exitFullscreen || (document as any).webkitExitFullscreen)?.call(document);
           } else if (timer.status === 'idle' || allComplete) {
             audioService.stop();
@@ -345,7 +341,7 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [timer.status, allComplete, isBlackout, isFullscreen, canFullscreen, isStandalone, onExit, handleResetAction, handleResetMouseUp, toggleFullscreen]);
+  }, [timer.status, allComplete, isBlackout, isFullscreen, canFullscreen, isStandalone, onExit, handleResetAction, handleResetMouseUp, toggleFullscreen, isFlashBlocking, dismissFlash]);
 
   // Update tab title
   useEffect(() => {
@@ -388,7 +384,8 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
         segmentName: currentSegment?.name ?? '',
         segmentMode: currentSegment?.mode ?? 'countdown',
         totalSegments: event.segments.length,
-        activeAlertColor: activeAlertColor || null,
+        activeAlertColor: currentSegment?.color ?? null,
+        isFlashing: isFlashBlocking,
         lastUpdatedAt: Date.now(),
         eventTitle: event.title,
         scheduledStartTime: event.scheduledStartTime ?? null,
@@ -416,7 +413,7 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
     return () => {
       if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
     };
-  }, [timer.timeInSeconds, timer.status, allComplete, isWaitingSchedule, currentSegmentIndex, activeAlertColor, event.shareId, event.title, event.segments.length, event.scheduledStartTime, currentSegment?.name, currentSegment?.mode]);
+  }, [timer.timeInSeconds, timer.status, allComplete, isWaitingSchedule, currentSegmentIndex, isFlashBlocking, event.shareId, event.title, event.segments.length, event.scheduledStartTime, currentSegment?.name, currentSegment?.mode, currentSegment?.color]);
 
   // Compute display values
   const displaySeconds = timer.timeInSeconds % 60;
@@ -453,8 +450,8 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
         className="h-[100dvh] flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden transition-colors duration-500"
         style={isFlashing
           ? { backgroundColor: flashColor || 'transparent', transition: 'none' }
-          : activeAlertColor
-            ? { backgroundColor: activeAlertColor }
+          : currentSegment?.color && !allComplete
+            ? { backgroundColor: currentSegment.color }
             : undefined
         }
       >
@@ -556,7 +553,7 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
                 type="button"
                 onClick={timer.start}
                 className={`group relative px-10 py-5 rounded-2xl font-bold backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300 ${
-                  activeAlertColor
+                  currentSegment?.color
                     ? 'bg-white/10 text-gray-600 border border-white/20 hover:bg-white/20'
                     : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-600 border border-emerald-500/30 hover:border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:shadow-[0_0_30px_rgba(16,185,129,0.3)]'
                 }`}
@@ -574,7 +571,7 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
                 type="button"
                 onClick={timer.pause}
                 className={`group relative px-10 py-5 rounded-2xl font-bold backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300 ${
-                  activeAlertColor
+                  currentSegment?.color
                     ? 'bg-white/10 text-gray-600 border border-white/20 hover:bg-white/20'
                     : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-600 border border-amber-500/30 hover:border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.15)] hover:shadow-[0_0_30px_rgba(245,158,11,0.3)]'
                 }`}
@@ -592,7 +589,7 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
                 type="button"
                 onClick={timer.resume}
                 className={`group relative px-10 py-5 rounded-2xl font-bold backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300 ${
-                  activeAlertColor
+                  currentSegment?.color
                     ? 'bg-white/10 text-gray-600 border border-white/20 hover:bg-white/20'
                     : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-600 border border-emerald-500/30 hover:border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:shadow-[0_0_30px_rgba(16,185,129,0.3)]'
                 }`}
@@ -687,9 +684,34 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
         <SegmentTransition
           fromName={currentSegment.name}
           toName={nextSegment.name}
-          toColor={nextSegment.colorAlerts[0]?.color ?? '#3B82F6'}
+          toColor={nextSegment.color}
           onComplete={handleTransitionComplete}
         />
+      )}
+
+      {/* Flash Blocking Overlay — user must dismiss to proceed */}
+      {isFlashBlocking && (
+        <div
+          className="fixed inset-0 z-[80] flex flex-col items-center justify-center cursor-pointer"
+          onClick={dismissFlash}
+        >
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); dismissFlash(); }}
+            className="px-12 py-6 rounded-2xl bg-black/30 backdrop-blur-xl text-white font-bold text-xl border border-white/30 hover:bg-black/40 active:scale-95 transition-all shadow-2xl"
+          >
+            <div className="flex items-center gap-3">
+              <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+                <rect x="6" y="4" width="4" height="16" rx="1" />
+                <rect x="14" y="4" width="4" height="16" rx="1" />
+              </svg>
+              <span className="tracking-widest">STOP</span>
+            </div>
+          </button>
+          <p className="mt-4 text-white/60 text-sm select-none">
+            Tap anywhere or press Space to continue
+          </p>
+        </div>
       )}
 
       {/* Blackout Overlay */}
