@@ -1,4 +1,4 @@
-import type { SpeechEvent, AppState, SpeechColorAlert } from '../types';
+import type { SpeechEvent, AppState } from '../types';
 
 const EVENTS_KEY = 'chronoflip-v2-events';
 
@@ -8,30 +8,18 @@ export function loadAppState(): AppState {
   try {
     const data = localStorage.getItem(EVENTS_KEY);
     if (data) {
-      const events: SpeechEvent[] = JSON.parse(data);
-      if (Array.isArray(events)) {
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed)) {
         // Migrate segments: ensure new fields have defaults
-        for (const ev of events) {
-          for (const seg of ev.segments) {
-            if (seg.tickEnabled === undefined) seg.tickEnabled = false;
-            // Migrate existing colorAlerts: add background field if missing
-            if (seg.colorAlerts) {
-              for (const alert of seg.colorAlerts) {
-                if ((alert as any).background === undefined) (alert as any).background = true;
-              }
-            }
-            // Migrate old backgroundColor → colorAlerts
-            if (!seg.colorAlerts) {
-              const oldColor = (seg as any).backgroundColor || '#3B82F6';
-              seg.colorAlerts = [
-                { id: crypto.randomUUID(), timeInSeconds: 300, color: '#EAB308', background: true, flash: false, sound: false, label: '5 min' },
-                { id: crypto.randomUUID(), timeInSeconds: 60,  color: '#F97316', background: true, flash: true,  sound: false, label: '1 min' },
-                { id: crypto.randomUUID(), timeInSeconds: 10,  color: oldColor,  background: true, flash: true,  sound: true,  label: '10 sec' },
-              ] as SpeechColorAlert[];
-              delete (seg as any).backgroundColor;
-            }
-          }
-        }
+        const events: SpeechEvent[] = parsed.map((event: any) => ({
+          ...event,
+          segments: (event.segments || []).map((seg: any) => ({
+            ...seg,
+            // Migrate: derive color from first colorAlert, default to blue
+            color: seg.color ?? seg.colorAlerts?.[0]?.color ?? '#3B82F6',
+            tickEnabled: seg.tickEnabled ?? false,
+          })),
+        }));
         return {
           events,
           currentScreen: 'eventList',
