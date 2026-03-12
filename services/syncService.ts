@@ -60,7 +60,7 @@ export async function publishEvent(event: SpeechEvent): Promise<string> {
       name: s.name,
       durationSeconds: s.durationSeconds,
       mode: s.mode,
-      colorAlerts: s.colorAlerts,
+      color: s.color,
     })),
     scheduledStartTime: event.scheduledStartTime ?? null,
   });
