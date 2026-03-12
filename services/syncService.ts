@@ -1,6 +1,6 @@
 import { ref, set, get, remove, onValue, type Unsubscribe } from 'firebase/database';
 import { database } from './firebaseConfig';
-import type { SpeechEvent, TimerSyncState } from '../types';
+import type { SpeechEvent, TimerSyncState, ViewerCommand } from '../types';
 
 // Allowed characters in share IDs (alphanumeric, no ambiguous chars)
 const SHARE_ID_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
@@ -100,4 +100,35 @@ export async function removeSharedEvent(shareId: string): Promise<void> {
   if (!validateShareId(shareId)) return;
   const sharedRef = ref(database, `shared/${shareId}`);
   await remove(sharedRef);
+}
+
+export async function publishCommand(shareId: string, command: ViewerCommand): Promise<void> {
+  if (!validateShareId(shareId)) return;
+  const commandRef = ref(database, `shared/${shareId}/command`);
+  await set(commandRef, command);
+}
+
+export function subscribeToCommand(
+  shareId: string,
+  callback: (command: ViewerCommand | null) => void,
+): Unsubscribe {
+  if (!validateShareId(shareId)) {
+    callback(null);
+    return () => {};
+  }
+  const commandRef = ref(database, `shared/${shareId}/command`);
+  return onValue(commandRef, (snapshot) => {
+    const val = snapshot.val();
+    if (val && typeof val === 'object' && typeof val.type === 'string' && typeof val.timestamp === 'number') {
+      callback(val as ViewerCommand);
+    } else {
+      callback(null);
+    }
+  });
+}
+
+export async function clearCommand(shareId: string): Promise<void> {
+  if (!validateShareId(shareId)) return;
+  const commandRef = ref(database, `shared/${shareId}/command`);
+  await remove(commandRef);
 }

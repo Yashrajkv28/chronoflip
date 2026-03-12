@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
-import type { SpeechEvent, TimerSyncState } from '../../types';
+import type { SpeechEvent, TimerSyncState, ViewerCommand } from '../../types';
 import { useTimer } from '../../hooks/useTimer';
 import { useWakeLock } from '../../hooks/useWakeLock';
 import { audioService } from '../../services/audioService';
-import { publishTimerState } from '../../services/syncService';
+import { publishTimerState, subscribeToCommand, clearCommand } from '../../services/syncService';
 import FlipClockDisplay from '../FlipClockDisplay';
 import SegmentTransition from '../ui/SegmentTransition';
 
@@ -248,6 +248,31 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
     exitIntervalRef.current = null;
   }, []);
 
+  const executeRestart = useCallback(() => {
+    // Stop all audio
+    audioService.stop();
+
+    // Clear any active flash
+    if (flashIntervalRef.current) {
+      clearInterval(flashIntervalRef.current);
+      flashIntervalRef.current = null;
+    }
+    setIsFlashing(false);
+    setFlashColor('');
+    setIsFlashBlocking(false);
+
+    // Clear transition and completion states
+    setIsTransitioning(false);
+    setAllComplete(false);
+
+    // Force idle and go to segment 0
+    setForceIdle(true);
+    setCurrentSegmentIndex(0);
+    setResetKey(prev => prev + 1);
+
+    if ('vibrate' in navigator) navigator.vibrate(50);
+  }, []);
+
   const handleRestartAction = useCallback(() => {
     // Always long-press — start progress animation
     let progress = 0;
@@ -257,33 +282,11 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
     }, PROGRESS_UPDATE_INTERVAL);
 
     restartTimerRef.current = window.setTimeout(() => {
-      // Stop all audio
-      audioService.stop();
-
-      // Clear any active flash
-      if (flashIntervalRef.current) {
-        clearInterval(flashIntervalRef.current);
-        flashIntervalRef.current = null;
-      }
-      setIsFlashing(false);
-      setFlashColor('');
-      setIsFlashBlocking(false);
-
-      // Clear transition and completion states
-      setIsTransitioning(false);
-      setAllComplete(false);
-
-      // Force idle and go to segment 0
-      setForceIdle(true);
-      setCurrentSegmentIndex(0);
-      setResetKey(prev => prev + 1);
-
-      // Clean up
+      executeRestart();
       clearRestartTimers();
       setRestartProgress(0);
-      if ('vibrate' in navigator) navigator.vibrate(50);
     }, RESTART_HOLD_DURATION);
-  }, [clearRestartTimers]);
+  }, [clearRestartTimers, executeRestart]);
 
   const handleRestartMouseUp = useCallback(() => {
     clearRestartTimers();
@@ -435,6 +438,53 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
     }
     return () => { document.title = 'ChronoFlip Premium'; };
   }, [allComplete, currentSegment, timer.timeInSeconds, timer.status]);
+
+  // Remote command handler ref (avoids stale closures in Firebase listener)
+  const commandHandlerRef = useRef<((cmd: ViewerCommand) => void) | null>(null);
+  const lastProcessedCommandRef = useRef<number>(0);
+
+  // Keep command handler in sync with latest state/callbacks
+  commandHandlerRef.current = (cmd: ViewerCommand) => {
+    // Ignore stale commands (older than 10 seconds)
+    if (Date.now() - cmd.timestamp > 10000) return;
+    // Ignore already-processed commands
+    if (cmd.timestamp <= lastProcessedCommandRef.current) return;
+    lastProcessedCommandRef.current = cmd.timestamp;
+
+    switch (cmd.type) {
+      case 'start':
+        if (isFlashBlocking) {
+          dismissFlash();
+        } else if (timer.status === 'idle' || allComplete) {
+          handleManualStart();
+        } else if (timer.status === 'paused') {
+          timer.resume();
+        }
+        break;
+      case 'pause':
+        if (timer.status === 'running') {
+          timer.pause();
+        }
+        break;
+      case 'restart':
+        executeRestart();
+        break;
+    }
+  };
+
+  // Subscribe to viewer commands (remote control)
+  useEffect(() => {
+    if (!event.shareId) return;
+
+    const unsubscribe = subscribeToCommand(event.shareId, (cmd) => {
+      if (cmd) {
+        commandHandlerRef.current?.(cmd);
+        clearCommand(event.shareId!).catch(() => {});
+      }
+    });
+
+    return unsubscribe;
+  }, [event.shareId]);
 
   // Sync timer state to Firebase for viewers
   const syncTimeoutRef = useRef<number | null>(null);

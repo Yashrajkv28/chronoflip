@@ -48,6 +48,13 @@ export interface TimerSyncState {
   scheduledStartTime: number | null;
 }
 
+// ========== Viewer Commands (remote control) ==========
+
+export interface ViewerCommand {
+  type: 'start' | 'pause' | 'restart';
+  timestamp: number;             // Date.now() when command was sent
+}
+
 // ========== App State ==========
 
 export interface AppState {

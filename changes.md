@@ -43,3 +43,12 @@
 - **Scope:** `useTimer.ts`, `TimerRunningScreen.tsx`, `HelpModal.tsx`
 - **Summary:** Current Reset/Exit button becomes Restart (1.5s hold, returns to segment 1 in idle). New Exit button added (3s hold, returns to edit screen). Keyboard: R=Restart, E=Exit. Escape no longer exits to edit screen.
 - **Plan file:** `docs/plans/restart-exit-buttons.md`
+
+### Change 5: Viewer Remote Control
+
+- **Date:** 2026-03-13
+- **Scope:** `types.ts`, `syncService.ts`, `TimerRunningScreen.tsx`, `ViewerScreen.tsx`
+- **Summary:** Viewers of shared timers can send Start, Stop, and Restart commands. Organizer receives and executes commands. All participants see the result.
+- **Known limitation:** If flash (blocking flash on segment completion) is turned on by the organizer, viewers cannot dismiss/stop the flash session — it must be stopped by the organizer.
+- **Plan file:** `docs/plans/viewer-remote-control.md`
+

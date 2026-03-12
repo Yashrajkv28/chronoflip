@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import type { SpeechEvent, TimerSyncState } from '../../types';
-import { fetchSharedEvent, subscribeToTimerState } from '../../services/syncService';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import type { SpeechEvent, TimerSyncState, ViewerCommand } from '../../types';
+import { fetchSharedEvent, subscribeToTimerState, publishCommand } from '../../services/syncService';
 import FlipClockDisplay from '../FlipClockDisplay';
 
 interface ViewerScreenProps {
@@ -16,6 +16,58 @@ const ViewerScreen: React.FC<ViewerScreenProps> = ({ shareId }) => {
   const [isStale, setIsStale] = useState(false);
   const timerStateRef = useRef<TimerSyncState | null>(null);
   const hadStateRef = useRef(false);
+  const [commandCooldown, setCommandCooldown] = useState(false);
+  const [restartProgress, setRestartProgress] = useState(0);
+  const restartTimerRef = useRef<number | null>(null);
+  const restartIntervalRef = useRef<number | null>(null);
+  const RESTART_HOLD_DURATION = 1500;
+  const PROGRESS_UPDATE_INTERVAL = 50;
+
+  const sendCommand = useCallback(async (type: ViewerCommand['type']) => {
+    if (commandCooldown) return;
+    try {
+      await publishCommand(shareId, { type, timestamp: Date.now() });
+      // Cooldown to prevent spam
+      setCommandCooldown(true);
+      setTimeout(() => setCommandCooldown(false), 2000);
+    } catch (err) {
+      console.error('Failed to send command:', err);
+    }
+  }, [shareId, commandCooldown]);
+
+  const clearRestartTimers = useCallback(() => {
+    if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
+    if (restartIntervalRef.current) clearInterval(restartIntervalRef.current);
+    restartTimerRef.current = null;
+    restartIntervalRef.current = null;
+  }, []);
+
+  const handleRestartDown = useCallback(() => {
+    if (commandCooldown) return;
+    let progress = 0;
+    restartIntervalRef.current = window.setInterval(() => {
+      progress += (PROGRESS_UPDATE_INTERVAL / RESTART_HOLD_DURATION) * 100;
+      setRestartProgress(Math.min(progress, 100));
+    }, PROGRESS_UPDATE_INTERVAL);
+
+    restartTimerRef.current = window.setTimeout(() => {
+      sendCommand('restart');
+      clearRestartTimers();
+      setRestartProgress(0);
+    }, RESTART_HOLD_DURATION);
+  }, [commandCooldown, sendCommand, clearRestartTimers]);
+
+  const handleRestartUp = useCallback(() => {
+    clearRestartTimers();
+    setRestartProgress(0);
+  }, [clearRestartTimers]);
+
+  useEffect(() => {
+    return () => {
+      if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
+      if (restartIntervalRef.current) clearInterval(restartIntervalRef.current);
+    };
+  }, []);
 
   // Force light mode for viewer
   useEffect(() => {
@@ -236,6 +288,100 @@ const ViewerScreen: React.FC<ViewerScreenProps> = ({ shareId }) => {
               showHours={showHours}
               isRunning={status === 'running'}
             />
+          </div>
+        )}
+
+        {/* Viewer Controls */}
+        {state && !removed && (
+          <div className="mt-8 flex flex-wrap gap-3 justify-center items-center">
+            {/* START / RESUME — when waiting or paused */}
+            {!state.isFlashing && (status === 'waiting' || status === 'paused') && (
+              <button
+                type="button"
+                onClick={() => sendCommand('start')}
+                disabled={commandCooldown}
+                className={`px-6 py-3 rounded-2xl font-bold text-sm backdrop-blur-xl transition-all duration-300 ${
+                  commandCooldown
+                    ? 'opacity-40 cursor-not-allowed'
+                    : 'hover:scale-105 active:scale-95'
+                } bg-emerald-500/20 text-emerald-600 border border-emerald-500/30 hover:bg-emerald-500/30`}
+              >
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  <span className="tracking-wider">{status === 'paused' ? 'RESUME' : 'START'}</span>
+                </div>
+              </button>
+            )}
+
+            {/* STOP FLASH — when flash is blocking */}
+            {state.isFlashing && (
+              <button
+                type="button"
+                onClick={() => sendCommand('start')}
+                disabled={commandCooldown}
+                className={`px-6 py-3 rounded-2xl font-bold text-sm backdrop-blur-xl transition-all duration-300 ${
+                  commandCooldown
+                    ? 'opacity-40 cursor-not-allowed'
+                    : 'hover:scale-105 active:scale-95'
+                } bg-amber-500/20 text-amber-600 border border-amber-500/30 hover:bg-amber-500/30`}
+              >
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <rect x="6" y="4" width="4" height="16" rx="1" />
+                    <rect x="14" y="4" width="4" height="16" rx="1" />
+                  </svg>
+                  <span className="tracking-wider">STOP</span>
+                </div>
+              </button>
+            )}
+
+            {/* PAUSE — when running (and not flashing) */}
+            {!state.isFlashing && status === 'running' && (
+              <button
+                type="button"
+                onClick={() => sendCommand('pause')}
+                disabled={commandCooldown}
+                className={`px-6 py-3 rounded-2xl font-bold text-sm backdrop-blur-xl transition-all duration-300 ${
+                  commandCooldown
+                    ? 'opacity-40 cursor-not-allowed'
+                    : 'hover:scale-105 active:scale-95'
+                } bg-amber-500/20 text-amber-600 border border-amber-500/30 hover:bg-amber-500/30`}
+              >
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                  <span className="tracking-wider">PAUSE</span>
+                </div>
+              </button>
+            )}
+
+            {/* RESTART — always visible when timer has state, 1.5s hold */}
+            <button
+              type="button"
+              onMouseDown={handleRestartDown}
+              onMouseUp={handleRestartUp}
+              onMouseLeave={handleRestartUp}
+              onTouchStart={(e) => { e.preventDefault(); handleRestartDown(); }}
+              onTouchEnd={(e) => { e.preventDefault(); handleRestartUp(); }}
+              disabled={commandCooldown}
+              className={`relative px-6 py-3 rounded-2xl font-bold text-sm backdrop-blur-xl transition-all duration-300 overflow-hidden ${
+                commandCooldown
+                  ? 'opacity-40 cursor-not-allowed'
+                  : 'hover:scale-105 active:scale-95'
+              } bg-white/10 text-gray-500 border border-white/20 hover:bg-white/20`}
+            >
+              {restartProgress > 0 && (
+                <div
+                  className="absolute inset-0 rounded-2xl pointer-events-none"
+                  style={{ background: `conic-gradient(rgba(59,130,246,0.4) ${restartProgress}%, transparent ${restartProgress}%)` }}
+                />
+              )}
+              <div className="flex items-center gap-2 relative z-10">
+                <svg className="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" />
+                </svg>
+                <span className="tracking-wider">RESTART</span>
+              </div>
+            </button>
           </div>
         )}
 
