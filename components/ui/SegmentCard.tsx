@@ -89,7 +89,7 @@ const SegmentCard: React.FC<SegmentCardProps> = ({ segment, editMode, onEdit, on
         {/* Left color strip */}
         <div
           className="absolute left-0 top-0 bottom-0 w-1.5"
-          style={{ backgroundColor: segment.colorAlerts[0]?.color ?? '#3B82F6' }}
+          style={{ backgroundColor: segment.color }}
         />
 
         <div className="flex items-center gap-3 pl-5 pr-4 py-3 sm:py-4">
