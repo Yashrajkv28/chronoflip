@@ -4,17 +4,7 @@ export type TimerMode = 'countdown' | 'countup';
 export type SegmentStatus = 'idle' | 'running' | 'paused' | 'completed';
 export type Screen = 'eventList' | 'eventSettings' | 'segmentSettings' | 'timerRunning';
 
-// ========== Color Alerts ==========
 
-export interface SpeechColorAlert {
-  id: string;
-  timeInSeconds: number;   // Trigger at this many seconds remaining (countdown) or elapsed (countup)
-  color: string;           // Hex color
-  background: boolean;     // Change background color
-  flash: boolean;
-  sound: boolean;
-  label: string;
-}
 
 // ========== Segment ==========
 
@@ -23,7 +13,7 @@ export interface Segment {
   name: string;
   durationSeconds: number;       // For countdown: total duration. For countup: 0 = unlimited
   mode: TimerMode;
-  colorAlerts: SpeechColorAlert[];
+  color: string;                 // Background color for this segment (hex)
   soundEnabled: boolean;         // Completion sound
   flashEnabled: boolean;         // Completion flash
   tickEnabled: boolean;
@@ -52,6 +42,7 @@ export interface TimerSyncState {
   segmentMode: TimerMode;
   totalSegments: number;
   activeAlertColor: string | null;
+  isFlashing: boolean;           // true during blocking flash
   lastUpdatedAt: number;
   eventTitle: string;
   scheduledStartTime: number | null;
@@ -83,21 +74,13 @@ export const SEGMENT_COLORS = [
   '#1F2937', // Dark
 ] as const;
 
-// ========== Default Color Alerts ==========
-
-export const DEFAULT_COLOR_ALERTS: SpeechColorAlert[] = [
-  { id: crypto.randomUUID(), timeInSeconds: 300, color: '#EAB308', background: true, flash: false, sound: false, label: '5 min' },
-  { id: crypto.randomUUID(), timeInSeconds: 60,  color: '#F97316', background: true, flash: true,  sound: false, label: '1 min' },
-  { id: crypto.randomUUID(), timeInSeconds: 10,  color: '#EF4444', background: true, flash: true,  sound: true,  label: '10 sec' },
-];
-
 // ========== Defaults ==========
 
 export const DEFAULT_SEGMENT: Omit<Segment, 'id'> = {
   name: 'New Speech',
   durationSeconds: 300,
   mode: 'countdown',
-  colorAlerts: DEFAULT_COLOR_ALERTS,
+  color: '#3B82F6',
   soundEnabled: true,
   flashEnabled: false,
   tickEnabled: false,
@@ -106,11 +89,6 @@ export const DEFAULT_SEGMENT: Omit<Segment, 'id'> = {
 export const createDefaultSegment = (): Segment => ({
   ...DEFAULT_SEGMENT,
   id: crypto.randomUUID(),
-  colorAlerts: [
-    { id: crypto.randomUUID(), timeInSeconds: 300, color: '#EAB308', background: true, flash: false, sound: false, label: '5 min' },
-    { id: crypto.randomUUID(), timeInSeconds: 60,  color: '#F97316', background: true, flash: true,  sound: false, label: '1 min' },
-    { id: crypto.randomUUID(), timeInSeconds: 10,  color: '#EF4444', background: true, flash: true,  sound: true,  label: '10 sec' },
-  ],
 });
 
 export const createDefaultEvent = (): SpeechEvent => {
