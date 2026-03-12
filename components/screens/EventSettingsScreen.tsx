@@ -258,10 +258,26 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
                     <path strokeLinecap="round" d="M12 3a9 9 0 1 0 9 9" />
                   </svg>
                 ) : (
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                    <polyline points="16 6 12 2 8 6" />
-                    <line x1="12" y1="2" x2="12" y2="15" />
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    {/* Top-left corner square */}
+                    <rect x="2" y="2" width="8" height="8" rx="1" />
+                    <rect x="4" y="4" width="4" height="4" rx="0.5" fill="white" />
+                    <rect x="5" y="5" width="2" height="2" />
+                    {/* Top-right corner square */}
+                    <rect x="14" y="2" width="8" height="8" rx="1" />
+                    <rect x="16" y="4" width="4" height="4" rx="0.5" fill="white" />
+                    <rect x="17" y="5" width="2" height="2" />
+                    {/* Bottom-left corner square */}
+                    <rect x="2" y="14" width="8" height="8" rx="1" />
+                    <rect x="4" y="16" width="4" height="4" rx="0.5" fill="white" />
+                    <rect x="5" y="17" width="2" height="2" />
+                    {/* Data dots */}
+                    <rect x="14" y="14" width="2" height="2" />
+                    <rect x="18" y="14" width="2" height="2" />
+                    <rect x="14" y="18" width="2" height="2" />
+                    <rect x="16" y="16" width="2" height="2" />
+                    <rect x="20" y="18" width="2" height="2" />
+                    <rect x="18" y="20" width="2" height="2" />
                   </svg>
                 )}
               </button>

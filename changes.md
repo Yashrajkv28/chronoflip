@@ -30,3 +30,9 @@
 - `config.ts` — has its own `ColorAlert` for legacy v1 timer, unrelated to speech segments
 - `components/TimerSettings.tsx` — uses `colorAlerts` from `config.ts` (legacy v1), unrelated
 - `App.tsx` — settings button already removed in prior change
+
+### Change 3: QR Code Icon for Share Button
+
+- **Date:** 2026-03-12
+- **Scope:** `EventSettingsScreen.tsx` — icon swap only
+- **Summary:** Replaced share/upload icon on the event share button with a miniature QR code icon.
