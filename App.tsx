@@ -14,7 +14,6 @@ const App: React.FC = () => {
   // ===== State =====
   const [showHelp, setShowHelp] = useState(false);
 
-
   // ===== Speech timer state =====
   const [appState, setAppState] = useState<AppState>(loadAppState);
 
@@ -22,7 +21,6 @@ const App: React.FC = () => {
   const activeEvent = appState.events.find(e => e.id === appState.activeEventId) ?? null;
   const activeSegment = activeEvent?.segments.find(s => s.id === appState.activeSegmentId) ?? null;
   const runningEvent = appState.events.find(e => e.id === appState.runningEventId) ?? null;
-
 
   // ===== Persistence =====
 
@@ -35,8 +33,6 @@ const App: React.FC = () => {
   useEffect(() => {
     saveEvents(appState.events);
   }, [appState.events]);
-
-
 
   // ===== Navigation =====
 
@@ -166,17 +162,12 @@ const App: React.FC = () => {
     }));
   }, []);
 
-
-
   // ===== Render =====
 
   const showGlobalUI = appState.currentScreen !== 'timerRunning';
 
   return (
     <div className="relative text-gray-900 h-[100dvh] overflow-hidden">
-
-
-
       {appState.currentScreen === 'eventList' && (
         <EventListScreen
           events={appState.events}
@@ -254,8 +245,6 @@ const App: React.FC = () => {
           </svg>
         </button>
       )}
-
-
 
       {/* Help Modal */}
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}

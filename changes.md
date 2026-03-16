@@ -49,6 +49,6 @@
 - **Date:** 2026-03-13
 - **Scope:** `types.ts`, `syncService.ts`, `TimerRunningScreen.tsx`, `ViewerScreen.tsx`
 - **Summary:** Viewers of shared timers can send Start, Stop, and Restart commands. Organizer receives and executes commands. All participants see the result.
-- **Known limitation:** If flash (blocking flash on segment completion) is turned on by the organizer, viewers cannot dismiss/stop the flash session — it must be stopped by the organizer.
+- **Note:** Viewers can dismiss the blocking flash by sending a Start command (STOP button), which the organizer receives and executes.
 - **Plan file:** `docs/plans/viewer-remote-control.md`
 

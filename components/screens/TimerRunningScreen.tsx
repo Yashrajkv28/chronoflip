@@ -151,8 +151,6 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
     resetKey,
   });
 
-
-
   // Scheduled start countdown
   useEffect(() => {
     if (!isWaitingSchedule || !event.scheduledStartTime) return;
@@ -608,7 +606,6 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
                 backdrop-blur-2xl backdrop-saturate-150
                 border border-white/40
                 shadow-[0_8px_32px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.4)]
-               
                 transition-all duration-500
               `}>
                 <h2 className="text-3xl sm:text-5xl font-bold font-mono tracking-tight text-zinc-800">
@@ -639,7 +636,6 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
               backdrop-blur-2xl backdrop-saturate-150
               border border-white/40
               shadow-[0_8px_32px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.4)]
-             
               transition-all duration-500
             `}>
               <h2 className="text-2xl sm:text-3xl font-bold text-zinc-800">Timer Complete</h2>
@@ -654,7 +650,6 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
               backdrop-blur-2xl backdrop-saturate-150
               border border-white/40
               shadow-[0_8px_32px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.4)]
-             
               transition-all duration-500
             `}>
               <FlipClockDisplay
