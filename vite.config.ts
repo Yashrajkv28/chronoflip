@@ -12,7 +12,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          firebase: ['firebase/app', 'firebase/database'],
+          'aws-amplify': ['aws-amplify', 'aws-amplify/auth', 'aws-amplify/api'],
         },
       },
     },

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import type { SpeechEvent, TimerSyncState, ViewerCommand } from '../../types';
+import type { SharedEvent, TimerSyncState, ViewerCommand } from '../../types';
 import { fetchSharedEvent, subscribeToTimerState, publishCommand } from '../../services/syncService';
 import FlipClockDisplay from '../FlipClockDisplay';
 
@@ -8,7 +8,7 @@ interface ViewerScreenProps {
 }
 
 const ViewerScreen: React.FC<ViewerScreenProps> = ({ shareId }) => {
-  const [event, setEvent] = useState<SpeechEvent | null>(null);
+  const [event, setEvent] = useState<SharedEvent | null>(null);
   const [timerState, setTimerState] = useState<TimerSyncState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);

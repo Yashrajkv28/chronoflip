@@ -29,7 +29,19 @@ export interface SpeechEvent {
   endTime: string;               // HH:mm e.g. '17:00'
   segments: Segment[];
   scheduledStartTime: number | null;  // Unix timestamp for scheduled auto-start
-  shareId?: string;              // Firebase share ID for QR code viewing
+  shareId?: string;              // Share ID for QR code viewing
+  updatedAt: number;             // Last modified timestamp for sync conflict resolution
+}
+
+// ========== Shared Event (viewer subset — matches GraphQL query fields) ==========
+
+export type SharedSegment = Pick<Segment, 'id' | 'name' | 'durationSeconds' | 'mode' | 'color'>;
+
+export interface SharedEvent {
+  id: string;
+  title: string;
+  segments: SharedSegment[];
+  scheduledStartTime: number | null;
 }
 
 // ========== Timer Sync (real-time viewer) ==========
@@ -100,23 +112,28 @@ export const createDefaultSegment = (): Segment => ({
 
 export const createDefaultEvent = (): SpeechEvent => {
   const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
   return {
     id: crypto.randomUUID(),
     title: 'New Event',
-    date: now.toISOString().split('T')[0],
+    date: `${yyyy}-${mm}-${dd}`,
     startTime: '09:00',
     endTime: '10:00',
     segments: [],
     scheduledStartTime: null,
+    updatedAt: Date.now(),
   };
 };
 
 // ========== Helpers ==========
 
 export const formatDuration = (totalSeconds: number): { h: number; m: number; s: number } => {
-  const h = Math.floor(totalSeconds / 3600);
-  const m = Math.floor((totalSeconds % 3600) / 60);
-  const s = totalSeconds % 60;
+  const t = Math.max(0, Math.round(totalSeconds));
+  const h = Math.floor(t / 3600);
+  const m = Math.floor((t % 3600) / 60);
+  const s = t % 60;
   return { h, m, s };
 };
 

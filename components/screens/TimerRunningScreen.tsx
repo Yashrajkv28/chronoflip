@@ -437,7 +437,7 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
     return () => { document.title = 'ChronoFlip Premium'; };
   }, [allComplete, currentSegment, timer.timeInSeconds, timer.status]);
 
-  // Remote command handler ref (avoids stale closures in Firebase listener)
+  // Remote command handler ref (avoids stale closures in subscription listener)
   const commandHandlerRef = useRef<((cmd: ViewerCommand) => void) | null>(null);
   const lastProcessedCommandRef = useRef<number>(0);
 
@@ -484,7 +484,7 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
     return unsubscribe;
   }, [event.shareId]);
 
-  // Sync timer state to Firebase for viewers
+  // Sync timer state to AppSync for viewers
   const syncTimeoutRef = useRef<number | null>(null);
   const prevStatusRef = useRef<string>('');
   useEffect(() => {
