@@ -17,6 +17,14 @@ export interface Segment {
   soundEnabled: boolean;         // Completion sound
   flashEnabled: boolean;         // Completion flash
   tickEnabled: boolean;
+  groupId?: string;               // undefined = ungrouped/loose timer
+}
+
+// ========== Timer Group ==========
+
+export interface TimerGroup {
+  id: string;
+  name: string;
 }
 
 // ========== Event ==========
@@ -24,10 +32,12 @@ export interface Segment {
 export interface SpeechEvent {
   id: string;
   title: string;
+  venueName?: string;              // optional venue/location name
   date: string;                  // ISO date string e.g. '2026-01-10'
   startTime: string;             // HH:mm e.g. '13:00'
   endTime: string;               // HH:mm e.g. '17:00'
   segments: Segment[];
+  groups?: TimerGroup[];           // group metadata (id + name)
   scheduledStartTime: number | null;  // Unix timestamp for scheduled auto-start
   shareId?: string;              // Share ID for QR code viewing
   updatedAt: number;             // Last modified timestamp for sync conflict resolution
@@ -35,12 +45,14 @@ export interface SpeechEvent {
 
 // ========== Shared Event (viewer subset — matches GraphQL query fields) ==========
 
-export type SharedSegment = Pick<Segment, 'id' | 'name' | 'durationSeconds' | 'mode' | 'color'>;
+export type SharedSegment = Pick<Segment, 'id' | 'name' | 'durationSeconds' | 'mode' | 'color' | 'groupId'>;
 
 export interface SharedEvent {
   id: string;
   title: string;
+  venueName?: string;
   segments: SharedSegment[];
+  groups?: { id: string; name: string }[];
   scheduledStartTime: number | null;
 }
 
@@ -58,6 +70,7 @@ export interface TimerSyncState {
   lastUpdatedAt: number;
   eventTitle: string;
   scheduledStartTime: number | null;
+  activeGroupId?: string;          // which group is running (undefined = all/loose)
 }
 
 // ========== Viewer Commands (remote control) ==========
@@ -76,6 +89,8 @@ export interface AppState {
   activeSegmentId: string | null;
   runningEventId: string | null;
   runningSegmentIndex: number;
+  runningGroupId: string | null;           // which group is running
+  runningGroupSegmentIndices: number[];    // segment indices for the active group
 }
 
 // ========== Color Palette ==========
@@ -108,6 +123,11 @@ export const DEFAULT_SEGMENT: Omit<Segment, 'id'> = {
 export const createDefaultSegment = (): Segment => ({
   ...DEFAULT_SEGMENT,
   id: crypto.randomUUID(),
+});
+
+export const createDefaultGroup = (name = 'New Group'): TimerGroup => ({
+  id: crypto.randomUUID(),
+  name,
 });
 
 export const createDefaultEvent = (): SpeechEvent => {
