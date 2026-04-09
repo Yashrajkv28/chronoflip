@@ -3,6 +3,7 @@ export const publishEventMutation = /* GraphQL */ `
     publishEvent(shareId: $shareId, event: $event) {
       id
       title
+      venueName
     }
   }
 `;
@@ -14,6 +15,7 @@ export const publishTimerStateMutation = /* GraphQL */ `
       status
       timeInSeconds
       lastUpdatedAt
+      activeGroupId
     }
   }
 `;
@@ -46,12 +48,17 @@ export const saveUserEventMutation = /* GraphQL */ `
       userId
       eventId
       updatedAt
+      deleted
     }
   }
 `;
 
 export const deleteUserEventMutation = /* GraphQL */ `
   mutation DeleteUserEvent($userId: String!, $eventId: String!) {
-    deleteUserEvent(userId: $userId, eventId: $eventId)
+    deleteUserEvent(userId: $userId, eventId: $eventId) {
+      userId
+      eventId
+      deleted
+    }
   }
 `;

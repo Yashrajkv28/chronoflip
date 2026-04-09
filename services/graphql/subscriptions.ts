@@ -13,6 +13,7 @@ export const onTimerStateUpdate = /* GraphQL */ `
       lastUpdatedAt
       eventTitle
       scheduledStartTime
+      activeGroupId
     }
   }
 `;
@@ -23,6 +24,17 @@ export const onCommandUpdate = /* GraphQL */ `
       shareId
       type
       timestamp
+    }
+  }
+`;
+
+export const onUserEventChange = /* GraphQL */ `
+  subscription OnUserEventChange($userId: String!) {
+    onUserEventChange(userId: $userId) {
+      userId
+      eventId
+      updatedAt
+      deleted
     }
   }
 `;

@@ -3,12 +3,18 @@ export const getSharedEvent = /* GraphQL */ `
     getSharedEvent(shareId: $shareId) {
       id
       title
+      venueName
       segments {
         id
         name
         durationSeconds
         mode
         color
+        groupId
+      }
+      groups {
+        id
+        name
       }
       scheduledStartTime
     }
@@ -30,6 +36,7 @@ export const getTimerState = /* GraphQL */ `
       lastUpdatedAt
       eventTitle
       scheduledStartTime
+      activeGroupId
     }
   }
 `;
