@@ -60,7 +60,8 @@ function isValidTimerState(val: unknown): val is TimerSyncState {
     typeof v.segmentMode === 'string' && ['countdown', 'countup'].includes(v.segmentMode as string) &&
     (v.activeAlertColor === null || typeof v.activeAlertColor === 'string') &&
     typeof v.isFlashing === 'boolean' &&
-    (v.scheduledStartTime === null || Number.isFinite(v.scheduledStartTime))
+    (v.scheduledStartTime === null || Number.isFinite(v.scheduledStartTime)) &&
+    (v.activeGroupId === undefined || v.activeGroupId === null || typeof v.activeGroupId === 'string')
   );
 }
 
@@ -80,13 +81,16 @@ export async function publishEvent(event: SpeechEvent): Promise<string> {
       event: {
         id: event.id,
         title: event.title,
+        venueName: event.venueName ?? null,
         segments: event.segments.map(s => ({
           id: s.id,
           name: s.name,
           durationSeconds: s.durationSeconds,
           mode: s.mode,
           color: s.color,
+          groupId: s.groupId ?? null,
         })),
+        groups: (event.groups ?? []).map(g => ({ id: g.id, name: g.name })),
         scheduledStartTime: event.scheduledStartTime ?? null,
       },
     },
@@ -115,6 +119,7 @@ export async function publishTimerState(shareId: string, state: TimerSyncState):
           lastUpdatedAt: state.lastUpdatedAt,
           eventTitle: state.eventTitle,
           scheduledStartTime: state.scheduledStartTime,
+          activeGroupId: state.activeGroupId ?? null,
         },
       },
       authMode: 'userPool',
