@@ -78,18 +78,20 @@ const EventListScreen: React.FC<EventListScreenProps> = ({
             <button
               type="button"
               onClick={onAddEvent}
-              className="p-2.5 rounded-xl
+              className="px-5 py-2.5 rounded-xl text-sm font-semibold
                          bg-white/20 backdrop-blur-md
                          border border-white/30
                          text-zinc-600
                          hover:bg-white/30
-                         hover:scale-110 active:scale-95
-                         transition-all duration-200 shadow-md"
+                         hover:scale-105 active:scale-95
+                         transition-all duration-200 shadow-md
+                         flex items-center gap-1.5"
               aria-label="Add new event"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" strokeLinecap="round">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" strokeLinecap="round">
                 <path d="M12 5v14m-7-7h14" />
               </svg>
+              New Event
             </button>
           </div>
         </div>
@@ -102,7 +104,7 @@ const EventListScreen: React.FC<EventListScreenProps> = ({
             <div className="text-center py-20">
               <div className="text-5xl mb-4 opacity-30">+</div>
               <p className="text-zinc-500 text-sm">
-                No events yet. Tap + to create one.
+                No events yet. Tap + New Event to create one.
               </p>
             </div>
           ) : (

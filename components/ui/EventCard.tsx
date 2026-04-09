@@ -112,6 +112,9 @@ const EventCard: React.FC<EventCardProps> = ({ event, editMode, onSelect, onStar
             <h3 className="font-semibold text-zinc-800 truncate text-base sm:text-lg">
               {event.title}
             </h3>
+            {event.venueName && (
+              <p className="text-xs text-zinc-400 truncate mt-0.5">{event.venueName}</p>
+            )}
             <div className="flex items-center gap-3 mt-1.5 text-xs text-zinc-400">
               <span>{segmentCount} segment{segmentCount !== 1 ? 's' : ''}</span>
               {totalDuration > 0 && (
