@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import type { Segment } from '../../types';
+import type { Segment, TimerGroup } from '../../types';
 import { formatDuration, SEGMENT_COLORS } from '../../types';
 import ScrollWheelPicker from '../ui/ScrollWheelPicker';
 
 interface SegmentSettingsScreenProps {
   segment: Segment;
+  groups: TimerGroup[];        // NEW — available groups for assignment
   onSave: (updates: Partial<Segment>) => void;
   onClose: () => void;
 }
 
-const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, onSave, onClose }) => {
+const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, groups, onSave, onClose }) => {
   const { h, m, s } = formatDuration(segment.durationSeconds);
   const [name, setName] = useState(segment.name);
   const [hours, setHours] = useState(h);
@@ -20,6 +21,7 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
   const [sound, setSound] = useState(segment.soundEnabled);
   const [flash, setFlash] = useState(segment.flashEnabled ?? false);
   const [tick, setTick] = useState(segment.tickEnabled ?? false);
+  const [groupId, setGroupId] = useState<string | undefined>(segment.groupId);
 
   const handleSave = () => {
     onSave({
@@ -30,6 +32,7 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
       soundEnabled: sound,
       flashEnabled: flash,
       tickEnabled: tick,
+      groupId: groupId || undefined,
     });
   };
 
@@ -81,6 +84,27 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
               </div>
             </div>
           </div>
+
+          {/* GROUP Section */}
+          {groups.length > 0 && (
+            <div className="mb-8">
+              <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Group</h3>
+              <div className="bg-zinc-50/80 backdrop-blur-md border border-zinc-200/50 rounded-2xl overflow-hidden shadow-sm">
+                <div className="p-4">
+                  <select
+                    value={groupId ?? ''}
+                    onChange={e => setGroupId(e.target.value || undefined)}
+                    className="w-full bg-white/60 border border-zinc-200/60 rounded-xl px-4 py-3 text-sm text-zinc-700 outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-all appearance-none"
+                  >
+                    <option value="">None (ungrouped)</option>
+                    {groups.map(g => (
+                      <option key={g.id} value={g.id}>{g.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* DURATION Section */}
           <div className="mb-8">
