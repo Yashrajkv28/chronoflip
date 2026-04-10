@@ -11,12 +11,18 @@ interface TimerRunningScreenProps {
   event: SpeechEvent;
   startSegmentIndex: number;
   onExit: () => void;
+  activeGroupId?: string;
+  groupSegmentIndices?: number[];
+  onGroupChange?: (groupId: string, segmentIndices: number[]) => void;
 }
 
 const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
   event,
   startSegmentIndex,
   onExit,
+  activeGroupId,
+  groupSegmentIndices = [],
+  onGroupChange,
 }) => {
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(startSegmentIndex);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -30,7 +36,6 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
     return event.scheduledStartTime != null && event.scheduledStartTime > Date.now();
   });
   const [scheduleCountdown, setScheduleCountdown] = useState('');
-  const [screenOn, setScreenOn] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isStandalone] = useState(() =>
     window.matchMedia('(display-mode: standalone)').matches ||
@@ -59,8 +64,44 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
   const RESTART_HOLD_DURATION = 1500;
   const PROGRESS_UPDATE_INTERVAL = 50;
 
-  const currentSegment = event.segments[currentSegmentIndex] ?? null;
-  const nextSegment = event.segments[currentSegmentIndex + 1] ?? null;
+  const isGroupMode = !!activeGroupId && groupSegmentIndices.length > 0;
+
+  // In group mode, only iterate through group's segments
+  const effectiveSegments = isGroupMode
+    ? groupSegmentIndices.map(i => event.segments[i]).filter(Boolean)
+    : event.segments;
+
+  const currentSegment = effectiveSegments[currentSegmentIndex] ?? null;
+  const nextSegment = effectiveSegments[currentSegmentIndex + 1] ?? null;
+
+  // Map local index to global index for sync
+  const localToGlobalIndex = (localIdx: number): number => {
+    if (!isGroupMode) return localIdx;
+    return groupSegmentIndices[localIdx] ?? localIdx;
+  };
+
+  // Find adjacent groups for prev/next navigation
+  const findAdjacentGroups = () => {
+    if (!activeGroupId) return { prevGroupId: null, nextGroupId: null };
+    const groupIds: string[] = [];
+    let lastGroupId: string | null = null;
+    for (const seg of event.segments) {
+      if (seg.groupId && seg.groupId !== lastGroupId) {
+        groupIds.push(seg.groupId);
+        lastGroupId = seg.groupId;
+      } else if (!seg.groupId) {
+        lastGroupId = null;
+      }
+    }
+    const currentIdx = groupIds.indexOf(activeGroupId);
+    return {
+      prevGroupId: currentIdx > 0 ? groupIds[currentIdx - 1] : null,
+      nextGroupId: currentIdx < groupIds.length - 1 ? groupIds[currentIdx + 1] : null,
+    };
+  };
+
+  const { prevGroupId, nextGroupId } = findAdjacentGroups();
+  const activeGroupName = event.groups?.find(g => g.id === activeGroupId)?.name;
 
   const wakeLock = useWakeLock();
 
@@ -99,12 +140,12 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
     audioService.stop();
 
     // Now advance to next segment or mark all complete
-    if (currentSegmentIndex < event.segments.length - 1) {
+    if (currentSegmentIndex < effectiveSegments.length - 1) {
       setIsTransitioning(true);
     } else {
       setAllComplete(true);
     }
-  }, [currentSegmentIndex, event.segments.length]);
+  }, [currentSegmentIndex, effectiveSegments.length]);
 
   // Cleanup flash interval on unmount
   useEffect(() => {
@@ -116,7 +157,7 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
   }, []);
 
   const handleSegmentComplete = useCallback(() => {
-    const seg = event.segments[currentSegmentIndex];
+    const seg = effectiveSegments[currentSegmentIndex];
     if (!seg) return;
 
     // Play alarm sound if enabled
@@ -133,7 +174,7 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
       // Do NOT set isTransitioning or allComplete here
     } else {
       // Normal auto-advance (no flash blocking)
-      if (currentSegmentIndex < event.segments.length - 1) {
+      if (currentSegmentIndex < effectiveSegments.length - 1) {
         setIsTransitioning(true);
         setTimeout(() => audioService.stop(), 2000);
       } else {
@@ -141,7 +182,7 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
         setTimeout(() => audioService.stop(), 4000);
       }
     }
-  }, [currentSegmentIndex, event.segments, startBlockingFlash]);
+  }, [currentSegmentIndex, effectiveSegments, startBlockingFlash]);
 
   const timer = useTimer({
     segment: currentSegment,
@@ -173,12 +214,12 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
 
   // Wake lock
   useEffect(() => {
-    if (screenOn || timer.status === 'running') {
+    if (timer.status === 'running') {
       wakeLock.request();
     } else {
       wakeLock.release();
     }
-  }, [screenOn, timer.status]);
+  }, [timer.status]);
 
   // Fullscreen toggle
   const toggleFullscreen = useCallback(() => {
@@ -323,6 +364,29 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
     timer.start();
   }, [timer]);
 
+  const navigateToGroup = useCallback((targetGroupId: string) => {
+    audioService.stop();
+    if (flashIntervalRef.current) {
+      clearInterval(flashIntervalRef.current);
+      flashIntervalRef.current = null;
+    }
+    setIsFlashing(false);
+    setFlashColor('');
+    setIsFlashBlocking(false);
+    setIsTransitioning(false);
+    setAllComplete(false);
+    setForceIdle(true);
+    setCurrentSegmentIndex(0);
+    setResetKey(prev => prev + 1);
+
+    const targetIndices = event.segments
+      .map((s, i) => s.groupId === targetGroupId ? i : -1)
+      .filter(i => i >= 0);
+
+    onGroupChange?.(targetGroupId, targetIndices);
+    if ('vibrate' in navigator) navigator.vibrate(50);
+  }, [event.segments, onGroupChange]);
+
   // Exit blackout on any key/tap
   useEffect(() => {
     if (!isBlackout) return;
@@ -379,10 +443,18 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
             setIsBlackout(prev => !prev);
           }
           break;
-        case 'KeyW':
-          if (!e.metaKey && !e.ctrlKey) {
+        case 'BracketLeft':
+        case 'KeyP':
+          if (!e.metaKey && !e.ctrlKey && isGroupMode && prevGroupId) {
             e.preventDefault();
-            setScreenOn(prev => !prev);
+            navigateToGroup(prevGroupId);
+          }
+          break;
+        case 'BracketRight':
+        case 'KeyN':
+          if (!e.metaKey && !e.ctrlKey && isGroupMode && nextGroupId) {
+            e.preventDefault();
+            navigateToGroup(nextGroupId);
           }
           break;
         case 'Escape':
@@ -415,7 +487,7 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [timer.status, allComplete, isBlackout, isFullscreen, canFullscreen, isStandalone, handleRestartAction, handleRestartMouseUp, handleExitAction, handleExitMouseUp, toggleFullscreen, isFlashBlocking, dismissFlash, handleManualStart]);
+  }, [timer.status, allComplete, isBlackout, isFullscreen, canFullscreen, isStandalone, handleRestartAction, handleRestartMouseUp, handleExitAction, handleExitMouseUp, toggleFullscreen, isFlashBlocking, dismissFlash, handleManualStart, isGroupMode, prevGroupId, nextGroupId, navigateToGroup]);
 
   // Update tab title
   useEffect(() => {
@@ -500,16 +572,17 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
 
       return {
         status: syncStatus,
-        currentSegmentIndex,
+        currentSegmentIndex: isGroupMode ? localToGlobalIndex(currentSegmentIndex) : currentSegmentIndex,
         timeInSeconds: timer.timeInSeconds,
         segmentName: currentSegment?.name ?? '',
         segmentMode: currentSegment?.mode ?? 'countdown',
-        totalSegments: event.segments.length,
+        totalSegments: effectiveSegments.length,
         activeAlertColor: currentSegment?.color ?? null,
         isFlashing: isFlashBlocking,
         lastUpdatedAt: Date.now(),
         eventTitle: event.title,
         scheduledStartTime: event.scheduledStartTime ?? null,
+        activeGroupId: activeGroupId ?? undefined,
       };
     };
 
@@ -534,7 +607,7 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
     return () => {
       if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
     };
-  }, [timer.timeInSeconds, timer.status, allComplete, isWaitingSchedule, currentSegmentIndex, isFlashBlocking, event.shareId, event.title, event.segments.length, event.scheduledStartTime, currentSegment?.name, currentSegment?.mode, currentSegment?.color]);
+  }, [timer.timeInSeconds, timer.status, allComplete, isWaitingSchedule, currentSegmentIndex, isFlashBlocking, event.shareId, event.title, effectiveSegments.length, event.scheduledStartTime, currentSegment?.name, currentSegment?.mode, currentSegment?.color, isGroupMode, activeGroupId]);
 
   // Compute display values
   const displaySeconds = timer.timeInSeconds % 60;
@@ -585,10 +658,15 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
               {getStatusBadge()}
               {currentSegment && !allComplete && (
                 <span className="text-xs text-zinc-400">
-                  {currentSegmentIndex + 1} / {event.segments.length}
+                  {currentSegmentIndex + 1} / {effectiveSegments.length}
                 </span>
               )}
             </div>
+            {activeGroupName && !allComplete && !isScheduledWaiting && (
+              <h3 className="text-sm font-semibold text-zinc-400 tracking-wide">
+                {activeGroupName}
+              </h3>
+            )}
             {currentSegment && !allComplete && !isScheduledWaiting && (
               <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-zinc-700">
                 {currentSegment.name}
@@ -638,8 +716,14 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
               shadow-[0_8px_32px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.4)]
               transition-all duration-500
             `}>
-              <h2 className="text-2xl sm:text-3xl font-bold text-zinc-800">Timer Complete</h2>
-              <p className="text-zinc-500 text-sm mt-3">All {event.segments.length} segments finished</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-zinc-800">
+                {isGroupMode ? 'Group Complete' : 'Timer Complete'}
+              </h2>
+              <p className="text-zinc-500 text-sm mt-3">
+                {isGroupMode
+                  ? `All ${effectiveSegments.length} timers in "${activeGroupName}" finished`
+                  : `All ${event.segments.length} segments finished`}
+              </p>
             </div>
           ) : (
             <div className={`
@@ -742,6 +826,36 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
               </svg>
             </button>
 
+            {/* Prev Group */}
+            {isGroupMode && prevGroupId && (
+              <button
+                type="button"
+                onClick={() => navigateToGroup(prevGroupId)}
+                title="Previous Group ([)"
+                aria-label="Go to previous group"
+                className="px-6 py-5 rounded-2xl bg-white/10 text-gray-600 font-bold border border-white/20 hover:bg-white/20 hover:scale-105 active:scale-95 transition-all duration-300 backdrop-blur-md"
+              >
+                <svg className="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+              </button>
+            )}
+
+            {/* Next Group */}
+            {isGroupMode && nextGroupId && (
+              <button
+                type="button"
+                onClick={() => navigateToGroup(nextGroupId)}
+                title="Next Group (])"
+                aria-label="Go to next group"
+                className="px-6 py-5 rounded-2xl bg-white/10 text-gray-600 font-bold border border-white/20 hover:bg-white/20 hover:scale-105 active:scale-95 transition-all duration-300 backdrop-blur-md"
+              >
+                <svg className="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </button>
+            )}
+
             {/* EXIT - always visible, always 3s hold */}
             <button
               type="button"
@@ -765,25 +879,6 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
-            </button>
-
-            {/* Screen On */}
-            <button
-              type="button"
-              onClick={() => setScreenOn(prev => !prev)}
-              title={screenOn ? "Allow Screen Sleep (W)" : "Keep Screen On (W)"}
-              aria-label={screenOn ? "Allow screen to sleep" : "Keep screen awake"}
-              className={`px-6 py-5 rounded-2xl font-bold border hover:scale-105 active:scale-95 transition-all duration-300 backdrop-blur-md ${
-                screenOn
-                  ? 'bg-amber-500/20 text-amber-500 border-amber-500/30 hover:bg-amber-500/30'
-                  : 'bg-white/10 text-gray-600 border-white/20 hover:bg-white/20'
-              }`}
-            >
-              {screenOn ? (
-                <svg className="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" /></svg>
-              ) : (
-                <svg className="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></svg>
-              )}
             </button>
 
             {/* Fullscreen */}
