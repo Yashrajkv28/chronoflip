@@ -13,8 +13,9 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import type { SpeechEvent } from '../../types';
+import type { SpeechEvent, TimerGroup } from '../../types';
 import SegmentCard from '../ui/SegmentCard';
+import GroupBlock from '../ui/GroupBlock';
 import QRCodeModal from '../ui/QRCodeModal';
 import { publishEvent } from '../../services/syncService';
 
@@ -23,6 +24,11 @@ interface EventSettingsScreenProps {
   onBack: () => void;
   onUpdateEvent: (updates: Partial<SpeechEvent>) => void;
   onAddSegment: () => void;
+  onAddGroup: () => void;
+  onAddSegmentToGroup: (groupId: string) => void;
+  onUpdateGroup: (groupId: string, updates: Partial<TimerGroup>) => void;
+  onDeleteGroup: (groupId: string) => void;
+  onStartGroup: (groupId: string) => void;
   onEditSegment: (segmentId: string) => void;
   onDeleteSegment: (segmentId: string) => void;
   onReorderSegments: (activeId: string, overId: string) => void;
@@ -35,6 +41,11 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
   onBack,
   onUpdateEvent,
   onAddSegment,
+  onAddGroup,
+  onAddSegmentToGroup,
+  onUpdateGroup,
+  onDeleteGroup,
+  onStartGroup,
   onEditSegment,
   onDeleteSegment,
   onReorderSegments,
@@ -44,6 +55,8 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
   const [editMode, setEditMode] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState(event.title);
+  const [editingVenue, setEditingVenue] = useState(false);
+  const [venueValue, setVenueValue] = useState(event.venueName ?? '');
   const [schedDate, setSchedDate] = useState('');
   const [schedTime, setSchedTime] = useState('');
   const [schedError, setSchedError] = useState('');
@@ -68,6 +81,11 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
       onUpdateEvent({ title: titleValue.trim() });
     }
     setEditingTitle(false);
+  };
+
+  const handleVenueSave = () => {
+    onUpdateEvent({ venueName: venueValue.trim() || undefined });
+    setEditingVenue(false);
   };
 
   const handleShare = async () => {
@@ -143,6 +161,27 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
             {/* Invisible spacer to keep title centered */}
             <div className="w-[38px]" />
           </div>
+
+          {/* Venue name */}
+          {editingVenue ? (
+            <input
+              type="text"
+              value={venueValue}
+              onChange={e => setVenueValue(e.target.value)}
+              onBlur={handleVenueSave}
+              onKeyDown={e => e.key === 'Enter' && handleVenueSave()}
+              autoFocus
+              placeholder="Add venue name..."
+              className="w-full text-center text-sm bg-transparent border-b-2 border-blue-500/50 text-zinc-500 outline-none py-1 mt-1"
+            />
+          ) : (
+            <p
+              onClick={() => { setVenueValue(event.venueName ?? ''); setEditingVenue(true); }}
+              className="text-sm text-zinc-400 text-center cursor-pointer hover:opacity-70 transition-opacity mt-1 truncate"
+            >
+              {event.venueName || 'Add venue name...'}
+            </p>
+          )}
 
           {/* Dynamic duration + schedule info bar */}
           {(() => {
@@ -223,19 +262,34 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
             <button
               type="button"
               onClick={onAddSegment}
-              className="p-2.5 rounded-xl
-                         bg-white/20
-                         backdrop-blur-xl
-                         border border-white/30
-                         text-zinc-600
-                         hover:bg-white/30
-                         hover:scale-110 active:scale-95
-                         transition-all duration-300 shadow-lg"
-              aria-label="Add segment"
+              className="px-4 py-2.5 rounded-xl text-sm font-semibold
+                         bg-white/20 backdrop-blur-xl border border-white/30
+                         text-zinc-600 hover:bg-white/30
+                         hover:scale-105 active:scale-95
+                         transition-all duration-300 shadow-lg
+                         flex items-center gap-1.5"
+              aria-label="Add timer"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" strokeLinecap="round">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" strokeLinecap="round">
                 <path d="M12 5v14m-7-7h14" />
               </svg>
+              New Timer
+            </button>
+            <button
+              type="button"
+              onClick={onAddGroup}
+              className="px-4 py-2.5 rounded-xl text-sm font-semibold
+                         bg-violet-500/10 backdrop-blur-xl border border-violet-500/20
+                         text-violet-600 hover:bg-violet-500/20
+                         hover:scale-105 active:scale-95
+                         transition-all duration-300 shadow-lg
+                         flex items-center gap-1.5"
+              aria-label="Add group"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" strokeLinecap="round">
+                <path d="M12 5v14m-7-7h14" />
+              </svg>
+              New Group
             </button>
             {event.segments.length > 0 && (
               <button
@@ -292,7 +346,7 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
           {event.segments.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-zinc-500 text-sm">
-                No segments yet. Tap + to add a speech.
+                No segments yet. Tap + New Timer to add one.
               </p>
             </div>
           ) : (
@@ -305,18 +359,70 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
                 items={event.segments.map(s => s.id)}
                 strategy={verticalListSortingStrategy}
               >
-                {event.segments.map((segment, index) => (
-                  <SegmentCard
-                    key={segment.id}
-                    segment={segment}
-                    editMode={editMode}
-                    onEdit={() => onEditSegment(segment.id)}
-                    onStart={() => onStartEvent(index)}
-                    onDelete={() => onDeleteSegment(segment.id)}
-                    swipeOpenId={swipeOpenId}
-                    onSwipeOpen={setSwipeOpenId}
-                  />
-                ))}
+                {(() => {
+                  const items: Array<
+                    | { type: 'segment'; segment: typeof event.segments[0]; index: number }
+                    | { type: 'group'; groupId: string; segments: { segment: typeof event.segments[0]; index: number }[] }
+                  > = [];
+
+                  let i = 0;
+                  while (i < event.segments.length) {
+                    const seg = event.segments[i];
+                    if (seg.groupId) {
+                      const groupId = seg.groupId;
+                      const groupSegs: { segment: typeof event.segments[0]; index: number }[] = [];
+                      while (i < event.segments.length && event.segments[i].groupId === groupId) {
+                        groupSegs.push({ segment: event.segments[i], index: i });
+                        i++;
+                      }
+                      items.push({ type: 'group', groupId, segments: groupSegs });
+                    } else {
+                      items.push({ type: 'segment', segment: seg, index: i });
+                      i++;
+                    }
+                  }
+
+                  return items.map((item) => {
+                    if (item.type === 'segment') {
+                      return (
+                        <SegmentCard
+                          key={item.segment.id}
+                          segment={item.segment}
+                          editMode={editMode}
+                          onEdit={() => onEditSegment(item.segment.id)}
+                          onStart={() => onStartEvent(item.index)}
+                          onDelete={() => onDeleteSegment(item.segment.id)}
+                          swipeOpenId={swipeOpenId}
+                          onSwipeOpen={setSwipeOpenId}
+                        />
+                      );
+                    } else {
+                      const group = event.groups?.find(g => g.id === item.groupId);
+                      if (!group) return null;
+                      return (
+                        <GroupBlock
+                          key={group.id}
+                          group={group}
+                          segments={item.segments.map(s => s.segment)}
+                          editMode={editMode}
+                          onEditGroup={(updates) => onUpdateGroup(group.id, updates)}
+                          onDeleteGroup={() => onDeleteGroup(group.id)}
+                          onStartGroup={() => onStartGroup(group.id)}
+                          onAddSegmentToGroup={() => onAddSegmentToGroup(group.id)}
+                          onEditSegment={onEditSegment}
+                          onDeleteSegment={onDeleteSegment}
+                          onStartSegment={(segId) => {
+                            const segIdx = event.segments.findIndex(s => s.id === segId);
+                            if (segIdx >= 0) onStartEvent(segIdx);
+                          }}
+                          onReorderSegments={onReorderSegments}
+                          swipeOpenId={swipeOpenId}
+                          onSwipeOpen={setSwipeOpenId}
+                        />
+                      );
+                    }
+                  });
+                })()}
               </SortableContext>
             </DndContext>
           )}
