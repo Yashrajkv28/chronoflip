@@ -17,6 +17,7 @@ export function useAuth(): UseAuthReturn {
 
   // Track mount status for all async callbacks
   useEffect(() => {
+    mountedRef.current = true;
     return () => { mountedRef.current = false; };
   }, []);
 
@@ -75,13 +76,16 @@ export function useAuth(): UseAuthReturn {
   }, []);
 
   const handleSignOut = useCallback(async () => {
+    console.log('[AUTH] signOut called, mountedRef:', mountedRef.current);
     if (!mountedRef.current) return;
     setLoading(true);
     try {
       await authSignOut();
+      console.log('[AUTH] signOut succeeded');
+    } catch (e) {
+      console.error('[AUTH] signOut error:', e);
     } finally {
-      // Intentionally clear local state even if Cognito call fails —
-      // a broken remote session should not leave the user "logged in" locally
+      console.log('[AUTH] signOut finally, mountedRef:', mountedRef.current);
       if (mountedRef.current) {
         setUser(null);
         setLoading(false);

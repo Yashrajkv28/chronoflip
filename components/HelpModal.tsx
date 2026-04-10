@@ -123,6 +123,8 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
             <ShortcutRow shortcut="Space" action="Start / Pause / Resume" />
             <ShortcutRow shortcut="R" action="Restart from segment 1 (hold 1.5s)" />
             <ShortcutRow shortcut="E" action="Exit to edit screen (hold 3s)" />
+            <ShortcutRow shortcut="[ / P" action="Previous group (group mode)" />
+            <ShortcutRow shortcut="] / N" action="Next group (group mode)" />
             <ShortcutRow shortcut="F" action="Toggle fullscreen" />
             <ShortcutRow shortcut="B" action="Blackout mode (when running)" />
             <ShortcutRow shortcut="Esc" action="Dismiss flash / Exit blackout / Exit fullscreen" border={false} />
@@ -207,6 +209,8 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
             <ShortcutRow shortcut="Space" action="開始 / 一時停止 / 再開" />
             <ShortcutRow shortcut="R" action="最初のセグメントに戻る（1.5秒長押し）" />
             <ShortcutRow shortcut="E" action="編集画面に戻る（3秒長押し）" />
+            <ShortcutRow shortcut="[ / P" action="前のグループ（グループモード）" />
+            <ShortcutRow shortcut="] / N" action="次のグループ（グループモード）" />
             <ShortcutRow shortcut="F" action="フルスクリーン切り替え" />
             <ShortcutRow shortcut="B" action="ブラックアウトモード（実行中のみ）" />
             <ShortcutRow shortcut="Esc" action="フラッシュ解除 / ブラックアウト解除 / フルスクリーン解除" border={false} />

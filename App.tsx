@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { arrayMove } from '@dnd-kit/sortable';
-import type { SpeechEvent, Segment, Screen, AppState } from './types';
-import { createDefaultEvent, createDefaultSegment } from './types';
-import { loadAppState, saveEvents, syncEvents, saveEventToCloud, deleteEventFromCloud, resetPersistenceClient, recordDeletedEvent, persistPendingSaves, loadAndClearPendingSaves } from './hooks/usePersistence';
+import type { SpeechEvent, Segment, Screen, AppState, TimerGroup } from './types';
+import { createDefaultEvent, createDefaultSegment, createDefaultGroup } from './types';
+import { loadAppState, saveEvents, syncEvents, saveEventToCloud, deleteEventFromCloud, resetPersistenceClient, recordDeletedEvent, persistPendingSaves, loadAndClearPendingSaves, subscribeToUserEventChanges } from './hooks/usePersistence';
 import { removeSharedEvent } from './services/syncService';
 import { useAuthContext } from './hooks/AuthContext';
 import EventListScreen from './components/screens/EventListScreen';
@@ -80,9 +80,10 @@ const App: React.FC = () => {
           }
           return e;
         });
-        // Also include any new events created locally during sync
+        // Also include any new events created locally DURING the sync
+        // (not in the pre-sync snapshot, so they weren't part of the merge)
         for (const prevEvent of prev.events) {
-          if (!syncedMap.has(prevEvent.id)) {
+          if (!syncedMap.has(prevEvent.id) && !localSnapshot.find(s => s.id === prevEvent.id)) {
             merged.push(prevEvent);
           }
         }
@@ -92,6 +93,45 @@ const App: React.FC = () => {
       });
     });
     // user?.userId is the only meaningful dep — eventsRef is read from ref
+  }, [user?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Real-time subscription: re-sync when another browser changes events
+  useEffect(() => {
+    if (!user) return;
+    let syncDebounce: ReturnType<typeof setTimeout> | null = null;
+
+    const unsubscribe = subscribeToUserEventChanges(user.userId, () => {
+      // Debounce rapid changes (e.g., multiple saves in quick succession)
+      if (syncDebounce) clearTimeout(syncDebounce);
+      syncDebounce = setTimeout(() => {
+        const localSnapshot = eventsRef.current;
+        syncEvents(user.userId, localSnapshot).then(synced => {
+          setAppState(prev => {
+            const syncedMap = new Map(synced.map(e => [e.id, e]));
+            const merged = synced.map(e => {
+              const prevVersion = prev.events.find(p => p.id === e.id);
+              const snapshotVersion = localSnapshot.find(s => s.id === e.id);
+              if (prevVersion && snapshotVersion && prevVersion !== snapshotVersion) {
+                return prevVersion;
+              }
+              return e;
+            });
+            for (const prevEvent of prev.events) {
+              if (!syncedMap.has(prevEvent.id) && !localSnapshot.find(s => s.id === prevEvent.id)) {
+                merged.push(prevEvent);
+              }
+            }
+            prevEventsRef.current = merged;
+            return { ...prev, events: merged };
+          });
+        });
+      }, 500);
+    });
+
+    return () => {
+      unsubscribe();
+      if (syncDebounce) clearTimeout(syncDebounce);
+    };
   }, [user?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Save to localStorage + debounced cloud save (only changed events)
@@ -295,6 +335,77 @@ const App: React.FC = () => {
     }));
   }, []);
 
+  // ===== Group CRUD =====
+
+  const addGroup = useCallback((eventId: string) => {
+    const newGroup = createDefaultGroup();
+    const newSeg = { ...createDefaultSegment(), groupId: newGroup.id };
+    setAppState(prev => ({
+      ...prev,
+      events: prev.events.map(e =>
+        e.id === eventId
+          ? {
+              ...e,
+              groups: [...(e.groups ?? []), newGroup],
+              segments: [...e.segments, newSeg],
+              updatedAt: Date.now(),
+            }
+          : e
+      ),
+    }));
+  }, []);
+
+  const addSegmentToGroup = useCallback((eventId: string, groupId: string) => {
+    const newSeg = { ...createDefaultSegment(), groupId };
+    setAppState(prev => ({
+      ...prev,
+      events: prev.events.map(e => {
+        if (e.id !== eventId) return e;
+        // Insert after the last segment in this group
+        const lastGroupIdx = e.segments.reduce(
+          (last, s, idx) => (s.groupId === groupId ? idx : last), -1
+        );
+        const insertIdx = lastGroupIdx >= 0 ? lastGroupIdx + 1 : e.segments.length;
+        const newSegments = [...e.segments];
+        newSegments.splice(insertIdx, 0, newSeg);
+        return { ...e, segments: newSegments, updatedAt: Date.now() };
+      }),
+      currentScreen: 'segmentSettings',
+      activeSegmentId: newSeg.id,
+    }));
+  }, []);
+
+  const updateGroup = useCallback((eventId: string, groupId: string, updates: Partial<TimerGroup>) => {
+    setAppState(prev => ({
+      ...prev,
+      events: prev.events.map(e =>
+        e.id === eventId
+          ? {
+              ...e,
+              groups: (e.groups ?? []).map(g => g.id === groupId ? { ...g, ...updates } : g),
+              updatedAt: Date.now(),
+            }
+          : e
+      ),
+    }));
+  }, []);
+
+  const deleteGroup = useCallback((eventId: string, groupId: string) => {
+    setAppState(prev => ({
+      ...prev,
+      events: prev.events.map(e =>
+        e.id === eventId
+          ? {
+              ...e,
+              groups: (e.groups ?? []).filter(g => g.id !== groupId),
+              segments: e.segments.map(s => s.groupId === groupId ? { ...s, groupId: undefined } : s),
+              updatedAt: Date.now(),
+            }
+          : e
+      ),
+    }));
+  }, []);
+
   // ===== Timer control =====
 
   const startEvent = useCallback((eventId: string, startSegmentIndex = 0) => {
@@ -303,8 +414,30 @@ const App: React.FC = () => {
       activeEventId: eventId,
       runningEventId: eventId,
       runningSegmentIndex: startSegmentIndex,
+      runningGroupId: null,
+      runningGroupSegmentIndices: [],
       currentScreen: 'timerRunning',
     }));
+  }, []);
+
+  const startGroup = useCallback((eventId: string, groupId: string) => {
+    setAppState(prev => {
+      const event = prev.events.find(e => e.id === eventId);
+      if (!event) return prev;
+      const groupIndices = event.segments
+        .map((s, i) => s.groupId === groupId ? i : -1)
+        .filter(i => i >= 0);
+      if (groupIndices.length === 0) return prev;
+      return {
+        ...prev,
+        activeEventId: eventId,
+        runningEventId: eventId,
+        runningSegmentIndex: groupIndices[0],
+        runningGroupId: groupId,
+        runningGroupSegmentIndices: groupIndices,
+        currentScreen: 'timerRunning',
+      };
+    });
   }, []);
 
   const exitTimer = useCallback(() => {
@@ -317,9 +450,20 @@ const App: React.FC = () => {
         ),
         runningEventId: null,
         runningSegmentIndex: 0,
+        runningGroupId: null,
+        runningGroupSegmentIndices: [],
         currentScreen: 'eventSettings',
       };
     });
+  }, []);
+
+  const handleGroupChange = useCallback((groupId: string, segmentIndices: number[]) => {
+    setAppState(prev => ({
+      ...prev,
+      runningGroupId: groupId,
+      runningGroupSegmentIndices: segmentIndices,
+      runningSegmentIndex: segmentIndices[0] ?? 0,
+    }));
   }, []);
 
   // Stable callback for schedule start (reads from prev state, no stale closure)
@@ -334,6 +478,8 @@ const App: React.FC = () => {
         ),
         runningEventId: eventId,
         runningSegmentIndex: 0,
+        runningGroupId: null,
+        runningGroupSegmentIndices: [],
         currentScreen: 'timerRunning' as Screen,
       };
     });
@@ -363,6 +509,11 @@ const App: React.FC = () => {
           onBack={() => navigateTo('eventList')}
           onUpdateEvent={(updates) => updateEvent(activeEvent.id, updates)}
           onAddSegment={() => addSegment(activeEvent.id)}
+          onAddGroup={() => addGroup(activeEvent.id)}
+          onAddSegmentToGroup={(groupId) => addSegmentToGroup(activeEvent.id, groupId)}
+          onUpdateGroup={(groupId, updates) => updateGroup(activeEvent.id, groupId, updates)}
+          onDeleteGroup={(groupId) => deleteGroup(activeEvent.id, groupId)}
+          onStartGroup={(groupId) => startGroup(activeEvent.id, groupId)}
           onEditSegment={(segId) => navigateTo('segmentSettings', { segmentId: segId })}
           onDeleteSegment={(segId) => deleteSegment(activeEvent.id, segId)}
           onReorderSegments={(activeId, overId) => reorderSegments(activeEvent.id, activeId, overId)}
@@ -374,6 +525,7 @@ const App: React.FC = () => {
       {appState.currentScreen === 'segmentSettings' && activeEvent && activeSegment && (
         <SegmentSettingsScreen
           segment={activeSegment}
+          groups={activeEvent.groups ?? []}
           onSave={(updates) => {
             updateSegment(activeEvent.id, activeSegment.id, updates);
             navigateTo('eventSettings');
@@ -387,6 +539,9 @@ const App: React.FC = () => {
           event={runningEvent}
           startSegmentIndex={appState.runningSegmentIndex}
           onExit={exitTimer}
+          activeGroupId={appState.runningGroupId ?? undefined}
+          groupSegmentIndices={appState.runningGroupSegmentIndices}
+          onGroupChange={handleGroupChange}
         />
       )}
 

@@ -5,6 +5,7 @@ import {
   saveUserEventMutation,
   deleteUserEventMutation,
 } from '../services/graphql/mutations';
+import { onUserEventChange } from '../services/graphql/subscriptions';
 
 const EVENTS_KEY = 'chronoflip-v2-events';
 const DELETED_KEY = 'chronoflip-v2-deleted';
@@ -117,6 +118,23 @@ function clearDeletedEvents(idsToRemove: string[]): void {
   } catch { /* ignore */ }
 }
 
+// ========== Last-sync timestamp (detects remote deletions) ==========
+
+const LAST_SYNC_KEY = 'chronoflip-v2-last-synced';
+
+function getLastSyncedAt(): number {
+  try {
+    const raw = localStorage.getItem(LAST_SYNC_KEY);
+    return raw ? Number(raw) : 0;
+  } catch { return 0; }
+}
+
+function setLastSyncedAt(): void {
+  try {
+    localStorage.setItem(LAST_SYNC_KEY, String(Date.now()));
+  } catch { /* ignore */ }
+}
+
 // ========== DynamoDB (source of truth) ==========
 
 interface CloudEventItem {
@@ -126,33 +144,47 @@ interface CloudEventItem {
 
 interface FetchCloudResult {
   items: CloudEventItem[];
+  rawCount: number;           // total items returned from cloud (including corrupted)
+  corruptedIds: string[];     // eventIds that couldn't be parsed — will be garbage-collected
   failed: boolean;
 }
 
 async function fetchCloudItems(userId: string): Promise<FetchCloudResult> {
-  if (!userId) return { items: [], failed: false };
+  if (!userId) return { items: [], rawCount: 0, corruptedIds: [], failed: false };
   try {
+    console.log('[SYNC] Fetching cloud events for userId:', userId);
     const result: any = await getClient().graphql({
       query: listUserEvents,
       variables: { userId },
       authMode: 'userPool',
     });
+    console.log('[SYNC] Raw cloud response:', JSON.stringify(result.data));
     const rawItems = result.data?.listUserEvents ?? [];
+    const corruptedIds: string[] = [];
     const items = rawItems.reduce((acc: CloudEventItem[], item: any) => {
       try {
-        const event = typeof item.data === 'string' ? JSON.parse(item.data) : item.data;
-        if (event && event.id && Array.isArray(event.segments)) {
-          acc.push({ event: event as SpeechEvent, updatedAt: Number(item.updatedAt) || 0 });
+        let parsed = typeof item.data === 'string' ? JSON.parse(item.data) : item.data;
+        // Handle double-encoded data: AWSJSON may return the inner JSON string
+        // which needs a second parse to get the actual event object
+        if (typeof parsed === 'string') {
+          parsed = JSON.parse(parsed);
+        }
+        if (parsed && parsed.id && Array.isArray(parsed.segments)) {
+          acc.push({ event: parsed as SpeechEvent, updatedAt: Number(item.updatedAt) || 0 });
+        } else if (item.eventId) {
+          corruptedIds.push(item.eventId);
         }
       } catch (e) {
-        console.warn('Failed to parse cloud event data:', e);
+        console.warn('[SYNC] Corrupted cloud event, will delete:', item.eventId);
+        if (item.eventId) corruptedIds.push(item.eventId);
       }
       return acc;
     }, []);
-    return { items, failed: false };
+    console.log('[SYNC] Parsed cloud items:', items.length, '| corrupted:', corruptedIds.length);
+    return { items, rawCount: rawItems.length, corruptedIds, failed: false };
   } catch (e) {
-    console.warn('Failed to fetch events from cloud:', e);
-    return { items: [], failed: true };
+    console.error('[SYNC] FAILED to fetch events from cloud:', e);
+    return { items: [], rawCount: 0, corruptedIds: [], failed: true };
   }
 }
 
@@ -160,21 +192,27 @@ async function fetchCloudItems(userId: string): Promise<FetchCloudResult> {
 export async function saveEventToCloud(userId: string, event: SpeechEvent): Promise<boolean> {
   if (!userId) return false;
   try {
-    await getClient().graphql({
+    console.log('[SAVE] Saving event to cloud:', event.id, event.title);
+    const result = await getClient().graphql({
       query: saveUserEventMutation,
       variables: {
         input: {
           userId,
           eventId: event.id,
-          data: JSON.stringify(event),
+          // Double-stringify: AWSJSON deserializes the outer JSON layer into a
+          // native object. By wrapping in an extra JSON.stringify, the resolver
+          // receives a plain String (the inner JSON) instead of a Map, which
+          // prevents the VTL resolver from corrupting it via Java Map.toString().
+          data: JSON.stringify(JSON.stringify(event)),
           updatedAt: event.updatedAt || Date.now(),
         },
       },
       authMode: 'userPool',
     });
+    console.log('[SAVE] Success:', JSON.stringify(result));
     return true;
   } catch (e) {
-    console.warn('Failed to save event to cloud:', e);
+    console.error('[SAVE] FAILED to save event to cloud:', e);
     return false;
   }
 }
@@ -182,36 +220,63 @@ export async function saveEventToCloud(userId: string, event: SpeechEvent): Prom
 export async function deleteEventFromCloud(userId: string, eventId: string): Promise<void> {
   if (!userId) return;
   try {
+    console.log('[DELETE] Deleting event from cloud:', eventId);
     await getClient().graphql({
       query: deleteUserEventMutation,
       variables: { userId, eventId },
       authMode: 'userPool',
     });
+    console.log('[DELETE] Success:', eventId);
   } catch (e) {
-    console.warn('Failed to delete event from cloud:', e);
+    console.error('[DELETE] FAILED:', eventId, e);
   }
 }
 
 // ========== Sync: merge cloud <-> cache ==========
 
 export async function syncEvents(userId: string, localEvents: SpeechEvent[]): Promise<SpeechEvent[]> {
-  const { items: cloudItems, failed } = await fetchCloudItems(userId);
+  const { items: cloudItems, rawCount, corruptedIds, failed } = await fetchCloudItems(userId);
 
   // On network failure, don't touch anything — return local as-is
   if (failed) return localEvents;
 
-  const deletedIds = getDeletedEventIds();
+  // Garbage-collect corrupted cloud entries (e.g., old pre-migration data)
+  if (corruptedIds.length > 0) {
+    console.log('[SYNC] Garbage-collecting corrupted entries:', corruptedIds);
+    await Promise.all(corruptedIds.map(id => deleteEventFromCloud(userId, id)));
+  }
 
-  if (cloudItems.length === 0 && localEvents.length > 0) {
-    // First cloud sync — upload only non-deleted local events
+  const deletedIds = getDeletedEventIds();
+  const lastSync = getLastSyncedAt();
+  // Use rawCount (not cloudItems.length) to detect whether cloud has ever been used.
+  // Corrupted items that can't be parsed still mean "cloud is not empty".
+  const cloudHasData = rawCount > 0;
+
+  if (!cloudHasData && localEvents.length > 0) {
+    if (lastSync > 0) {
+      // We've synced before but cloud is empty — events were deleted remotely.
+      // Only keep/upload local events created AFTER the last sync.
+      const newLocal = localEvents.filter(e =>
+        !deletedIds.has(e.id) && (e.updatedAt || 0) > lastSync
+      );
+      if (newLocal.length > 0) {
+        await Promise.all(newLocal.map(event => saveEventToCloud(userId, event)));
+      }
+      clearDeletedEvents([...deletedIds]);
+      setLastSyncedAt();
+      return newLocal;
+    }
+    // Truly first cloud sync — upload only non-deleted local events
     const toUpload = localEvents.filter(e => !deletedIds.has(e.id));
     await Promise.all(toUpload.map(event => saveEventToCloud(userId, event)));
     clearDeletedEvents([...deletedIds]);
+    setLastSyncedAt();
     return toUpload;
   }
 
-  if (cloudItems.length === 0 && localEvents.length === 0) {
+  if (!cloudHasData && localEvents.length === 0) {
     clearDeletedEvents([...deletedIds]);
+    setLastSyncedAt();
     return [];
   }
 
@@ -234,11 +299,12 @@ export async function syncEvents(userId: string, localEvents: SpeechEvent[]): Pr
       } else {
         merged.push(ci.event);
       }
-    } else {
-      // Local-only — keep and upload
+    } else if (lastSync === 0 || (local.updatedAt || 0) > lastSync) {
+      // Genuinely new local event (created/modified after last sync) — keep and upload
       merged.push(local);
       cloudUploads.push(local);
     }
+    // else: event existed before last sync but is gone from cloud → deleted remotely, drop it
   }
 
   // Second pass: append cloud-only events (not in local, not deleted)
@@ -263,6 +329,9 @@ export async function syncEvents(userId: string, localEvents: SpeechEvent[]): Pr
   // Clean up deletion tracking: keep IDs still in cloud (delete may have failed)
   const stillInCloud = new Set(cloudItems.map(ci => ci.event.id));
   clearDeletedEvents([...deletedIds].filter(id => !stillInCloud.has(id)));
+
+  // Record sync timestamp so future syncs can detect remote deletions
+  setLastSyncedAt();
 
   // Don't call saveEventsToCache here — App.tsx effect handles it on state change
   return merged;
@@ -298,6 +367,71 @@ export function loadAndClearPendingSaves(): SpeechEvent[] {
   return [];
 }
 
+// ========== Real-time subscription (cross-browser sync) ==========
+
+export interface UserEventChangeNotification {
+  userId: string;
+  eventId: string;
+  updatedAt?: number;
+  deleted?: boolean;
+}
+
+type Unsubscribe = () => void;
+
+/**
+ * Subscribe to real-time event changes for a user.
+ * Calls `onChanged` whenever another browser saves or deletes an event.
+ * Follows the same retry/backoff pattern as subscribeToTimerState in syncService.
+ */
+export function subscribeToUserEventChanges(
+  userId: string,
+  onChanged: (notification: UserEventChangeNotification) => void,
+): Unsubscribe {
+  if (!userId) return () => {};
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let sub: any = null;
+  let cancelled = false;
+  let retryTimer: ReturnType<typeof setTimeout> | null = null;
+  let retryCount = 0;
+
+  function connect() {
+    sub?.unsubscribe();
+    sub = getClient().graphql({
+      query: onUserEventChange,
+      variables: { userId },
+      authMode: 'userPool',
+    }).subscribe({
+      next: ({ data }: any) => {
+        retryCount = 0;
+        const val = data?.onUserEventChange;
+        if (val && typeof val.eventId === 'string') {
+          console.log('[REALTIME] Event change:', val.eventId, val.deleted ? 'deleted' : 'saved');
+          onChanged(val as UserEventChangeNotification);
+        }
+      },
+      error: (err: any) => {
+        console.error('[REALTIME] Subscription error:', JSON.stringify(err, null, 2));
+        if (!cancelled) {
+          const delay = Math.min(3000 * Math.pow(2, retryCount), 30000);
+          if (retryCount < 10) retryCount++;
+          retryTimer = setTimeout(() => { if (!cancelled) connect(); }, delay);
+        }
+      },
+    });
+  }
+
+  connect();
+  console.log('[REALTIME] Subscribed to event changes for user:', userId);
+
+  return () => {
+    cancelled = true;
+    if (retryTimer) clearTimeout(retryTimer);
+    sub?.unsubscribe();
+    console.log('[REALTIME] Unsubscribed from event changes');
+  };
+}
+
 // ========== Public API (same interface as before) ==========
 
 export function loadAppState(): AppState {
@@ -309,6 +443,8 @@ export function loadAppState(): AppState {
     activeSegmentId: null,
     runningEventId: null,
     runningSegmentIndex: 0,
+    runningGroupId: null,
+    runningGroupSegmentIndices: [],
   };
 }
 

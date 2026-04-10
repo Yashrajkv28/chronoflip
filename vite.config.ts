@@ -8,6 +8,9 @@ export default defineConfig({
     host: '0.0.0.0',
   },
   plugins: [react()],
+  optimizeDeps: {
+    include: ['aws-amplify', 'aws-amplify/auth', 'aws-amplify/api', 'aws-amplify/utils'],
+  },
   build: {
     rollupOptions: {
       output: {
