@@ -30,3 +30,43 @@ user.md
 .env
 .env*.local
 nul
+
+# Local secrets & scratch files — never commit
+aws-ids.txt
+
+# Personal notes / session logs
+chat.md
+yash.md
+yashraj.md
+oldchatcontext.md
+
+# Internal messages / drafts
+message-to-taguchi.md
+message-to-taguchi-deploy-complete.md
+sharewithtaguchi.md
+
+# Verification / checklist scratch
+v2-verification-checklist.md
+
+# Dev docs that may contain IDs or credentials
+docs/aws-deployment-guide.md
+docs/aws-setup-walkthrough.md
+docs/aws-realtime-sync-setup.md
+
+# Local deploy & user management scripts (contain AWS resource IDs)
+deploy.ps1
+manage-users.ps1
+manage-users.sh
+
+# Screenshots / spec artifacts / extracted docx contents
+screenshots/
+_docx_images/
+*.docx
+newer version/
+
+# Debug zip artifacts
+test.zip
+deploy.zip
+
+# Claude Code / superpowers scratch
+docs/superpowers/
