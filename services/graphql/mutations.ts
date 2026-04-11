@@ -13,8 +13,16 @@ export const publishTimerStateMutation = /* GraphQL */ `
     publishTimerState(input: $input) {
       shareId
       status
+      currentSegmentIndex
       timeInSeconds
+      segmentName
+      segmentMode
+      totalSegments
+      activeAlertColor
+      isFlashing
       lastUpdatedAt
+      eventTitle
+      scheduledStartTime
       activeGroupId
     }
   }
@@ -32,7 +40,11 @@ export const publishCommandMutation = /* GraphQL */ `
 
 export const clearCommandMutation = /* GraphQL */ `
   mutation ClearCommand($shareId: String!) {
-    clearCommand(shareId: $shareId)
+    clearCommand(shareId: $shareId) {
+      shareId
+      type
+      timestamp
+    }
   }
 `;
 

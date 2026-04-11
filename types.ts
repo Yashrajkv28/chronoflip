@@ -76,7 +76,7 @@ export interface TimerSyncState {
 // ========== Viewer Commands (remote control) ==========
 
 export interface ViewerCommand {
-  type: 'start' | 'pause' | 'restart';
+  type: 'start' | 'pause' | 'restart' | 'nextGroup' | 'prevGroup';
   timestamp: number;             // Date.now() when command was sent
 }
 

@@ -382,6 +382,50 @@ const ViewerScreen: React.FC<ViewerScreenProps> = ({ shareId }) => {
                 <span className="tracking-wider">RESTART</span>
               </div>
             </button>
+
+            {/* PREV GROUP — only in group mode */}
+            {state.activeGroupId && (
+              <button
+                type="button"
+                onClick={() => sendCommand('prevGroup')}
+                disabled={commandCooldown}
+                className={`px-5 py-3 rounded-2xl font-bold text-sm backdrop-blur-xl transition-all duration-300 ${
+                  commandCooldown
+                    ? 'opacity-40 cursor-not-allowed'
+                    : 'hover:scale-105 active:scale-95'
+                } bg-white/10 text-gray-500 border border-white/20 hover:bg-white/20`}
+                aria-label="Previous group"
+              >
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 18l-6-6 6-6" />
+                  </svg>
+                  <span className="tracking-wider">PREV GROUP</span>
+                </div>
+              </button>
+            )}
+
+            {/* NEXT GROUP — only in group mode */}
+            {state.activeGroupId && (
+              <button
+                type="button"
+                onClick={() => sendCommand('nextGroup')}
+                disabled={commandCooldown}
+                className={`px-5 py-3 rounded-2xl font-bold text-sm backdrop-blur-xl transition-all duration-300 ${
+                  commandCooldown
+                    ? 'opacity-40 cursor-not-allowed'
+                    : 'hover:scale-105 active:scale-95'
+                } bg-white/10 text-gray-500 border border-white/20 hover:bg-white/20`}
+                aria-label="Next group"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="tracking-wider">NEXT GROUP</span>
+                  <svg className="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 18l6-6-6-6" />
+                  </svg>
+                </div>
+              </button>
+            )}
           </div>
         )}
 

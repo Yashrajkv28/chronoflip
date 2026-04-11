@@ -347,12 +347,29 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
         clearInterval(flashIntervalRef.current);
         flashIntervalRef.current = null;
       }
+      // Reset viewers to the waiting screen
+      if (event.shareId) {
+        publishTimerState(event.shareId, {
+          status: 'waiting',
+          currentSegmentIndex: 0,
+          timeInSeconds: 0,
+          segmentName: '',
+          segmentMode: 'countdown',
+          totalSegments: event.segments.length,
+          activeAlertColor: null,
+          isFlashing: false,
+          lastUpdatedAt: Date.now(),
+          eventTitle: event.title,
+          scheduledStartTime: event.scheduledStartTime ?? null,
+          activeGroupId: undefined,
+        }).catch(() => {});
+      }
       onExit();
       clearExitTimers();
       setExitProgress(0);
       if ('vibrate' in navigator) navigator.vibrate(50);
     }, EXIT_HOLD_DURATION);
-  }, [onExit, clearExitTimers]);
+  }, [onExit, clearExitTimers, event.shareId, event.segments.length, event.title, event.scheduledStartTime]);
 
   const handleExitMouseUp = useCallback(() => {
     clearExitTimers();
@@ -538,6 +555,16 @@ const TimerRunningScreen: React.FC<TimerRunningScreenProps> = ({
         break;
       case 'restart':
         executeRestart();
+        break;
+      case 'prevGroup':
+        if (isGroupMode && prevGroupId) {
+          navigateToGroup(prevGroupId);
+        }
+        break;
+      case 'nextGroup':
+        if (isGroupMode && nextGroupId) {
+          navigateToGroup(nextGroupId);
+        }
         break;
     }
   };

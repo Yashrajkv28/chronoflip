@@ -21,7 +21,7 @@ function getSyncClient() {
 const SHARE_ID_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
 const SHARE_ID_RE = /^[A-HJ-NP-Za-km-z2-9]{4,16}$/;
 
-const ALLOWED_COMMAND_TYPES: ViewerCommand['type'][] = ['start', 'pause', 'restart'];
+const ALLOWED_COMMAND_TYPES: ViewerCommand['type'][] = ['start', 'pause', 'restart', 'nextGroup', 'prevGroup'];
 
 type Unsubscribe = () => void;
 
