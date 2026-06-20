@@ -27,3 +27,28 @@ old/
 user.md
 
 .vercel
+
+# Secrets — never commit
+.env
+.env.*
+aws-ids.txt
+
+# Local scripts — never commit
+deploy.ps1
+manage-users.ps1
+manage-users.sh
+
+# Personal notes / messages
+chat.md
+recentchat.md
+yash.md
+message-to-taguchi.md
+message-to-taguchi-deploy-complete.md
+sharewithtaguchi.md
+
+# Local artifacts / scratch
+*.docx
+_docx_images/
+test.zip
+screenshots/
+docs/aws-resources.md
