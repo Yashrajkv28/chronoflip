@@ -51,14 +51,14 @@ const GroupBlock: React.FC<GroupBlockProps> = ({
   const totalDuration = segments.reduce((sum, s) => sum + s.durationSeconds, 0);
 
   return (
-    <div className="rounded-2xl border-2 border-violet-500/20 bg-violet-500/5 overflow-hidden">
+    <div className="rounded-2xl border-2 border-accent-sage bg-bg-secondary overflow-hidden shadow-hard">
       {/* Group Header */}
-      <div className="flex items-center gap-3 px-4 py-3 bg-violet-500/10">
+      <div className="flex items-center gap-3 px-4 py-3 bg-accent-sage/10">
         {editMode && (
           <button
             type="button"
             onClick={onDeleteGroup}
-            className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/10 hover:text-red-500 transition-all"
+            className="p-1.5 rounded-lg text-error/70 hover:bg-error/10 hover:text-error transition-all"
             aria-label="Delete group"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
@@ -76,15 +76,15 @@ const GroupBlock: React.FC<GroupBlockProps> = ({
               onBlur={handleNameSave}
               onKeyDown={e => e.key === 'Enter' && handleNameSave()}
               autoFocus
-              className="w-full text-sm font-bold bg-transparent border-b-2 border-violet-500/50 text-violet-700 outline-none py-0.5"
+              className="w-full text-sm font-bold bg-transparent border-b-2 border-accent-blue text-text-primary outline-none py-0.5"
             />
           ) : (
             <div
               onClick={() => { setNameValue(group.name); setEditingName(true); }}
               className="cursor-pointer hover:opacity-70 transition-opacity"
             >
-              <h3 className="text-sm font-bold text-violet-700 truncate">{group.name}</h3>
-              <span className="text-[10px] text-violet-400">
+              <h3 className="text-sm font-bold text-accent-sage truncate">{group.name}</h3>
+              <span className="text-[10px] text-text-muted">
                 {segments.length} timer{segments.length !== 1 ? 's' : ''}
                 {totalDuration > 0 && ` \u00B7 ${Math.floor(totalDuration / 60)}m`}
               </span>
@@ -97,9 +97,9 @@ const GroupBlock: React.FC<GroupBlockProps> = ({
             type="button"
             onClick={onStartGroup}
             className="px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider
-                       bg-emerald-500/15 text-emerald-600
-                       border border-emerald-500/20
-                       hover:bg-emerald-500/25 hover:border-emerald-500/40
+                       bg-success text-white
+                       border border-success
+                       shadow-hard-sm hover:shadow-hard
                        hover:scale-105 active:scale-95
                        transition-all duration-200"
           >
@@ -135,9 +135,9 @@ const GroupBlock: React.FC<GroupBlockProps> = ({
         <button
           type="button"
           onClick={onAddSegmentToGroup}
-          className="w-full py-2 rounded-xl text-xs font-medium text-violet-500
-                     border border-dashed border-violet-500/30
-                     hover:bg-violet-500/10 hover:border-violet-500/50
+          className="w-full py-2 rounded-xl text-xs font-medium text-accent-sage
+                     border border-dashed border-accent-sage/50
+                     hover:bg-accent-sage/10 hover:border-accent-sage
                      transition-all duration-200
                      flex items-center justify-center gap-1"
         >

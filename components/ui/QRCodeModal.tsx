@@ -32,15 +32,13 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ eventTitle, shareId, onClose 
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-text-primary/60" onClick={onClose} />
 
       {/* Modal */}
       <div className="relative w-full max-w-sm rounded-3xl
-                      bg-white/80
-                      backdrop-blur-2xl backdrop-saturate-150
-                      border border-white/40
-                      shadow-[0_8px_32px_rgba(0,0,0,0.15)]
-                     
+                      bg-bg-primary
+                      border border-border-soft
+                      shadow-hard-lg
                       p-6 sm:p-8
                       animate-[fadeIn_0.2s_ease-out]">
 
@@ -49,8 +47,8 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ eventTitle, shareId, onClose 
           type="button"
           onClick={onClose}
           className="absolute top-4 right-4 p-2 rounded-full
-                     text-zinc-400 hover:text-zinc-600
-                     hover:bg-black/5
+                     text-text-muted hover:text-text-secondary
+                     hover:bg-bg-secondary
                      transition-all"
           aria-label="Close"
         >
@@ -60,16 +58,16 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ eventTitle, shareId, onClose 
         </button>
 
         {/* Title */}
-        <h2 className="text-lg font-bold text-zinc-800 text-center mb-1">
+        <h2 className="text-lg font-bold text-text-primary text-center mb-1">
           Share
         </h2>
-        <p className="text-sm text-zinc-500 text-center mb-6 truncate">
+        <p className="text-sm text-text-secondary text-center mb-6 truncate">
           {eventTitle}
         </p>
 
         {/* QR Code */}
         <div className="flex justify-center mb-6">
-          <div className="p-4 bg-white rounded-2xl shadow-inner">
+          <div className="p-4 bg-white rounded-2xl border border-border-soft">
             <QRCodeSVG
               value={viewerUrl}
               size={200}
@@ -81,7 +79,7 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ eventTitle, shareId, onClose 
         </div>
 
         {/* Description */}
-        <p className="text-xs text-zinc-500 text-center mb-5">
+        <p className="text-xs text-text-secondary text-center mb-5">
           Participants can scan this code to view the live timer
         </p>
 
@@ -90,9 +88,9 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ eventTitle, shareId, onClose 
           type="button"
           onClick={handleCopy}
           className="w-full py-3 rounded-2xl text-sm font-semibold
-                     bg-blue-500/15 text-blue-600
-                     border border-blue-500/25
-                     hover:bg-blue-500/25 hover:border-blue-500/40
+                     bg-accent-blue text-white
+                     border border-accent-blue
+                     shadow-hard-sm hover:shadow-hard
                      active:scale-[0.98]
                      transition-all duration-200
                      flex items-center justify-center gap-2"

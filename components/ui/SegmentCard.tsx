@@ -51,13 +51,14 @@ const SegmentCard: React.FC<SegmentCardProps> = ({ segment, editMode, onEdit, on
     <div
       ref={setNodeRef}
       style={dndStyle}
-      className="group relative rounded-xl overflow-hidden"
+      className="group relative rounded-xl overflow-hidden
+                 shadow-hard-sm hover:shadow-hard transition-shadow duration-200"
     >
       {/* Delete zone - behind the sliding content, hidden until swiped */}
       <div
         className="absolute inset-y-0 right-0 w-20 flex items-center justify-center
-                   bg-red-500 text-white cursor-pointer
-                   hover:bg-red-600 transition-all duration-200"
+                   bg-error text-white cursor-pointer
+                   hover:bg-error/90 transition-all duration-200"
         style={{ opacity: offsetX < 0 ? 1 : 0 }}
         role="button"
         aria-label="Delete segment"
@@ -77,12 +78,8 @@ const SegmentCard: React.FC<SegmentCardProps> = ({ segment, editMode, onEdit, on
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
         className="relative
-                   bg-white/20
-                   backdrop-blur-xl
-                   border border-white/25
-                   shadow-[0_2px_8px_rgba(0,0,0,0.04)]
-                  
-                   hover:bg-white/30
+                   bg-bg-secondary
+                   border border-border-soft
                    transition-[background-color] duration-200
                    rounded-xl"
       >
@@ -97,7 +94,7 @@ const SegmentCard: React.FC<SegmentCardProps> = ({ segment, editMode, onEdit, on
           {editMode && (
             <button
               type="button"
-              className="cursor-grab active:cursor-grabbing p-1 text-zinc-400 touch-none"
+              className="cursor-grab active:cursor-grabbing p-1 text-text-muted touch-none"
               {...attributes}
               {...listeners}
             >
@@ -112,18 +109,18 @@ const SegmentCard: React.FC<SegmentCardProps> = ({ segment, editMode, onEdit, on
           {/* Content - clickable */}
           <div className="flex-1 min-w-0 cursor-pointer" onClick={isOpen ? undefined : onEdit}>
             <div className="flex items-center gap-2 mb-0.5">
-              <span className="font-semibold text-sm sm:text-base text-zinc-800 truncate">
+              <span className="font-semibold text-sm sm:text-base text-text-primary truncate">
                 {segment.name}
               </span>
               <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider shrink-0 ${
                 segment.mode === 'countdown'
-                  ? 'bg-red-500/15 text-red-500'
-                  : 'bg-blue-500/15 text-blue-500'
+                  ? 'bg-error/10 text-error'
+                  : 'bg-accent-blue/10 text-accent-blue'
               }`}>
                 {segment.mode === 'countdown' ? 'CountDown' : 'CountUp'}
               </span>
             </div>
-            <span className="text-xs sm:text-sm font-mono text-zinc-500">
+            <span className="text-xs sm:text-sm font-mono text-text-secondary">
               {formatDurationString(segment.durationSeconds)}
             </span>
           </div>
@@ -134,7 +131,7 @@ const SegmentCard: React.FC<SegmentCardProps> = ({ segment, editMode, onEdit, on
               <button
                 type="button"
                 onClick={onDelete}
-                className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/10 hover:text-red-500 transition-all duration-200"
+                className="p-1.5 rounded-lg text-error/70 hover:bg-error/10 hover:text-error transition-all duration-200"
                 aria-label="Delete segment"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
@@ -145,8 +142,8 @@ const SegmentCard: React.FC<SegmentCardProps> = ({ segment, editMode, onEdit, on
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onStart(); }}
-                className="p-1.5 rounded-lg text-emerald-500
-                           hover:bg-emerald-500/10 hover:scale-110 active:scale-95
+                className="p-1.5 rounded-lg text-success
+                           hover:bg-success/10 hover:scale-110 active:scale-95
                            transition-all duration-200"
                 aria-label="Start from this segment"
               >

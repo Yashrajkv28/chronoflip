@@ -6,28 +6,28 @@ interface HelpModalProps {
 
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="mb-6">
-    <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wide">
+    <h3 className="px-4 mb-2 text-xs font-semibold text-text-secondary uppercase tracking-wide">
       {title}
     </h3>
-    <div className="bg-zinc-50/80 backdrop-blur-md border border-zinc-200/50 rounded-2xl overflow-hidden shadow-sm">
+    <div className="bg-bg-secondary border border-border-soft rounded-2xl overflow-hidden shadow-hard-sm">
       {children}
     </div>
   </div>
 );
 
 const InfoRow = ({ title, description, border = true }: { title: string; description: string; border?: boolean }) => (
-  <div className={`p-4 ${border ? 'border-b border-zinc-200/50' : ''}`}>
-    <div className="text-[15px] font-medium text-zinc-900">{title}</div>
-    <div className="text-[13px] text-zinc-500 mt-0.5">{description}</div>
+  <div className={`p-4 ${border ? 'border-b border-border-soft' : ''}`}>
+    <div className="text-[15px] font-medium text-text-primary">{title}</div>
+    <div className="text-[13px] text-text-secondary mt-0.5">{description}</div>
   </div>
 );
 
 const ShortcutRow = ({ shortcut, action, border = true }: { shortcut: string; action: string; border?: boolean }) => (
-  <div className={`p-4 flex items-center justify-between ${border ? 'border-b border-zinc-200/50' : ''}`}>
-    <kbd className="px-2.5 py-1 rounded-lg bg-zinc-200/80 text-[13px] font-mono font-semibold text-zinc-700 border border-zinc-300/50 shadow-sm min-w-[3rem] text-center">
+  <div className={`p-4 flex items-center justify-between ${border ? 'border-b border-border-soft' : ''}`}>
+    <kbd className="px-2.5 py-1 rounded-lg bg-bg-secondary text-[13px] font-mono font-semibold text-text-primary border border-border-soft shadow-hard-sm min-w-[3rem] text-center">
       {shortcut}
     </kbd>
-    <span className="text-[14px] text-zinc-600 ml-4 text-right flex-1">{action}</span>
+    <span className="text-[14px] text-text-secondary ml-4 text-right flex-1">{action}</span>
   </div>
 );
 
@@ -44,34 +44,33 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/20 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-text-primary/30"
       onClick={onClose}
     >
       <div
         className="w-full sm:max-w-md h-[90vh] sm:h-auto sm:max-h-[85vh]
-                   bg-white/90
-                   backdrop-blur-2xl
-                   border-t sm:border border-white/20
+                   bg-bg-primary
+                   border-t sm:border border-border-soft
                    rounded-t-[2.5rem] sm:rounded-[2.5rem]
-                   shadow-2xl overflow-hidden flex flex-col
+                   shadow-hard-lg overflow-hidden flex flex-col
                    animate-slide-up"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="relative flex items-center justify-between px-6 py-5 border-b border-zinc-200/50 bg-white/50 backdrop-blur-xl z-20">
+        <div className="relative flex items-center justify-between px-6 py-5 border-b border-border-soft bg-bg-primary z-20">
           <div className="w-16" />
-          <span className="text-zinc-900 font-semibold text-[17px]">Help</span>
+          <span className="text-text-primary font-semibold text-[17px]">Help</span>
           <button
             type="button"
             onClick={onClose}
-            className="text-blue-500 font-bold text-[17px] hover:opacity-70 transition-opacity w-16 text-right"
+            className="text-accent-blue font-bold text-[17px] hover:opacity-70 transition-opacity w-16 text-right"
           >
             Done
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 scrollbar-hide">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 no-scrollbar">
 
           {/* ===== ENGLISH ===== */}
 
@@ -152,11 +151,11 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
 
           {/* ===== LANGUAGE DIVIDER ===== */}
           <div className="flex items-center gap-3 my-8">
-            <div className="flex-1 h-px bg-zinc-300/50" />
-            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">
+            <div className="flex-1 h-px bg-border-soft" />
+            <span className="text-xs font-semibold text-text-muted uppercase tracking-widest">
               日本語 / Japanese
             </span>
-            <div className="flex-1 h-px bg-zinc-300/50" />
+            <div className="flex-1 h-px bg-border-soft" />
           </div>
 
           {/* ===== JAPANESE ===== */}

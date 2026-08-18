@@ -18,10 +18,10 @@ const AuthGate: React.FC<AuthGateProps> = ({ children }) => {
 
   if (auth.loading) {
     return (
-      <div className="h-[100dvh] flex items-center justify-center light-mesh-bg">
+      <div className="h-[100dvh] flex items-center justify-center bg-bg-primary">
         <div className="text-center space-y-4">
-          <div className="w-10 h-10 border-[3px] border-zinc-300 border-t-zinc-600 rounded-full animate-spin mx-auto" />
-          <p className="text-zinc-400 text-sm">Checking authentication...</p>
+          <div className="w-10 h-10 border-[3px] border-border-soft border-t-accent-slate rounded-full animate-spin mx-auto" />
+          <p className="text-text-muted text-sm">Checking authentication...</p>
         </div>
       </div>
     );

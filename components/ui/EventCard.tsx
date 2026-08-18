@@ -53,13 +53,14 @@ const EventCard: React.FC<EventCardProps> = ({ event, editMode, onSelect, onStar
     <div
       ref={setNodeRef}
       style={dndStyle}
-      className="group relative rounded-2xl overflow-hidden"
+      className="group relative rounded-2xl overflow-hidden
+                 shadow-hard hover:shadow-hard-hover transition-shadow duration-300"
     >
       {/* Delete zone - behind the sliding content, hidden until swiped */}
       <div
         className="absolute inset-y-0 right-0 w-20 flex items-center justify-center
-                   bg-red-500 text-white cursor-pointer
-                   hover:bg-red-600 transition-all duration-200"
+                   bg-error text-white cursor-pointer
+                   hover:bg-error/90 transition-all duration-200"
         style={{ opacity: offsetX < 0 ? 1 : 0 }}
         role="button"
         aria-label="Delete event"
@@ -79,15 +80,9 @@ const EventCard: React.FC<EventCardProps> = ({ event, editMode, onSelect, onStar
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
         className="relative
-                   bg-white/25
-                   backdrop-blur-xl
-                   border border-white/30
-                   shadow-[0_4px_16px_rgba(0,0,0,0.06)]
-                  
-                   hover:shadow-[0_8px_32px_rgba(0,0,0,0.1)]
-                  
-                   hover:bg-white/35
-                   transition-[background-color,box-shadow] duration-300
+                   bg-bg-secondary
+                   border border-border-soft
+                   transition-[background-color] duration-300
                    rounded-2xl"
       >
         <div className="flex items-center gap-3 p-4 sm:p-5">
@@ -95,7 +90,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, editMode, onSelect, onStar
           {editMode && (
             <button
               type="button"
-              className="cursor-grab active:cursor-grabbing p-1 text-zinc-400 touch-none"
+              className="cursor-grab active:cursor-grabbing p-1 text-text-muted touch-none"
               {...attributes}
               {...listeners}
             >
@@ -109,17 +104,17 @@ const EventCard: React.FC<EventCardProps> = ({ event, editMode, onSelect, onStar
 
           {/* Content - clickable */}
           <div className="flex-1 min-w-0 cursor-pointer" onClick={isOpen ? undefined : onSelect}>
-            <h3 className="font-semibold text-zinc-800 truncate text-base sm:text-lg">
+            <h3 className="font-semibold text-text-primary truncate text-base sm:text-lg">
               {event.title}
             </h3>
             {event.venueName && (
-              <p className="text-xs text-zinc-400 truncate mt-0.5">{event.venueName}</p>
+              <p className="text-xs text-text-muted truncate mt-0.5">{event.venueName}</p>
             )}
-            <div className="flex items-center gap-3 mt-1.5 text-xs text-zinc-400">
+            <div className="flex items-center gap-3 mt-1.5 text-xs text-text-muted">
               <span>{segmentCount} segment{segmentCount !== 1 ? 's' : ''}</span>
               {totalDuration > 0 && (
                 <>
-                  <span className="text-zinc-300">|</span>
+                  <span className="text-border-soft">|</span>
                   <span>
                     {totalDuration >= 3600
                       ? `${Math.floor(totalDuration / 3600)}h ${Math.floor((totalDuration % 3600) / 60)}m`
@@ -129,8 +124,8 @@ const EventCard: React.FC<EventCardProps> = ({ event, editMode, onSelect, onStar
               )}
               {event.scheduledStartTime != null && event.scheduledStartTime > 0 && (
                 <>
-                  <span className="text-zinc-300">|</span>
-                  <span className="text-pink-500">
+                  <span className="text-border-soft">|</span>
+                  <span className="text-accent-slate">
                     {new Date(event.scheduledStartTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </>
@@ -144,7 +139,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, editMode, onSelect, onStar
               <button
                 type="button"
                 onClick={onDelete}
-                className="p-2 rounded-xl text-red-400 hover:bg-red-500/10 hover:text-red-500 transition-all duration-200"
+                className="p-2 rounded-xl text-error/70 hover:bg-error/10 hover:text-error transition-all duration-200"
                 aria-label="Delete event"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
@@ -156,9 +151,9 @@ const EventCard: React.FC<EventCardProps> = ({ event, editMode, onSelect, onStar
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onStart(); }}
                 className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider
-                           bg-emerald-500/15 text-emerald-600
-                           border border-emerald-500/20
-                           hover:bg-emerald-500/25 hover:border-emerald-500/40
+                           bg-success text-white
+                           border border-success
+                           shadow-hard-sm hover:shadow-hard
                            hover:scale-105 active:scale-95
                            transition-all duration-200"
               >

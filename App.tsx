@@ -41,7 +41,6 @@ const App: React.FC = () => {
   // Theme setup
   useEffect(() => {
     document.documentElement.classList.remove('dark');
-    document.body.classList.remove('mesh-bg');
     document.body.classList.add('light-mesh-bg');
     return () => {
       document.body.classList.remove('light-mesh-bg');
@@ -490,7 +489,7 @@ const App: React.FC = () => {
   const showGlobalUI = appState.currentScreen !== 'timerRunning';
 
   return (
-    <div className="relative text-gray-900 h-[100dvh] overflow-hidden">
+    <div className="relative text-text-primary h-[100dvh] overflow-hidden">
       {appState.currentScreen === 'eventList' && (
         <EventListScreen
           events={appState.events}
@@ -556,11 +555,11 @@ const App: React.FC = () => {
             title="Help & Keyboard Shortcuts"
             aria-label="Open help and keyboard shortcuts"
             className="fixed bottom-6 left-6 z-50 p-3 rounded-full
-                       bg-white/20 backdrop-blur-md
-                       border border-white/20
-                       shadow-lg hover:scale-110 transition-all duration-200"
+                       bg-white
+                       border border-border-soft
+                       shadow-hard hover:shadow-hard-hover hover:scale-110 transition-all duration-200"
           >
-            <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
+            <svg className="w-5 h-5 text-text-secondary" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
               <circle cx="12" cy="12" r="10" />
               <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" strokeLinecap="round" strokeLinejoin="round" />
               <line x1="12" y1="17" x2="12.01" y2="17" strokeLinecap="round" />
@@ -573,11 +572,11 @@ const App: React.FC = () => {
               title="Sign out"
               aria-label="Sign out"
               className="fixed bottom-6 right-6 z-50 p-3 rounded-full
-                         bg-white/20 backdrop-blur-md
-                         border border-white/20
-                         shadow-lg hover:scale-110 transition-all duration-200"
+                         bg-white
+                         border border-border-soft
+                         shadow-hard hover:shadow-hard-hover hover:scale-110 transition-all duration-200"
             >
-              <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="w-5 h-5 text-text-secondary" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />

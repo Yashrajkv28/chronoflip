@@ -109,8 +109,8 @@ const ScrollWheelPicker: React.FC<ScrollWheelPickerProps> = ({ value, min, max, 
             >
               <span className={`text-2xl sm:text-3xl font-mono transition-all duration-150 ${
                 v === value
-                  ? 'text-zinc-900 font-bold scale-110'
-                  : 'text-zinc-400'
+                  ? 'text-text-primary font-bold scale-110'
+                  : 'text-text-muted'
               }`}>
                 {v.toString().padStart(2, '0')}
               </span>
@@ -122,7 +122,7 @@ const ScrollWheelPicker: React.FC<ScrollWheelPickerProps> = ({ value, min, max, 
 
         {/* Selection highlight */}
         <div
-          className="absolute pointer-events-none left-0 right-0 border-t-2 border-b-2 border-blue-500/40"
+          className="absolute pointer-events-none left-0 right-0 border-t-2 border-b-2 border-accent-blue"
           style={{
             top: spacerHeight,
             height: ITEM_HEIGHT,
@@ -130,7 +130,7 @@ const ScrollWheelPicker: React.FC<ScrollWheelPickerProps> = ({ value, min, max, 
         />
       </div>
       {label && (
-        <span className="mt-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+        <span className="mt-2 text-xs font-semibold text-text-secondary uppercase tracking-wider">
           {label}
         </span>
       )}

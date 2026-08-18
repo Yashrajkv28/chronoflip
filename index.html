@@ -22,8 +22,30 @@
         theme: {
           extend: {
             fontFamily: {
-              sans: ['Inter', 'sans-serif'],
+              sans: ['Inter', 'system-ui', 'sans-serif'],
               mono: ['Roboto Mono', 'monospace'],
+            },
+            // EventHQ design tokens — shared across the product suite.
+            colors: {
+              'bg-primary': '#F9FAFB',
+              'bg-secondary': '#F3F4F6',
+              'border-soft': '#CBD5E1',
+              'text-primary': '#111827',
+              'text-secondary': '#6B7280',
+              'text-muted': '#9CA3AF',
+              'accent-slate': '#64748B',
+              'accent-blue': '#3B82F6',
+              'accent-sage': '#6B8F71',
+              'success': '#16A34A',
+              'warning': '#D97706',
+              'error': '#DC2626',
+            },
+            // EventHQ signature "hard shadow" — sharp offsets, no blur.
+            boxShadow: {
+              'hard': '4px 4px 0px 0px rgba(0,0,0,0.08)',
+              'hard-sm': '2px 2px 0px 0px rgba(0,0,0,0.06)',
+              'hard-lg': '6px 6px 0px 0px rgba(0,0,0,0.08)',
+              'hard-hover': '6px 6px 0px 0px rgba(0,0,0,0.10)',
             },
             animation: {
               // TOP FLAP: Falls down in first 0.3s

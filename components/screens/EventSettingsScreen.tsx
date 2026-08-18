@@ -120,7 +120,7 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
   };
 
   return (
-    <div className="h-[100dvh] flex flex-col overflow-hidden">
+    <div className="h-[100dvh] flex flex-col overflow-hidden bg-bg-primary">
       {/* Header */}
       <div className="shrink-0 px-4 sm:px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-4">
         <div className="max-w-2xl mx-auto">
@@ -129,7 +129,7 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
             <button
               type="button"
               onClick={onBack}
-              className="p-2.5 -ml-2 rounded-xl text-zinc-500 hover:bg-white/20 transition-all"
+              className="p-2.5 -ml-2 rounded-xl text-text-secondary hover:bg-bg-secondary transition-all"
               aria-label="Back to event list"
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
@@ -146,12 +146,12 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
                   onBlur={handleTitleSave}
                   onKeyDown={e => e.key === 'Enter' && handleTitleSave()}
                   autoFocus
-                  className="w-full text-center text-lg font-bold bg-transparent border-b-2 border-blue-500/50 text-zinc-800 outline-none py-1"
+                  className="w-full text-center text-lg font-bold bg-transparent border-b-2 border-accent-blue text-text-primary outline-none py-1"
                 />
               ) : (
                 <h1
                   onClick={() => { setTitleValue(event.title); setEditingTitle(true); }}
-                  className="text-lg sm:text-xl font-bold text-zinc-800 truncate cursor-pointer hover:opacity-70 transition-opacity"
+                  className="text-lg sm:text-xl font-bold text-text-primary truncate cursor-pointer hover:opacity-70 transition-opacity"
                 >
                   {event.title}
                 </h1>
@@ -172,12 +172,12 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
               onKeyDown={e => e.key === 'Enter' && handleVenueSave()}
               autoFocus
               placeholder="Add venue name..."
-              className="w-full text-center text-sm bg-transparent border-b-2 border-blue-500/50 text-zinc-500 outline-none py-1 mt-1"
+              className="w-full text-center text-sm bg-transparent border-b-2 border-accent-blue text-text-secondary outline-none py-1 mt-1"
             />
           ) : (
             <p
               onClick={() => { setVenueValue(event.venueName ?? ''); setEditingVenue(true); }}
-              className="text-sm text-zinc-400 text-center cursor-pointer hover:opacity-70 transition-opacity mt-1 truncate"
+              className="text-sm text-text-muted text-center cursor-pointer hover:opacity-70 transition-opacity mt-1 truncate"
             >
               {event.venueName || 'Add venue name...'}
             </p>
@@ -209,14 +209,14 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
                 {/* Total duration pill */}
                 {totalSec > 0 && (
                   <span className="px-5 py-2 rounded-full text-sm font-semibold font-mono
-                                   bg-purple-500/10 border border-purple-500/20 text-purple-500">
+                                   bg-white border border-border-soft text-text-secondary shadow-hard-sm">
                     {fmtDur(totalSec)}
                   </span>
                 )}
                 {/* Scheduled time range */}
                 {hasSchedule && totalSec > 0 && (
                   <span className="px-4 py-1.5 rounded-full text-xs font-semibold
-                                   bg-pink-500/10 border border-pink-500/20 text-pink-500">
+                                   bg-accent-slate/10 border border-accent-slate/40 text-accent-slate">
                     {fmtTime(event.scheduledStartTime!)} → {fmtTime(endTs)}
                   </span>
                 )}
@@ -231,12 +231,11 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
                 type="button"
                 onClick={() => onStartEvent()}
                 className="px-7 py-3 rounded-2xl text-sm font-bold uppercase tracking-wider
-                           bg-emerald-500/15 text-emerald-600
-                           border border-emerald-500/25
-                           hover:bg-emerald-500/25 hover:border-emerald-500/40
-                           shadow-[0_0_15px_rgba(16,185,129,0.1)] hover:shadow-[0_0_25px_rgba(16,185,129,0.2)]
+                           bg-success text-white
+                           border border-success
+                           shadow-hard-sm hover:shadow-hard
                            hover:scale-105 active:scale-95
-                           backdrop-blur-xl transition-all duration-300"
+                           transition-all duration-300"
               >
                 <div className="flex items-center gap-2.5">
                   <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -251,10 +250,10 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
             <button
               type="button"
               onClick={() => setEditMode(!editMode)}
-              className={`px-5 py-2.5 rounded-xl text-sm font-semibold backdrop-blur-xl border shadow-lg hover:scale-105 active:scale-95 transition-all duration-300 ${
+              className={`px-5 py-2.5 rounded-xl text-sm font-semibold border shadow-hard-sm hover:shadow-hard hover:scale-105 active:scale-95 transition-all duration-300 ${
                 editMode
-                  ? 'bg-blue-500/20 text-blue-600 border-blue-500/30 hover:bg-blue-500/30'
-                  : 'bg-white/20 text-zinc-600 border-white/30 hover:bg-white/30'
+                  ? 'bg-accent-blue text-white border-accent-blue'
+                  : 'bg-white text-text-primary border-border-soft hover:bg-bg-secondary'
               }`}
             >
               {editMode ? 'Done' : 'Edit'}
@@ -263,10 +262,10 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
               type="button"
               onClick={onAddSegment}
               className="px-4 py-2.5 rounded-xl text-sm font-semibold
-                         bg-white/20 backdrop-blur-xl border border-white/30
-                         text-zinc-600 hover:bg-white/30
+                         bg-white border border-border-soft
+                         text-text-primary hover:bg-bg-secondary
                          hover:scale-105 active:scale-95
-                         transition-all duration-300 shadow-lg
+                         transition-all duration-300 shadow-hard-sm hover:shadow-hard
                          flex items-center gap-1.5"
               aria-label="Add timer"
             >
@@ -279,10 +278,10 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
               type="button"
               onClick={onAddGroup}
               className="px-4 py-2.5 rounded-xl text-sm font-semibold
-                         bg-violet-500/10 backdrop-blur-xl border border-violet-500/20
-                         text-violet-600 hover:bg-violet-500/20
+                         bg-accent-sage/10 border border-accent-sage
+                         text-accent-sage hover:bg-accent-sage/20
                          hover:scale-105 active:scale-95
-                         transition-all duration-300 shadow-lg
+                         transition-all duration-300 shadow-hard-sm hover:shadow-hard
                          flex items-center gap-1.5"
               aria-label="Add group"
             >
@@ -297,14 +296,13 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
                 onClick={handleShare}
                 disabled={sharing}
                 className="p-2.5 rounded-xl
-                           bg-violet-500/15
-                           backdrop-blur-xl
-                           border border-violet-500/25
-                           text-violet-600
-                           hover:bg-violet-500/25
+                           bg-accent-slate/10
+                           border border-accent-slate/40
+                           text-accent-slate
+                           hover:bg-accent-slate/20
                            hover:scale-110 active:scale-95
                            disabled:opacity-50
-                           transition-all duration-300 shadow-lg"
+                           transition-all duration-300 shadow-hard-sm hover:shadow-hard"
                 aria-label="Share event via QR code"
               >
                 {sharing ? (
@@ -345,7 +343,7 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
         <div className="max-w-2xl mx-auto space-y-2">
           {event.segments.length === 0 ? (
             <div className="text-center py-16">
-              <p className="text-zinc-500 text-sm">
+              <p className="text-text-secondary text-sm">
                 No segments yet. Tap + New Timer to add one.
               </p>
             </div>
@@ -431,14 +429,14 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
         {/* Schedule Start Section */}
         {event.segments.length > 0 && (
           <div className="max-w-2xl mx-auto mt-8">
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-400 mb-2 px-1">
+            <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-text-muted mb-2 px-1">
               Scheduled Start
             </h3>
             <div className="p-5 rounded-2xl
-                            bg-zinc-50/80
-                            backdrop-blur-xl
-                            border border-zinc-200/50">
-              <p className="text-sm font-medium text-zinc-600 mb-4">
+                            bg-bg-secondary
+                            border border-border-soft
+                            shadow-hard-sm">
+              <p className="text-sm font-medium text-text-secondary mb-4">
                 Start at specific time
               </p>
               <div className="flex items-center gap-3">
@@ -446,13 +444,13 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
                   type="date"
                   value={schedDate}
                   onChange={e => setSchedDate(e.target.value)}
-                  className="flex-1 min-w-0 bg-white/60 border border-zinc-200/60 rounded-xl px-4 py-3 text-sm text-zinc-700 outline-none focus:border-pink-500/50 focus:ring-1 focus:ring-pink-500/20 transition-all"
+                  className="flex-1 min-w-0 bg-white border border-border-soft rounded-xl px-4 py-3 text-sm text-text-primary outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue/30 transition-all"
                 />
                 <input
                   type="time"
                   value={schedTime}
                   onChange={e => setSchedTime(e.target.value)}
-                  className="flex-1 min-w-0 bg-white/60 border border-zinc-200/60 rounded-xl px-4 py-3 text-sm text-zinc-700 outline-none focus:border-pink-500/50 focus:ring-1 focus:ring-pink-500/20 transition-all"
+                  className="flex-1 min-w-0 bg-white border border-border-soft rounded-xl px-4 py-3 text-sm text-text-primary outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue/30 transition-all"
                 />
               </div>
               <button
@@ -460,13 +458,12 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
                 onClick={handleScheduleStart}
                 disabled={!schedDate || !schedTime}
                 className="w-full mt-4 px-5 py-3.5 rounded-2xl text-sm font-bold
-                           bg-pink-500/15 text-pink-600
-                           border border-pink-500/25
-                           hover:bg-pink-500/25 hover:border-pink-500/40
-                           shadow-[0_0_15px_rgba(236,72,153,0.1)] hover:shadow-[0_0_25px_rgba(236,72,153,0.2)]
+                           bg-accent-slate text-white
+                           border border-accent-slate
+                           shadow-hard-sm hover:shadow-hard
                            disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none
                            hover:scale-105 active:scale-95
-                           backdrop-blur-xl transition-all duration-300
+                           transition-all duration-300
                            flex items-center justify-center gap-2.5"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
@@ -478,9 +475,9 @@ const EventSettingsScreen: React.FC<EventSettingsScreenProps> = ({
                 Schedule Start
               </button>
               {schedError && (
-                <p className="text-xs text-red-500 mt-2">{schedError}</p>
+                <p className="text-xs text-error mt-2">{schedError}</p>
               )}
-              <p className="text-[10px] text-zinc-400 mt-2.5 text-center">
+              <p className="text-[10px] text-text-muted mt-2.5 text-center">
                 Timer will automatically start at the scheduled time
               </p>
             </div>

@@ -16,26 +16,60 @@ export interface SignInResult {
   needsNewPassword: boolean;
 }
 
-// Map Cognito error names to user-safe messages (prevents user enumeration)
-const FRIENDLY_AUTH_ERRORS: Record<string, string> = {
-  UserNotFoundException: 'Incorrect email or password.',
-  NotAuthorizedException: 'Incorrect email or password.',
-  PasswordResetRequiredException: 'A password reset is required. Contact your administrator.',
-  UserNotConfirmedException: 'Account not confirmed. Contact your administrator.',
-  TooManyRequestsException: 'Too many attempts. Please wait and try again.',
-  LimitExceededException: 'Too many attempts. Please wait and try again.',
-  InvalidPasswordException: 'Password does not meet requirements: 8+ characters with uppercase, lowercase, number, and symbol.',
-  InvalidParameterException: 'Invalid input. Please check your details.',
+export type AuthLang = 'en' | 'jp';
+
+// Errors this module raises itself. Named so they can be localised like Cognito's.
+export const EXTRA_STEP_ERROR = 'ExtraVerificationStepRequired';
+export const PASSWORD_TOO_SHORT_ERROR = 'PasswordTooShort';
+
+// Map error names to user-safe messages (prevents user enumeration)
+const FRIENDLY_AUTH_ERRORS: Record<AuthLang, Record<string, string>> = {
+  en: {
+    UserNotFoundException: 'Incorrect email or password.',
+    NotAuthorizedException: 'Incorrect email or password.',
+    PasswordResetRequiredException: 'A password reset is required. Contact your administrator.',
+    UserNotConfirmedException: 'Account not confirmed. Contact your administrator.',
+    TooManyRequestsException: 'Too many attempts. Please wait and try again.',
+    LimitExceededException: 'Too many attempts. Please wait and try again.',
+    InvalidPasswordException: 'Password does not meet requirements: 8+ characters with uppercase, lowercase, number, and symbol.',
+    InvalidParameterException: 'Invalid input. Please check your details.',
+    [EXTRA_STEP_ERROR]: 'An additional verification step is required. Contact your administrator.',
+    [PASSWORD_TOO_SHORT_ERROR]: 'Password must be at least 8 characters.',
+  },
+  jp: {
+    UserNotFoundException: 'メールアドレスまたはパスワードが正しくありません。',
+    NotAuthorizedException: 'メールアドレスまたはパスワードが正しくありません。',
+    PasswordResetRequiredException: 'パスワードの再設定が必要です。管理者にお問い合わせください。',
+    UserNotConfirmedException: 'アカウントが確認されていません。管理者にお問い合わせください。',
+    TooManyRequestsException: '試行回数が多すぎます。しばらく待ってから再試行してください。',
+    LimitExceededException: '試行回数が多すぎます。しばらく待ってから再試行してください。',
+    InvalidPasswordException: 'パスワードが要件を満たしていません。8文字以上で、大文字・小文字・数字・記号を含めてください。',
+    InvalidParameterException: '入力内容が正しくありません。ご確認ください。',
+    [EXTRA_STEP_ERROR]: '追加の認証手続きが必要です。管理者にお問い合わせください。',
+    [PASSWORD_TOO_SHORT_ERROR]: 'パスワードは8文字以上で入力してください。',
+  },
 };
 
-export function getAuthErrorMessage(err: unknown): string {
+const FALLBACK_AUTH_ERROR: Record<AuthLang, string> = {
+  en: 'An unexpected error occurred. Please try again.',
+  jp: '予期しないエラーが発生しました。もう一度お試しください。',
+};
+
+/** Build a named Error so getAuthErrorMessage can localise it. */
+function namedError(name: string): Error {
+  const e = new Error(name);
+  e.name = name;
+  return e;
+}
+
+export function getAuthErrorMessage(err: unknown, lang: AuthLang = 'en'): string {
   if (err instanceof Error) {
     const name = err.name;
-    if (name && FRIENDLY_AUTH_ERRORS[name]) return FRIENDLY_AUTH_ERRORS[name];
+    if (name && FRIENDLY_AUTH_ERRORS[lang][name]) return FRIENDLY_AUTH_ERRORS[lang][name];
     // Never leak raw Amplify/Cognito error messages to the UI
     console.warn('Unmapped auth error:', name);
   }
-  return 'An unexpected error occurred. Please try again.';
+  return FALLBACK_AUTH_ERROR[lang];
 }
 
 export async function signIn(email: string, password: string): Promise<SignInResult> {
@@ -52,7 +86,7 @@ export async function signIn(email: string, password: string): Promise<SignInRes
   }
 
   // Don't leak the raw signInStep value to the UI
-  throw new Error('An additional verification step is required. Contact your administrator.');
+  throw namedError(EXTRA_STEP_ERROR);
 }
 
 export async function signOut(): Promise<void> {
@@ -83,12 +117,12 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 export async function completeNewPasswordChallenge(newPassword: string): Promise<SignInResult> {
   // Do not trim passwords — spaces may be intentional
   if (!newPassword || newPassword.length < 8) {
-    throw new Error('Password must be at least 8 characters.');
+    throw namedError(PASSWORD_TOO_SHORT_ERROR);
   }
   const result = await confirmSignIn({ challengeResponse: newPassword });
   if (result.isSignedIn) {
     return { isSignedIn: true, needsNewPassword: false };
   }
   // Don't leak the raw signInStep value to the UI
-  throw new Error('An additional verification step is required. Contact your administrator.');
+  throw namedError(EXTRA_STEP_ERROR);
 }

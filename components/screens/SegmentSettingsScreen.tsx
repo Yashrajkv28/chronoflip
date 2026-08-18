@@ -37,30 +37,29 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/20 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-text-primary/30">
       <div className="
         w-full sm:max-w-md h-[90vh] sm:h-auto sm:max-h-[85vh]
-        bg-white/90
-        backdrop-blur-2xl
-        border-t sm:border border-white/20
+        bg-bg-primary
+        border-t sm:border border-border-soft
         rounded-t-[2.5rem] sm:rounded-[2.5rem]
-        shadow-2xl overflow-hidden flex flex-col
+        shadow-hard-lg overflow-hidden flex flex-col
         animate-slide-up
       ">
         {/* Header — iOS style text buttons */}
-        <div className="relative flex items-center justify-between px-6 py-5 border-b border-zinc-200/50 bg-white/50 backdrop-blur-xl z-20">
+        <div className="relative flex items-center justify-between px-6 py-5 border-b border-border-soft bg-bg-primary z-20">
           <button
             type="button"
             onClick={onClose}
-            className="text-blue-500 font-medium text-[17px] hover:opacity-70 transition-opacity"
+            className="text-accent-blue font-medium text-[17px] hover:opacity-70 transition-opacity"
           >
             Cancel
           </button>
-          <span className="text-zinc-900 font-semibold text-[17px]">Segment</span>
+          <span className="text-text-primary font-semibold text-[17px]">Segment</span>
           <button
             type="button"
             onClick={handleSave}
-            className="text-blue-500 font-bold text-[17px] hover:opacity-70 transition-opacity"
+            className="text-accent-blue font-bold text-[17px] hover:opacity-70 transition-opacity"
           >
             Done
           </button>
@@ -71,15 +70,15 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
 
           {/* SUBTITLE Section */}
           <div className="mb-8">
-            <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Subtitle</h3>
-            <div className="bg-zinc-50/80 backdrop-blur-md border border-zinc-200/50 rounded-2xl overflow-hidden shadow-sm">
+            <h3 className="px-4 mb-2 text-xs font-semibold text-text-secondary uppercase tracking-wide">Subtitle</h3>
+            <div className="bg-bg-secondary border border-border-soft rounded-2xl overflow-hidden shadow-hard-sm">
               <div className="p-4">
                 <input
                   type="text"
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="Speech name"
-                  className="w-full bg-transparent text-[15px] font-medium text-zinc-900 placeholder-zinc-400 outline-none"
+                  className="w-full bg-transparent text-[15px] font-medium text-text-primary placeholder-text-muted outline-none"
                 />
               </div>
             </div>
@@ -88,13 +87,13 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
           {/* GROUP Section */}
           {groups.length > 0 && (
             <div className="mb-8">
-              <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Group</h3>
-              <div className="bg-zinc-50/80 backdrop-blur-md border border-zinc-200/50 rounded-2xl overflow-hidden shadow-sm">
+              <h3 className="px-4 mb-2 text-xs font-semibold text-text-secondary uppercase tracking-wide">Group</h3>
+              <div className="bg-bg-secondary border border-border-soft rounded-2xl overflow-hidden shadow-hard-sm">
                 <div className="p-4">
                   <select
                     value={groupId ?? ''}
                     onChange={e => setGroupId(e.target.value || undefined)}
-                    className="w-full bg-white/60 border border-zinc-200/60 rounded-xl px-4 py-3 text-sm text-zinc-700 outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-all appearance-none"
+                    className="w-full bg-white border border-border-soft rounded-xl px-4 py-3 text-sm text-text-primary outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue/30 transition-all appearance-none"
                   >
                     <option value="">None (ungrouped)</option>
                     {groups.map(g => (
@@ -108,8 +107,8 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
 
           {/* DURATION Section */}
           <div className="mb-8">
-            <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Duration</h3>
-            <div className="bg-zinc-50/80 backdrop-blur-md border border-zinc-200/50 rounded-2xl overflow-hidden shadow-sm">
+            <h3 className="px-4 mb-2 text-xs font-semibold text-text-secondary uppercase tracking-wide">Duration</h3>
+            <div className="bg-bg-secondary border border-border-soft rounded-2xl overflow-hidden shadow-hard-sm">
               <div className="p-4">
                 <div className="flex items-start justify-center gap-4 sm:gap-8">
                   <ScrollWheelPicker value={hours} min={0} max={23} onChange={setHours} label="hours" />
@@ -139,8 +138,8 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                       }}
                       className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold transition-all duration-200
                         ${hours * 3600 + minutes * 60 + seconds === p.sec
-                          ? 'bg-blue-500/20 text-blue-600 border border-blue-500/30'
-                          : 'bg-white/15 text-zinc-500 border border-white/15 hover:bg-white/25'
+                          ? 'bg-accent-blue text-white border border-accent-blue'
+                          : 'bg-white text-text-secondary border border-border-soft hover:bg-bg-secondary'
                         }`}
                     >
                       {p.label}
@@ -153,10 +152,10 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
 
           {/* COUNT MODE Section — SegmentedControl style */}
           <div className="mb-8">
-            <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Count Mode</h3>
-            <div className="bg-zinc-50/80 backdrop-blur-md border border-zinc-200/50 rounded-2xl overflow-hidden shadow-sm">
+            <h3 className="px-4 mb-2 text-xs font-semibold text-text-secondary uppercase tracking-wide">Count Mode</h3>
+            <div className="bg-bg-secondary border border-border-soft rounded-2xl overflow-hidden shadow-hard-sm">
               <div className="p-4">
-                <div className="flex p-1 bg-zinc-200/80 rounded-xl backdrop-blur-sm" role="tablist">
+                <div className="flex p-1 bg-bg-secondary border border-border-soft rounded-xl" role="tablist">
                   <button
                     type="button"
                     onClick={() => setMode('countdown')}
@@ -164,8 +163,8 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                     aria-selected={mode === 'countdown'}
                     className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all duration-300 ${
                       mode === 'countdown'
-                        ? 'bg-red-500/20 text-red-600 shadow-sm'
-                        : 'text-zinc-500 hover:text-zinc-800'
+                        ? 'bg-error text-white shadow-hard-sm'
+                        : 'text-text-secondary hover:text-text-primary'
                     }`}
                   >
                     Countdown
@@ -177,8 +176,8 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                     aria-selected={mode === 'countup'}
                     className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all duration-300 ${
                       mode === 'countup'
-                        ? 'bg-blue-500/20 text-blue-600 shadow-sm'
-                        : 'text-zinc-500 hover:text-zinc-800'
+                        ? 'bg-accent-blue text-white shadow-hard-sm'
+                        : 'text-text-secondary hover:text-text-primary'
                     }`}
                   >
                     Count Up
@@ -190,10 +189,10 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
 
           {/* AUDIO Section */}
           <div className="mb-8">
-            <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Audio</h3>
-            <div className="bg-zinc-50/80 backdrop-blur-md border border-zinc-200/50 rounded-2xl overflow-hidden shadow-sm">
-              <div className="p-4 flex items-center justify-between border-b border-zinc-200/50">
-                <span className="text-[15px] font-medium text-zinc-900">Alarm on Completion</span>
+            <h3 className="px-4 mb-2 text-xs font-semibold text-text-secondary uppercase tracking-wide">Audio</h3>
+            <div className="bg-bg-secondary border border-border-soft rounded-2xl overflow-hidden shadow-hard-sm">
+              <div className="p-4 flex items-center justify-between border-b border-border-soft">
+                <span className="text-[15px] font-medium text-text-primary">Alarm on Completion</span>
                 <button
                   type="button"
                   onClick={() => setSound(!sound)}
@@ -201,7 +200,7 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                   role="switch"
                   aria-checked={sound}
                   className={`relative w-11 h-6 rounded-full transition-colors duration-300 ease-in-out ${
-                    sound ? 'bg-blue-500' : 'bg-zinc-300'
+                    sound ? 'bg-accent-blue' : 'bg-border-soft'
                   }`}
                 >
                   <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
@@ -209,8 +208,8 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                   }`} />
                 </button>
               </div>
-              <div className="p-4 flex items-center justify-between border-b border-zinc-200/50">
-                <span className="text-[15px] font-medium text-zinc-900">Tick Sound</span>
+              <div className="p-4 flex items-center justify-between border-b border-border-soft">
+                <span className="text-[15px] font-medium text-text-primary">Tick Sound</span>
                 <button
                   type="button"
                   onClick={() => setTick(!tick)}
@@ -218,7 +217,7 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                   role="switch"
                   aria-checked={tick}
                   className={`relative w-11 h-6 rounded-full transition-colors duration-300 ease-in-out ${
-                    tick ? 'bg-blue-500' : 'bg-zinc-300'
+                    tick ? 'bg-accent-blue' : 'bg-border-soft'
                   }`}
                 >
                   <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
@@ -227,7 +226,7 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                 </button>
               </div>
               <div className="p-4 flex items-center justify-between">
-                <span className="text-[15px] font-medium text-zinc-900">Flash on Completion</span>
+                <span className="text-[15px] font-medium text-text-primary">Flash on Completion</span>
                 <button
                   type="button"
                   onClick={() => setFlash(!flash)}
@@ -235,7 +234,7 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                   role="switch"
                   aria-checked={flash}
                   className={`relative w-11 h-6 rounded-full transition-colors duration-300 ease-in-out ${
-                    flash ? 'bg-blue-500' : 'bg-zinc-300'
+                    flash ? 'bg-accent-blue' : 'bg-border-soft'
                   }`}
                 >
                   <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
@@ -248,15 +247,15 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
 
           {/* SEGMENT COLOR Section */}
           <div className="mb-8">
-            <h3 className="px-4 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Segment Color</h3>
-            <p className="px-4 mb-3 text-[10px] text-zinc-400">
+            <h3 className="px-4 mb-2 text-xs font-semibold text-text-secondary uppercase tracking-wide">Segment Color</h3>
+            <p className="px-4 mb-3 text-[10px] text-text-muted">
               Background color while this segment is active
             </p>
-            <div className="bg-zinc-50/80 backdrop-blur-md border border-zinc-200/50 rounded-2xl overflow-hidden shadow-sm">
+            <div className="bg-bg-secondary border border-border-soft rounded-2xl overflow-hidden shadow-hard-sm">
               <div className="p-4">
                 {/* Color preview bar */}
                 <div
-                  className="w-full h-10 rounded-xl mb-4 shadow-inner border border-black/5"
+                  className="w-full h-10 rounded-xl mb-4 border border-border-soft"
                   style={{ backgroundColor: color }}
                 />
                 {/* Color swatches */}
@@ -268,7 +267,7 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                       onClick={() => setColor(c)}
                       className={`w-8 h-8 rounded-full transition-all duration-200 border-2 hover:scale-110 active:scale-95 ${
                         color === c
-                          ? 'border-zinc-800 scale-110 shadow-lg'
+                          ? 'border-text-primary scale-110 shadow-hard-sm'
                           : 'border-transparent opacity-70 hover:opacity-100'
                       }`}
                       style={{ backgroundColor: c }}
@@ -277,7 +276,7 @@ const SegmentSettingsScreen: React.FC<SegmentSettingsScreenProps> = ({ segment, 
                   ))}
                   {/* Custom color picker */}
                   <label
-                    className="relative w-8 h-8 rounded-full cursor-pointer overflow-hidden ring-1 ring-zinc-300 hover:scale-110 transition-transform"
+                    className="relative w-8 h-8 rounded-full cursor-pointer overflow-hidden ring-1 ring-border-soft hover:scale-110 transition-transform"
                     title="Custom color"
                     style={{ background: 'conic-gradient(#ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)' }}
                   >
